@@ -172,4 +172,4 @@ SHARE_PRICE = "250"
 
 INFO_EMAIL = "gemuese@huebhof2023.ch"
 SERVER_URL = "www.huebhof.org"
-STYLES = {'static': ['/static/demo/css/customize.css']}
+STYLES = {'static': ['/static/huebhof/css/customize.css']}
