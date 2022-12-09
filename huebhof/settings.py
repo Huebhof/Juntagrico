@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('JUNTAGRICO_SECRET_KEY')
 
 DEBUG = os.environ.get("JUNTAGRICO_DEBUG", 'False')=='True'
 
-ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost',]
+ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof2023.ch']
 
 
 # Application definition
@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'adminsortable2',
     'huebhof',
     'polymorphic',
+    'juntagrico_billing',
 ]
 
 ROOT_URLCONF = 'huebhof.urls'
