@@ -169,7 +169,7 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "ESR" : ""}
 SHARE_PRICE = "250"
 
-INFO_EMAIL = "admin@huebhof2023.ch"
+INFO_EMAIL = "gemuese@huebhof2023.ch"
 SERVER_URL = "www.huebhof2023.ch"
 STYLES = {'static': ['/huebhof/css/customize.css']}
 BILLS_USERMENU = True
