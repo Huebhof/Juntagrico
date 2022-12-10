@@ -115,7 +115,7 @@ EMAIL_USE_SSL = os.environ.get('JUNTAGRICO_EMAIL_SSL', 'False')=='True'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
-WHITELIST_EMAILS = ['admin@huebhof2023.ch','gemuese@huebhof2023.ch']
+WHITELIST_EMAILS = ['admin@huebhof2023.ch','gemuese@huebhof2023.ch','mywolke@hoengg.com']
 
 def whitelist_email_from_env(var_env_name):
     email = os.environ.get(var_env_name)
@@ -169,7 +169,7 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "ESR" : ""}
 SHARE_PRICE = "250"
 
-INFO_EMAIL = "gemuese@huebhof2023.ch"
+INFO_EMAIL = "mywolke@hoengg.ch"
 SERVER_URL = "www.huebhof2023.ch"
 STYLES = {'static': ['/huebhof/css/customize.css']}
 BILLS_USERMENU = True
