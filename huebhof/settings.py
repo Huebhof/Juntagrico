@@ -75,7 +75,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'huebhof.wsgi.application'
 
 
-LANGUAGE_CODE = 'de-CH'
+LANGUAGE_CODE = 'de'
 
 SITE_ID = 1
 
