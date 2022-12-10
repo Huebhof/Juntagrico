@@ -155,7 +155,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
      FAVICON Settings
 """
 
-FAVICON = {"/static/huebhof/img/huebhof_33x33.ico"}
+FAVICON = {"/huebhof/img/huebhof_33x33.ico"}
 
 """
      juntagrico Settings
