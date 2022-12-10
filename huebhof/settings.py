@@ -170,6 +170,6 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "12345",
 SHARE_PRICE = "250"
 
 INFO_EMAIL = "gemuese@huebhof2023.ch"
-SERVER_URL = "www.huebhof.org"
+SERVER_URL = "www.huebhof2023.ch"
 STYLES = {'static': ['/static/huebhof/css/customize.css']}
 BILLS_USERMENU = True
