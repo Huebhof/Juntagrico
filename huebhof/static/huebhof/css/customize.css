@@ -1,6 +1,6 @@
 .juntagrico-logo {
     /* uncomment the next line and add your logo in the img folder */
-    background: url(/static/huebhof/img/logo.png) no-repeat 0 0;
+    background: url(/static/img/logo.png) no-repeat 0 0;
     background-size: contain;
     display: inline-block;
     width: 580px;
