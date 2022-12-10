@@ -12,8 +12,6 @@
     font-weight: bold;
 }
 
-.assignments, img {
+img {
     background: url(/static/huebhof/img/karotte_klein.png);
-    background-size: contain;
-    display: inline-block;
 }
