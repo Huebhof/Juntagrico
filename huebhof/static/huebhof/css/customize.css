@@ -13,5 +13,5 @@
 }
 
 .assignments {
-    background: url(/static/huebhof/img/karotte.png);
+    src: url(/static/huebhof/img/karotte.png);
 }
