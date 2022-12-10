@@ -12,6 +12,6 @@
     font-weight: bold;
 }
 
-.assignments {
-    src: url(/static/huebhof/img/karotte.png);
+.assignments, .img {
+    background-image: url(/static/huebhof/img/karotte.png);
 }
