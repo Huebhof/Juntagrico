@@ -162,7 +162,7 @@ ORGANISATION_ADDRESS = {"name":"Verein Huebacker",
             "zip" : "8051",
             "city" : "Zürich",
             "extra" : ""}
-ORGANISATION_BANK_CONNECTION = {"PC" : "-",
+ORGANISATION_BANK_CONNECTION = {"PC" : "",
             "IBAN" : "CH90 3012 3039 0058 1010 5",
             "BIC" : "ABSOCH22",
             "NAME" : "Alternative Bank Schweiz AG",
