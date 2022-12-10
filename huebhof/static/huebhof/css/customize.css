@@ -13,8 +13,7 @@
 }
 
 .assignments, .img {
-    width: 300px;
-    height: 300px;
-    object-fit: none;
-    content: url(/static/huebhof/img/karotte_klein.png);
+    background: url(/static/huebhof/img/karotte_klein.png);
+    background-size: contain;
+    display: inline-block;
 }
