@@ -169,7 +169,7 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "ESR" : ""}
 SHARE_PRICE = "250"
 
-INFO_EMAIL = "mywolke@hoengg.ch"
+INFO_EMAIL = "mywolke@hoengg.com"
 SERVER_URL = "www.huebhof2023.ch"
 STYLES = {'static': ['/huebhof/css/customize.css']}
 BILLS_USERMENU = True
