@@ -152,6 +152,12 @@ MEDIA_ROOT = 'media'
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 """
+     FAVICON Settings
+"""
+
+FAVICON = {"/static/huebhof/img/Huebhof_33x33.ico"}
+
+"""
      juntagrico Settings
 """
 ORGANISATION_NAME = "Verein Huebacker"
