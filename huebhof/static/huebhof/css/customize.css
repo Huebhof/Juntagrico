@@ -12,7 +12,7 @@
     font-weight: bold;
 }
 
-.assignments, .img {
+.assignments, img {
     background: url(/static/huebhof/img/karotte_klein.png);
     background-size: contain;
     display: inline-block;
