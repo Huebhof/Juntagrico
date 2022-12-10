@@ -6,7 +6,8 @@
     width: 580px;
     height: 161px;
 }
-.h5, h5 {
+
+.main-menu,.h5,h5 {
     font-size: 0.9rem;
     font-weight: bold;
 }
