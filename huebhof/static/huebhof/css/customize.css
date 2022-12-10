@@ -13,5 +13,5 @@
 }
 
 img {
-    background: url(/static/huebhof/img/karotte_klein.png);
+    content: url(/static/huebhof/img/karotte_klein.png);
 }
