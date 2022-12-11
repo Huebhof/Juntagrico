@@ -12,6 +12,8 @@
     font-weight: bold;
 }
 
-.assignments, img {
-    background: url(/static/huebhof/img/karotte_klein.png);
+.assignments, img[src*="/static/juntagrico/img/single_empty.png] {
+
+      background-image: url(/static/huebhof/img/karotte_klein.png);
+
 }
