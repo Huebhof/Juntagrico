@@ -14,6 +14,6 @@
 
 img[src="/static/juntagrico/img/single_empty.png"] {
 
-      background: url("/static/huebhof/img/karotte_klein.png");
+      content: url("/static/huebhof/img/karotte_klein.png");
 
 }
