@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('JUNTAGRICO_SECRET_KEY')
 
 DEBUG = os.environ.get("JUNTAGRICO_DEBUG", 'False')=='True'
 
-ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof2023.ch']
+ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof2023.ch', 'my.huebhof.org']
 
 
 # Application definition
@@ -176,7 +176,7 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
 SHARE_PRICE = "250"
 
 INFO_EMAIL = "gemuese@huebhof2023.ch"
-SERVER_URL = "www.huebhof2023.ch"
+SERVER_URL = "www.huebhof.org"
 DEFAULT_FROM_EMAIL = "gemuese@huebhof2023.ch"
 STYLES = {'static': ['/huebhof/css/customize.css']}
 BILLS_USERMENU = True
