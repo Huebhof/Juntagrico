@@ -177,6 +177,7 @@ SHARE_PRICE = "250"
 
 INFO_EMAIL = "gemuese@huebhof2023.ch"
 SERVER_URL = "www.huebhof2023.ch"
+DEFAULT_FROM_EMAIL = "gemuese@huebhof2023.ch"
 STYLES = {'static': ['/huebhof/css/customize.css']}
 BILLS_USERMENU = True
 TIME_ZONE = 'Europe/Zurich'
