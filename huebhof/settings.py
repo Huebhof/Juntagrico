@@ -161,11 +161,11 @@ FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
      juntagrico Settings
 """
 ORGANISATION_NAME = "Huebacker"
-ORGANISATION_LONG_NAME = "Verein Huebacker"
-ORGANISATION_ADDRESS = {"name":"Verein Huebacker", 
-            "street" : "Probsteistrasse",
-            "number" : "26",
-            "zip" : "8051",
+ORGANISATION_LONG_NAME = "GmbH Huebacker"
+ORGANISATION_ADDRESS = {"name":"GmbH Huebacker", 
+            "street" : "Hagenholzstrasse",
+            "number" : "108b",
+            "zip" : "8050",
             "city" : "Zürich",
             "extra" : ""}
 ORGANISATION_BANK_CONNECTION = {"PC" : "-",
