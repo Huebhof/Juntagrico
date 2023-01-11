@@ -160,9 +160,9 @@ FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
 """
      juntagrico Settings
 """
-ORGANISATION_NAME = "Huebacker"
-ORGANISATION_LONG_NAME = "GmbH Huebacker"
-ORGANISATION_ADDRESS = {"name":"GmbH Huebacker", 
+ORGANISATION_NAME = "Huebhof"
+ORGANISATION_LONG_NAME = "GmbH Huebhof"
+ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
             "street" : "Hagenholzstrasse",
             "number" : "108b",
             "zip" : "8050",
