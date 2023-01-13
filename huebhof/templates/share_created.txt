@@ -14,7 +14,7 @@
 
 {% with sc=shares|length %}Es freut uns, dass du dich für den Verein HUEBACKER interessierst. Wie du bereits in den Statuten des Vereins gelesen hast, braucht es für einen Vereinsbeitritt mindestens einen Anteilschein.
 {# Anteilschein / Anteilscheine #}
-{% if shares|length is 1 %} Du hast {{sc}} {{ v_share }} zu je {{ c_currency }} {{ c_share_price }} bestellt. {% elif shares|length is not 1 %} Du hast {{sc}} {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt. {% else %} Keine {{ v_share_pl }} bestellt {% endif %}
+{% if shares|length is 1 %} Du hast {{sc}} {{ v_share }} zu {{ c_currency }} {{ c_share_price }} bestellt. {% elif shares|length is not 1 %} Du hast {{sc}} {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt. {% else %} Keine {{ v_share_pl }} bestellt {% endif %}
 
 Bitte überweise den Gesamtbetrag von {{ c_currency }} {% widthratio c_share_price 1 sc|add:"0" %} auf das folgende Konto:{% endwith %}
 
