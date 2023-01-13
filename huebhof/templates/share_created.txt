@@ -16,9 +16,9 @@
 einen Anteilschein.
 
 {# Kommentar #}
-{% if shares|length = 1 %}
+{% if shares|length is 1 %}
 Anteilschein
-{% elif shares|length == 1 %}
+{% elif shares|length is not 1 %}
 Anteilscheine
 {% else %}
 Keine Anteilscheine
