@@ -12,7 +12,7 @@
 {% vocabulary "share_pl" as v_share_pl %}
 {% trans "Hallo" %}
 
-{% with sc=shares|length %}Du hast bei {{ v_d_enriched_organisation }} {% if {{sc}} = 1 %} Something is True {% else %} Something is False {% endif %} {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt.
+{% with sc=shares|length %}Du hast bei {{ v_d_enriched_organisation }} <bold> {{sc}} </bold> {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt.
 
 Bitte überweise den Gesamtbetrag von {{ c_currency }} {% widthratio c_share_price 1 sc|add:"0" %} auf das folgende Konto:{% endwith %}
 
