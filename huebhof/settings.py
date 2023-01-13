@@ -188,6 +188,4 @@ TIME_ZONE = 'Europe/Zurich'
     Mail Templates
 """
 
-EMAILS = {
-    's_created': '/templates/mails/member/share_created.txt'
-}
+EMAILS = { 's_created': ['/templates/mails/member/share_created.txt']}
