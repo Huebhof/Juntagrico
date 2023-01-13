@@ -1,4 +1,3 @@
-{% extends "mails/email.txt" %}
 {% load i18n %}
 {% load juntagrico.config %}
 {% block content %}
