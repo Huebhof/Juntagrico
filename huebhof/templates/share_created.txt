@@ -12,22 +12,23 @@
 {% vocabulary "share_pl" as v_share_pl %}
 {% trans "Hallo" %}
 
-{% with sc=shares|length %}Du hast bei {{ v_d_enriched_organisation }} <bold> {{sc}} </bold> {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt.
+{% with sc=shares|length %}Es freut uns, dass du dich für den Verein HUEBACKER interessierst. Wie du bereits in den Statuten des Vereins gelesen hast, braucht es für einen Vereinsbeitritt mindestens
+einen Anteilschein.
 
+Du hast {{sc}} {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt.
 Bitte überweise den Gesamtbetrag von {{ c_currency }} {% widthratio c_share_price 1 sc|add:"0" %} auf das folgende Konto:{% endwith %}
 
-    {{ c_addr.name }}
-    {% if c_addr.extra %}{{ c_addr.extra }}{% endif %}
-    {{ c_addr.street }} {{ c_addr.number }}
-    {{ c_addr.zip }} {{ c_addr.city }}
+    Verein HUEBACKER
 
-    {{ c_bank.NAME }}
-    {% trans "Postkonto-Nummer" %}: {{ c_bank.PC }}
-    {% trans "IBAN" %}: {{ c_bank.IBAN }}
-    {% trans "BIC" %}: {{ c_bank.BIC }}
+    Probsteistrasse 26
+    8051 Zürich
 
-Gib im Betreff bitte den Namen und die E-Mail-Adresse der Halterin oder des Halters der {{ v_share_pl }} an
-(dies ist vor allem wichtig, wenn du diese {{ v_share_pl }} für jemand anderen bezahlst).
+    Alternative Bank Schweiz AG
+    IBAN: CH??
+    BIC: ??
+
+Gib im Betreff bitte den Namen und die E-Mail-Adresse der Halterin oder des Halters der {{ v_share_pl }} an. Dies ist wichtig, wenn du die Anteilscheine für eine andere Person bezahlst.
+ 
 
 Bis bald und liebe Grüsse
 deine {{ c_organisation_name }}-Betriebsgruppe
