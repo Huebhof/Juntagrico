@@ -52,6 +52,7 @@ DATABASES = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # location of your overriding templates
         'OPTIONS': {
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
@@ -160,6 +161,7 @@ FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
 """
      juntagrico Settings
 """
+
 ORGANISATION_NAME = "HUEBHOF"
 ORGANISATION_LONG_NAME = "GmbH Huebhof"
 ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
@@ -181,3 +183,11 @@ DEFAULT_FROM_EMAIL = "info@huebhof.org"
 STYLES = {'static': ['/huebhof/css/customize.css']}
 BILLS_USERMENU = True
 TIME_ZONE = 'Europe/Zurich'
+
+"""
+    Mail Templates
+"""
+
+EMAILS = {
+    's_created': 'mails/member/share_created.txt',
+}
