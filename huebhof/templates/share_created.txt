@@ -29,8 +29,8 @@ Bitte überweise den Gesamtbetrag von {{ c_currency }} {% widthratio c_share_pri
 
 Gib im Betreff bitte den Namen und die E-Mail-Adresse der Halterin oder des Halters der {{ v_share_pl }} an. Dies ist wichtig, wenn du die Anteilscheine für eine andere Person bezahlst.
  
-
 Bis bald und liebe Grüsse
 deine {{ c_organisation_name }}-Betriebsgruppe
+
 
 {% endblock %}
