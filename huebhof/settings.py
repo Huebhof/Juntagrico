@@ -189,5 +189,5 @@ TIME_ZONE = 'Europe/Zurich'
 """
 
 EMAILS = {
-    's_created': 'mails/member/share_created.txt'
+    's_created': '/mails/member/share_created.txt'
 }
