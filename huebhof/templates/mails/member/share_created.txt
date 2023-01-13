@@ -10,7 +10,7 @@
 {% enriched_organisation "D" as v_d_enriched_organisation %}
 {% vocabulary "share" as v_share %}
 {% vocabulary "share_pl" as v_share_pl %}
-{% trans "Hallo" %}
+{% trans "Hallo Du" %}
 
 {% with sc=shares|length %}Du hast bei {{ v_d_enriched_organisation }} {{ sc }} {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt.
 
