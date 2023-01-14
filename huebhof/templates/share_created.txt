@@ -33,9 +33,3 @@ Dies ist wichtig, wenn du die Anteilscheine für eine andere Person bezahlst.{% 
 Bis bald und liebe Grüsse die {{ c_organisation_name }}-Betriebsgruppe
 {% endblocktrans %}
 {% endblock %}
- 
-Bis bald und liebe Grüsse
-deine {{ c_organisation_name }}-Betriebsgruppe
-
-
-{% endblock %}
