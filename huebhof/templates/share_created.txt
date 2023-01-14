@@ -24,9 +24,10 @@ Bitte überweise den Gesamtbetrag von {{ c_currency }} {% widthratio c_share_pri
     IBAN: CH??
     BIC: ??
 
-Um die Arbeit der Buchhaltung zu erleichtern zahle bitte nur 1 {{ v_share }} auf einmal.
 Gib im Betreff die Systemnummer und die Email-Adresse der Halterin/des Halters der Anteilscheine an. Dies ist wichtig, wenn du die Anteilscheine für eine andere Person bezahlst.
 
 Bis bald und liebe Grüsse die {{ c_organisation_name }}-Betriebsgruppe
+
+
 
 {% endblock %}
