@@ -14,8 +14,6 @@
 
 {% with sc=shares|length %}{% if shares|length is 1 %}Vielen Dank, dass du {{sc}} {{ v_share }} zu {{ c_currency }} {{ c_share_price }} bestellt hast. {% elif shares|length is not 1 %} Vielen Dank, dass du {{sc}} {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt hast. {% else %} Keine {{ v_share_pl }} bestellt {% endif %} 
 {# Anteilschein / Anteilscheine #}
-
-
 Bitte überweise den Gesamtbetrag von {{ c_currency }} {% widthratio c_share_price 1 sc|add:"0" %} auf das folgende Konto:{% endwith %}
 
     Verein HUEBACKER
@@ -26,7 +24,15 @@ Bitte überweise den Gesamtbetrag von {{ c_currency }} {% widthratio c_share_pri
     IBAN: CH??
     BIC: ??
 
-Gib im Betreff bitte den Namen und die E-Mail-Adresse der Halterin oder des Halters der {{ v_share_pl }} an. Dies ist wichtig, wenn du die Anteilscheine für eine andere Person bezahlst.
+
+{% blocktrans %}Um die Arbeit der Buchhaltung zu erleichtern zahle bitte nur 1 {{ v_share }} auf einmal.
+Gib im Betreff die Systemnummer an und die Emailadresse der Halterin oder des Halters des/r {{ v_share }} an.
+Dies ist wichtig, wenn du die Anteilscheine für eine andere Person bezahlst.{% endblocktrans %}
+
+{% blocktrans trimmed %}
+Bis bald und liebe Grüsse die {{ c_organisation_name }}-Betriebsgruppe
+{% endblocktrans %}
+{% endblock %}
  
 Bis bald und liebe Grüsse
 deine {{ c_organisation_name }}-Betriebsgruppe
