@@ -12,7 +12,7 @@
 {% vocabulary "share_pl" as v_share_pl %}
 {% trans "Hallo" %}
 {# Anteilschein / Anteilscheine #}
-{% with sc=shares|length %}{% if shares|length is 1 %}Vielen Dank, dass du {{sc}} {{ v_share }} zu {{ c_currency }} {{ c_share_price }} bestellt hast. {% for share in shares %} {% blocktrans with sid=share.id %} ( Systemnummer {{ sid }} ) {% endblocktrans %} {% endfor %} {% elif shares|length is not 1 %}Vielen Dank, dass du {{sc}} {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt hast. (Systemnummer {% for share in shares %} {% blocktrans with sid=share.id %} {{ sid }}{% endblocktrans %} {% endfor %}) {% else %} Keine {{ v_share_pl }} bestellt {% endif %} 
+{% with sc=shares|length %}{% if shares|length is 1 %}Vielen Dank, dass du {{sc}} {{ v_share }} zu {{ c_currency }} {{ c_share_price }} bestellt hast. {% for share in shares %} {% blocktrans with sid=share.id %} ( Systemnummer {{ sid }} ) {% endblocktrans %} {% endfor %} {% elif shares|length is not 1 %}Vielen Dank, dass du {{sc}} {{ v_share_pl }} zu je {{ c_currency }} {{ c_share_price }} bestellt hast. ( Systemnummer {% for share in shares %} {% blocktrans with sid=share.id %} {{ sid }}{% endblocktrans %} {% endfor %}) {% else %} Keine {{ v_share_pl }} bestellt {% endif %} 
 
 Bitte überweise den Gesamtbetrag von {{ c_currency }} {% widthratio c_share_price 1 sc|add:"0" %} auf das folgende Konto:{% endwith %}
 
