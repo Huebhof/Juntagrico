@@ -185,11 +185,17 @@ BILLS_USERMENU = True
 TIME_ZONE = 'Europe/Zurich'
 
 """
-    Mail Templates, Anteilschein Bestellung
+    Mail Template, Anteilscheine bestellen
 """
 
 EMAILS = {
     's_created': 'share_created.txt'
 }
 
-
+"""
+Test Anteilschein Kündigungstermin
+"""
+BUSINESS_YEAR_START = {"day": 1, "month": 1}
+BUSINESS_YEAR_CANCELATION_MONTH = 12
+MEMBERSHIP_END_MONTH = 9
+MEMBERSHIP_END_NOTICE_PERIOD = 12
