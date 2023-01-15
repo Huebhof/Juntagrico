@@ -10,10 +10,10 @@
 {% block allcontent %}
     <div class="alert alert-success">
         {% enriched_organisation "D" as v_d_enriched_organisation %} {% vocabulary "member_type" as v_member_type %} {% vocabulary "subscription" as v_subscription %}
-        {% blocktrans %}Sobald du deine Anteilscheine Du bist jetzt {{ v_member_type }} bei {{ v_d_enriched_organisation }}.{% endblocktrans %}
+        {% blocktrans %}Sobald du deine Anteilscheine bezahlt hast, bist du {{ v_member_type }} des Vereins {{ v_d_enriched_organisation }}.{% endblocktrans %}
         {% if not no_subscription %}
             {% blocktrans %}Du wurdest als {{ v_subscription }}-BezieherIn zur Warteliste hinzugefügt.{% endblocktrans %}
         {% endif %}
-        {% trans "Du erhälst eine Email mit allen weiteren Infos an die von dir angegebene Email-Adresse ( unsere Mails verirren sich manchmal in den SPAM Ordner )." %}
+        {% trans "Du erhälst eine E-Mail mit allen weiteren Infos an die von dir angegebene Email-Adresse. Solltest du keine E-Mail erhalten haben, überprüfe deinen Spam-Ordner." %}
     </div>
 {% endblock %}
