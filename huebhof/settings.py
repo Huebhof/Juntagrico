@@ -116,7 +116,7 @@ EMAIL_USE_SSL = os.environ.get('JUNTAGRICO_EMAIL_SSL', 'False')=='True'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
-WHITELIST_EMAILS = ['admin@huebhof2023.ch','gemuese@huebhof2023.ch']
+WHITELIST_EMAILS = ['gemuese@huebhof.org']
 
 def whitelist_email_from_env(var_env_name):
     email = os.environ.get(var_env_name)
@@ -163,7 +163,7 @@ FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
 """
 
 ORGANISATION_NAME = "HUEBACKER"
-ORGANISATION_LONG_NAME = "Verein HUEBACKER"
+ORGANISATION_LONG_NAME = "Verein HUEBACKER - Solawi"
 ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
             "street" : "Hagenholzstrasse",
             "number" : "108b",
