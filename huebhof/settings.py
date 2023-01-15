@@ -52,7 +52,7 @@ DATABASES = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # location of your overriding templates
+        'DIRS': [os.path.join(BASE_DIR, 'huebhof/templates')],  # location of your overriding templates
         'OPTIONS': {
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
