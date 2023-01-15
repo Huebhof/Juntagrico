@@ -38,7 +38,7 @@
                 {% endblocktrans %}
                 {% if shares.total_required > 0 %}
                     
-                    Für die von dir ausgewählten {{ v_subscription }}-Bestandteile brauchst du {% if shares.total_required == 0 %} {{ st }} {{ v_share }} {% elif %} {{ st }} {{ v_share_pl }}{% else %} Keine {{ v_share_pl }} {% endif %}.
+                    Für die von dir ausgewählten {{ v_subscription }}-Bestandteile brauchst du {% if shares.total_required == 0 %} {{ st }} {{ v_share }} {% elif shares.total_required == 0 %} {{ st }} {{ v_share_pl }}{% else %} keinen {{ v_share }} {% endif %}.
                     Du kannst natürlich auch mehr Anteilscheine erwerben.
                     
                     <br/>
