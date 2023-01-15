@@ -167,7 +167,7 @@ STYLES = {'static': ['/huebhof/css/customize.css']}
 """
      juntagrico Settings
 """
-
+BUSINESS_REGULATIONS = "https://huebhof2023.ch/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf"
 ORGANISATION_NAME = "HUEBACKER"
 ORGANISATION_LONG_NAME = "Verein HUEBACKER - Solawi"
 ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
