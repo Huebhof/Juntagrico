@@ -170,7 +170,7 @@ STYLES = {'static': ['/huebhof/css/customize.css']}
 BUSINESS_REGULATIONS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf"
 BYLAWS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf"
 ORGANISATION_NAME = "HUEBACKER"
-ORGANISATION_LONG_NAME = "Verein HUEBACKER - Solawi"
+ORGANISATION_LONG_NAME = "Verein HUEBACKER"
 ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
             "street" : "Hagenholzstrasse",
             "number" : "108b",
