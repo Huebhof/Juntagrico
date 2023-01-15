@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('JUNTAGRICO_SECRET_KEY')
 
 DEBUG = os.environ.get("JUNTAGRICO_DEBUG", 'False')=='True'
 
-ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof2023.ch', 'my.huebhof.org']
+ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof.org']
 
 
 # Application definition
