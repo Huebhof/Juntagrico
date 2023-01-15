@@ -37,10 +37,10 @@
                 1 {{ v_share }} ({{ c_currency }} {{ c_share_price }}) erwerben.
                 {% endblocktrans %}
                 {% if shares.total_required > 0 %}
-                    
-                    Für die von dir ausgewählten {{ v_subscription }}-Bestandteile brauchst du insgesamt {% if shares|length is 1 %} {{sc}} {{ v_share }} {% elif shares|length is not 1 %} {{sc}} {{ v_share_pl }}{% else %} Keine {{ v_share_pl }} {% endif %}
+                    {% blocktrans trimmed with shares.total_required as st %}
+                    Für die von dir ausgewählten {{ v_subscription }}-Bestandteile brauchst du insgesamt {# {% if shares.total_required is 1 %} {{sc}} {{ v_share }} {% elif shares.total_required is not 1 %} {{sc}} {{ v_share_pl }}{% else %} Keine {{ v_share_pl }} {% endif %} #}
                     . Du kannst natürlich auch mehr Anteilscheine erwerben.
-                    
+                    {% endblocktrans %}
                     <br/>
                 {% else %}
                     {% blocktrans trimmed %}
