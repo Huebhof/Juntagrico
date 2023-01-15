@@ -163,7 +163,7 @@ FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
 """
 
 ORGANISATION_NAME = "HUEBHOF"
-ORGANISATION_LONG_NAME = "GmbH Huebhof"
+ORGANISATION_LONG_NAME = "Verein Huebacker"
 ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
             "street" : "Hagenholzstrasse",
             "number" : "108b",
