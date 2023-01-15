@@ -38,11 +38,11 @@
                 {% endblocktrans %}
                 {% if shares.total_required is 0 %}
                     {% blocktrans trimmed with shares.total_required as st %}
-                    Für die von dir ausgewählten {{ v_subscription }}-Bestandteile brauchst du {{ st }} {{ v_share }}.
                     Du kannst natürlich auch mehr Anteilscheine erwerben.
                     {% endblocktrans %}
                 {% elif shares.total_required is not 0 %}
                     {% blocktrans trimmed with shares.total_required as st %}
+                    Für die von dir ausgewählten {{ v_subscription }}-Bestandteile brauchst du {{ st }} {{ v_share }}.
                     Du kannst natürlich auch mehr Anteilscheine erwerben.
                     {% endblocktrans %}
                     <br/>
