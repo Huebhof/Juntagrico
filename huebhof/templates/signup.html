@@ -13,7 +13,6 @@
 {% block allcontent %}
     <div class="col-md-12">
         {% config "enable_shares" as c_enable_shares %}
-        {% config "bylaws" as c_bylaws %}
         {% config "business_regulations" as c_business_regulations %}
         {% config "gdpr_info" as c_gdpr_info %}
         {% config "share_price" as c_share_price %}
@@ -31,15 +30,12 @@
         {% if c_enable_shares %}
             <div class="row mb-3">
                 <div class="col-md-12">
-                    {% blocktrans trimmed %}
-                    Die Mitgliedschaft bei {{ v_d_enriched_organisation }} ist geknüpft an den Erwerb von
-                    {{ v_share_pl }} in der Höhe
-                    von CHF {{ c_share_price }} pro {{ v_share }}. Die Anzahl {{ v_share_pl }}
-                    ist abhängig von den {{ v_subscription }}-Bestandteilen. Die {{ v_share_pl }} sind das
-                    Kapital, das vor allem zur Finanzierung von Investitionen – zum Beispiel Infrastruktur – verwendet
-                    wird.
-                    Beim Austritt werden die {{ v_share_pl }} rückerstattet.
-                    {% endblocktrans %}
+                    Die Mitgliedschaft bei ortoloco ist geknüpft an den Erwerb von Anteilscheinen in der Höhe von
+                    CHF 250 pro Anteilschein. Die Anteilscheine bilden das Investitionskapital, das zur Finanzierung
+                    der Infrastruktur verwendet wird. Jeder Haushalt, der ein Abo bezieht, zeichnet im Minimum
+                    4 Anteilscheine. Damit wir den Hof zu einem grossen Teil über Anteilscheine tragen können,
+                    beteiligen sich Haushalte, die das können, mit mehr - idealerweise mit 26 Anteilscheinen
+                    (CHF 6‘500) pro Abo. Beim Austritt werden die Anteilscheine rückerstattet.
                 </div>
             </div>
         {% endif %}
@@ -53,20 +49,17 @@
                 {% endblocktrans %}
             </div>
         </div>
-        {% if c_bylaws.strip or c_business_regulations.strip %}
         <div class="row mb-4">
             <div class="col-md-12">
                 {% blocktrans trimmed %}
                 Bevor du dich als {{ v_member_type }} anmeldest, lies bitte folgendes durch
                 {% endblocktrans %} :
                 <ul>
-                    {% if c_bylaws.strip %}
-                        <li>
-                            <a target="_blank" href="{{ c_bylaws|safe }}">
-                                {% trans "Statuten" %}
-                            </a>
-                        </li>
-                    {% endif %}
+                    <li>
+                        <a target="_blank" href="{% config "bylaws"|safe %}">
+                            {% trans "Statuten" %}
+                        </a>
+                    </li>
                     {% if c_business_regulations.strip %}
                         <li>
                             <a target="_blank" href="{{ c_business_regulations|safe }}">
@@ -77,7 +70,6 @@
                 </ul>
             </div>
         </div>
-        {% endif %}
         <div class="row">
             <div class="offset-md-2 col-md-8">
                 <form action="" method="post">
