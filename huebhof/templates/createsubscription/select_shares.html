@@ -36,10 +36,10 @@
                 Um {{ v_member_type }} des Vereins {{ v_d_enriched_organisation }} zu werden, musst du mindestens
                 1 {{ v_share }} ({{ c_currency }} {{ c_share_price }}) erwerben.
                 {% endblocktrans %}
-                {% if shares.total_required > 0 %}
+                {% if shares.total_required > 1 %}
                     
-                    Für die von dir ausgewählten {{ v_subscription }}-Bestandteile brauchst du insgesamt {% if shares.total_required is 1 %} {{sc}} {{ v_share }} {% elif shares.total_required is not 1 %} {{sc}} {{ v_share_pl }}{% else %} Keine {{ v_share_pl }} {% endif %}
-                    . Du kannst natürlich auch mehr Anteilscheine erwerben.
+                    Für die von dir ausgewählten {{ v_subscription }}-Bestandteile brauchst du insgesamt {% if shares.total_required is 1 %} {{ sc }} {{ v_share }} {% elif shares.total_required is not 1 %} {{ sc }} {{ v_share_pl }}{% else %} Keine {{ v_share_pl }} {% endif %}.
+                    Du kannst natürlich auch mehr Anteilscheine erwerben.
                     
                     <br/>
                 {% else %}
