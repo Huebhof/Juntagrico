@@ -159,6 +159,12 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
 
 """
+     STYLE_SHEET Settings
+"""
+
+STYLES = {'static': ['/huebhof/css/customize.css']}
+
+"""
      juntagrico Settings
 """
 
@@ -180,7 +186,6 @@ SHARE_PRICE = "250"
 INFO_EMAIL = "huebacker@huebhof.org"
 SERVER_URL = "www.huebhof.org"
 DEFAULT_FROM_EMAIL = "huebacker@huebhof.org"
-STYLES = {'static': ['/huebhof/css/customize.css']}
 BILLS_USERMENU = True
 TIME_ZONE = 'Europe/Zurich'
 
