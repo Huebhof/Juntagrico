@@ -191,3 +191,9 @@ TIME_ZONE = 'Europe/Zurich'
 EMAILS = {
     's_created': 'share_created.txt'
 }
+
+"""
+Test Anteilschein Kündigungstermin
+"""
+MEMBERSHIP_END_MONTH = 9
+MEMBERSHIP_END_NOTICE_PERIOD = 9
