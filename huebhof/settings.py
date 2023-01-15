@@ -52,6 +52,7 @@ DATABASES = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': True,
         'DIRS': [os.path.join(BASE_DIR, 'templates')],  # location of your overriding templates
         'OPTIONS': {
             'context_processors': [
