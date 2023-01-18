@@ -10,7 +10,7 @@
 {% block allcontent %}
     <div class="alert alert-success">
         {% enriched_organisation "D" as v_d_enriched_organisation %} {% vocabulary "member_type" as v_member_type %} {% vocabulary "subscription" as v_subscription %}
-        {% blocktrans %}Sobald du deine Anteilscheine bezahlt hast, bist du {{ v_member_type }} des Vereins {{ v_d_enriched_organisation }}.{% endblocktrans %}
+        {% blocktrans %}nnSobald du deine Anteilscheine bezahlt hast, bist du {{ v_member_type }} des Vereins {{ v_d_enriched_organisation }}.{% endblocktrans %}
         {% if not no_subscription %}
             {% blocktrans %}Du wurdest als {{ v_subscription }}-BezieherIn zur Warteliste hinzugefügt.{% endblocktrans %}
         {% endif %}
