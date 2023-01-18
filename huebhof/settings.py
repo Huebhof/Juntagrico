@@ -182,7 +182,6 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "BIC" : "ABSOCH22",
             "NAME" : "Alternative Bank Schweiz AG",
             "ESR" : ""}
-SHARE_PRICE = "250"
 
 INFO_EMAIL = "huebacker@huebhof.org"
 SERVER_URL = "www.huebhof.org"
@@ -199,11 +198,20 @@ EMAILS = {
 }
 
 """
-Test Anteilschein Kündigungstermin
+Business Year / Membership
 """
 BUSINESS_YEAR_START = {"day": 1, "month": 5}
 BUSINESS_YEAR_CANCELATION_MONTH = 12
 MEMBERSHIP_END_MONTH = 9
-# MEMBERSHIP_END_NOTICE_PERIOD = 1
+MEMBERSHIP_END_NOTICE_PERIOD = 3
 
-c_enable_shares = False
+"""
+Shares
+"""
+ENABLE_SHARES = False
+SHARE_PRICE = "250"
+
+"""
+Jobs
+"""
+ASSIGNMENT_UNIT = "HOURS"
