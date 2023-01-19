@@ -153,21 +153,12 @@ MEDIA_ROOT = 'media'
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 """
-     FAVICON Settings
+JUNTAGRICO SETTINGS
 """
 
-FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
-
 """
-     STYLE_SHEET Settings
+Contact Information
 """
-
-STYLES = {'static': ['/huebhof/css/customize.css']}
-
-"""
-     juntagrico Settings
-"""
-
 ORGANISATION_NAME = "HUEBHOF"
 ORGANISATION_LONG_NAME = "SOLAWI HUEBHOF"
 ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
@@ -176,6 +167,10 @@ ORGANISATION_ADDRESS = {"name":"GmbH Huebhof",
             "zip" : "8050",
             "city" : "Zürich",
             "extra" : ""}
+# ORGANISATION_PHONE = ""
+INFO_EMAIL = "solawi@huebhof.org"
+SERVER_URL = "www.huebhof.org"
+
 """
 Accounting
 """
@@ -184,44 +179,70 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "BIC" : "ABSOCH22",
             "NAME" : "Alternative Bank Schweiz AG",
             "ESR" : ""}
-
-INFO_EMAIL = "solawi@huebhof.org"
-SERVER_URL = "www.huebhof.org"
 DEFAULT_FROM_EMAIL = "solawi@huebhof.org"
 BILLS_USERMENU = True
-TIME_ZONE = 'Europe/Zurich'
+
 """
 External Documents
 """
 BUSINESS_REGULATIONS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your business regulations document
 BYLAWS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your bylaws document
 FAQ_DOC = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your FAQ document
-EXTRA_SUB_INFO = "" # If you use extra subscriptions this describes the URL to the document describing them
-ACTIVITY_AREA_INFO = "" # URL to your document describing your activity areas
-
-"""
-    Mail Templatesn
-"""
-
-EMAILS = {
-    's_created': 'share_created.txt'
-}
+# EXTRA_SUB_INFO = "" # If you use extra subscriptions this describes the URL to the document describing them
+# ACTIVITY_AREA_INFO = "" # URL to your document describing your activity areas
 
 """
 Business Year / Membership
 """
-BUSINESS_YEAR_START = {"day": 1, "month": 5}
-BUSINESS_YEAR_CANCELATION_MONTH = 12
+BUSINESS_YEAR_START = {"day": 1, "month": 5} # Defining the start of the business year
+BUSINESS_YEAR_CANCELATION_MONTH = 12 # The date until you can cancel your subscriptions
 MEMBERSHIP_END_MONTH = 9
 MEMBERSHIP_END_NOTICE_PERIOD = 3
 
 """
 Shares
 """
-ENABLE_SHARES = False
+ENABLE_SHARES = False #Enable all share related funtionality
 SHARE_PRICE = "250"
 
 """
 Jobs
 """
 ASSIGNMENT_UNIT = "HOURS"
+
+"""
+Appearance
+"""
+VOCABULARY = {
+    'member': 'Mitglied',
+    'member_pl' : 'Mitglieder',
+    'assignment' : 'Arbeitseinsatz',
+    'assignment_pl' : 'Arbeitseinsätze',
+    'share' : 'Anteilschein',
+    'share_pl' : 'Anteilscheine',
+    'subscription' : 'Abo',
+    'subscription_pl' : 'Abos',
+    'co_member' : 'Mitabonnent',
+    'co_member_pl' : 'Mitabonnenten',
+    'price' : 'Betriebsbeitrag',
+    'member_type' : 'Mitglied',
+    'member_type_pl' : 'Mitglieder',
+    'depot' : 'Depot',
+    'depot_pl' : 'Depots',
+    'package': 'Tasche',
+}
+STYLES = {'static': ['/huebhof/css/customize.css']}
+FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
+IMAGES = {'status_100': '/static/juntagrico/img/status_100.png',
+    'status_75': '/static/juntagrico/img/status_75.png',
+    'status_50': '/static/juntagrico/img/status_50.png',
+    'status_25': '/static/juntagrico/img/status_25.png',
+    'status_0': '/static/juntagrico/img/status_0.png',
+    'single_full': '/static/juntagrico/img/single_full.png',
+    'single_empty': '/static/juntagrico/img/single_empty.png',
+    'single_core': '/static/juntagrico/img/single_core.png',
+    'core': '/static/juntagrico/img/core.png'}
+EMAILS = {
+    's_created': 'share_created.txt'
+}
+TIME_ZONE = 'Europe/Zurich'
