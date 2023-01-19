@@ -239,7 +239,7 @@ IMAGES = {'status_100': '/static/juntagrico/img/status_100.png',
     'status_25': '/static/juntagrico/img/status_25.png',
     'status_0': '/static/juntagrico/img/status_0.png',
     'single_full': '/static/juntagrico/img/single_full.png',
-    'single_empty': '/static/juntagrico/img/single_empty.png',
+    'single_empty': '/static/huebhof/img/karotte_klein.png',
     'single_core': '/static/juntagrico/img/single_core.png',
     'core': '/static/juntagrico/img/core.png'}
 EMAILS = {
