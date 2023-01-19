@@ -169,8 +169,8 @@ STYLES = {'static': ['/huebhof/css/customize.css']}
 """
 BUSINESS_REGULATIONS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf"
 BYLAWS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf"
-ORGANISATION_NAME = "HUEBACKER"
-ORGANISATION_LONG_NAME = "Verein HUEBACKER"
+ORGANISATION_NAME = "HUEBHOF"
+ORGANISATION_LONG_NAME = "SOLAWI HUEBHOF"
 ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
             "street" : "Hagenholzstrasse",
             "number" : "108b",
@@ -183,9 +183,9 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "NAME" : "Alternative Bank Schweiz AG",
             "ESR" : ""}
 
-INFO_EMAIL = "huebacker@huebhof.org"
+INFO_EMAIL = "solawi@huebhof.org"
 SERVER_URL = "www.huebhof.org"
-DEFAULT_FROM_EMAIL = "huebacker@huebhof.org"
+DEFAULT_FROM_EMAIL = "solawi@huebhof.org"
 BILLS_USERMENU = True
 TIME_ZONE = 'Europe/Zurich'
 
