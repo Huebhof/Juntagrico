@@ -17,7 +17,7 @@
     {% if member.canceled %}
         <div class="alert alert-warning">
             {% blocktrans trimmed with cd=member.cancellation_date|date:"d.m.Y"%}
-                Deine {{ v_member_type }}schaft ist seit dem {{ cd }} gekündigt.
+                Deine Profil ist seit dem {{ cd }} gelöscht.
             {% endblocktrans %}
         </div>
     {% endif %}
@@ -40,7 +40,7 @@
         <div class="row mb-2">
             <div class="offset-md-3 col-md-9">
                 <a href="{% url 'cancel-membership' %}" class="btn btn-danger">
-                    {% trans "Mitgliedschaft künden" %}
+                    {% trans "Profil löschen" %}
                 </a>
             </div>
         </div>
