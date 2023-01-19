@@ -46,7 +46,7 @@
         <div class="row mb-4">
             <div class="col-md-12">
                 {% blocktrans trimmed %}
-                Bevor du dich als {{ v_member_type }} anmeldest, lies bitte folgendes durch
+                Bevor du dich für einen Ernteanteil anmeldest, lies bitte folgendes durch:
                 {% endblocktrans %} :
                 <ul>
                     <li>
@@ -54,9 +54,9 @@
                             {% trans "Statuten" %}
                         </a>
                     </li>
-                    {% if extra_sub_info.strip %}
+                    {% if EXTRA_SUB_INFO.strip %}
                         <li>
-                            <a target="_blank" href="{{ extra_sub_info|safe }}">
+                            <a target="_blank" href="{{ EXTRA_SUB_INFO|safe }}">
                                 {% trans "Abovertrag für einen Ernteanteil der Solawi auf dem Huebhof " %}
                             </a>
                         </li>
