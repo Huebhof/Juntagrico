@@ -167,8 +167,7 @@ STYLES = {'static': ['/huebhof/css/customize.css']}
 """
      juntagrico Settings
 """
-BUSINESS_REGULATIONS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf"
-BYLAWS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf"
+
 ORGANISATION_NAME = "HUEBHOF"
 ORGANISATION_LONG_NAME = "SOLAWI HUEBHOF"
 ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
@@ -177,6 +176,9 @@ ORGANISATION_ADDRESS = {"name":"GmbH Huebhof",
             "zip" : "8050",
             "city" : "Zürich",
             "extra" : ""}
+"""
+Accounting
+"""
 ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "IBAN" : "CH90 3012 3039 0058 1010 5",
             "BIC" : "ABSOCH22",
@@ -188,9 +190,17 @@ SERVER_URL = "www.huebhof.org"
 DEFAULT_FROM_EMAIL = "solawi@huebhof.org"
 BILLS_USERMENU = True
 TIME_ZONE = 'Europe/Zurich'
+"""
+External Documents
+"""
+BUSINESS_REGULATIONS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your business regulations document
+BYLAWS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your bylaws document
+FAQ_DOC = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your FAQ document
+EXTRA_SUB_INFO = "" # If you use extra subscriptions this describes the URL to the document describing them
+ACTIVITY_AREA_INFO = "" # URL to your document describing your activity areas
 
 """
-    Mail Template, Anteilscheine bestellen
+    Mail Templatesn
 """
 
 EMAILS = {
