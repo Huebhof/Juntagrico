@@ -188,7 +188,7 @@ External Documents
 BUSINESS_REGULATIONS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your business regulations document
 BYLAWS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your bylaws document
 FAQ_DOC = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your FAQ document
-# EXTRA_SUB_INFO = "" # If you use extra subscriptions this describes the URL to the document describing them
+EXTRA_SUB_INFO = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # If you use extra subscriptions this describes the URL to the document describing them
 # ACTIVITY_AREA_INFO = "" # URL to your document describing your activity areas
 
 """
@@ -225,7 +225,7 @@ VOCABULARY = {
     'co_member' : 'Mitabonnent',
     'co_member_pl' : 'Mitabonnenten',
     'price' : 'Betriebsbeitrag',
-    'member_type' : 'Profil',
+    'member_type' : 'Mitglied',
     'member_type_pl' : 'Mitglieder',
     'depot' : 'Depot',
     'depot_pl' : 'Depots',
