@@ -6,7 +6,7 @@
     {% vocabulary "member_type" as v_member_type %}
     <div class="page-title col-md-12">
         <h3>
-            {% blocktrans %}werden{% endblocktrans %}
+            {% blocktrans %}Mitwirken auf dem Huebhof{% endblocktrans %}
         </h3>
     </div>
 {% endblock %}
@@ -22,11 +22,7 @@
         {% vocabulary "subscription" as v_subscription %}
         {% vocabulary "member_type" as v_member_type %}
         {% vocabulary "member_type_pl" as v_member_type_pl %}
-        <div class="row mb-3">
-            <div class="col-md-12">
-                Mitwirken auf dem {% enriched_organisation "D" %}?
-            </div>
-        </div>
+        
         {% if c_enable_shares %}
             <div class="row mb-3">
                 <div class="col-md-12">
