@@ -225,12 +225,11 @@ VOCABULARY = {
     'co_member' : 'Mitabonnent',
     'co_member_pl' : 'Mitabonnenten',
     'price' : 'Betriebsbeitrag',
-    'member_type' : 'Mitglied',
+    'member_type' : 'Profil',
     'member_type_pl' : 'Mitglieder',
     'depot' : 'Depot',
     'depot_pl' : 'Depots',
     'package': 'Tasche',
-    'Mitgliedschaft': 'test',
 }
 STYLES = {'static': ['/huebhof/css/customize.css']}
 FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
