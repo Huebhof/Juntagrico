@@ -12,12 +12,12 @@
     font-weight: bold;
 }
 
-.nav-link {
+a.nav-link {
     visibility: hidden;
     position: relative;
 }
 
-.nav-link:after {
+a.nav-link:after {
     visibility: visible;
     position: absolute;
     top: 0;
