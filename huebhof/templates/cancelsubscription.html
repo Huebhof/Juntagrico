@@ -12,7 +12,7 @@
 {% vocabulary "subscription" as v_subscription %}
     <div class="row mb-3">
         <div class="col-md-12">
-            {% blocktrans trimmed with ed=end_date|date:"d.m.Y" %}
+            {% blocktrans trimmed with ncd=end_date|date:"d.m.Y" %}
             Hier kannst du dein/e/n {{ v_subscription }} kündigen. Der nächste
             reguläre Kündigungstermin ist der <b>{{ ncd }}</b>.
             {% endblocktrans %}
