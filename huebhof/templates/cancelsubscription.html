@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load juntagrico.config %}
+{% load juntagrico.subscription %}
+{% vocabulary "subscription" as v_subscription %}
 {% block page_title %}
-    {% vocabulary "subscription" as v_subscription %}
     <h3>
         {% blocktrans %}Künde dein/e/n {{ v_subscription }}{% endblocktrans %}
     </h3>
 {% endblock %}
 {% block content %}
-    {% vocabulary "subscription" as v_subscription %}
     <div class="row mb-3">
         <div class="col-md-12">
             {#% blocktrans trimmed with ed=end_date|date:"d.m.Y" %#}
