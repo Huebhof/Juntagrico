@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load juntagrico.config %}
+{% load crispy_forms_tags %}
+{% block page_title %}
+    <h3>
+        {% trans "Personalien ändern" %}
+    </h3>
+{% endblock %}
+{% block content %}
+    {% vocabulary "member_type" as v_member_type %}
+    {% if success %}
+        <div class="alert alert-success">
+            {% trans "Personalien erfolgreich geändert" %}
+        </div>
+    {% endif %}
+    {% if member.canceled %}
+        <div class="alert alert-warning">
+            {% blocktrans trimmed with cd=member.cancellation_date|date:"d.m.Y"%}
+                Deine {{ v_member_type }}schaft ist seit dem {{ cd }} gekündigt.
+            {% endblocktrans %}
+        </div>
+    {% endif %}
+    {% if not member.canceled and not member.inactive%}
+        <div class="alert alert-success">
+            {% blocktrans %}Deine {{ v_member_type }}schaft ist aktiv.{% endblocktrans %}
+        </div>
+    {% endif %}
+    <form method="post" class="mb-4">
+        {% crispy memberform %}
+    </form>
+    <div class="row mb-2">
+        <div class="offset-md-3 col-md-9">
+            <a href="{% url 'password' %}" class="btn btn-success">
+                {% trans "Passwort ändern" %}
+            </a>
+        </div>
+    </div>
+    {% if not member.canceled %}
+        <div class="row mb-2">
+            <div class="offset-md-3 col-md-9">
+                <a href="{% url 'cancel-membership' %}" class="btn btn-danger">
+                    {% trans "Profil künden" %}
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
