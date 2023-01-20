@@ -11,10 +11,10 @@
     font-size: 1rem;
     font-weight: bold;
 }
-.custom-control-label.requiredField {
+.offset-md-3 col-md-9 {
     visibility: hidden;
 }
-.custom-control-label.requiredField:after {
+.offset-md-3 col-md-9:after {
     visibility: visible;
     content: "TEST";
 }
