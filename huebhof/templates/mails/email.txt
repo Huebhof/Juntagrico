@@ -3,6 +3,5 @@
 {% block content %}{% endblock %}
 {% endspaceless %}
 
-
 ============
-1weitere Infos: http://{% config "server_url" %}
+weitere Infos: http://{% config "server_url" %}
