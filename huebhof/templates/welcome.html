@@ -4,16 +4,13 @@
 {% block all_page_title %}
     {% enriched_organisation "D" as v_d_enriched_organisation %}
     <h3 class="page-title">
-        {% blocktrans %}
-        Es freut uns, dass du uns im Rahmen der solidarischen Landwirtschaft
-        auf dem Huebhof unterstützt.
-        {% endblocktrans %}
+        {% blocktrans %} Herzlich willkommen auf dem Huebhof!{% endblocktrans %}
     </h3>
 {% endblock %}
 {% block allcontent %}
     <div class="alert alert-success">
         {% enriched_organisation "D" as v_d_enriched_organisation %} {% vocabulary "member_type" as v_member_type %} {% vocabulary "subscription" as v_subscription %}
-        {% blocktrans %}Sobald du deine Anteilscheine bezahlt hast, bist du {{ v_member_type }} des Vereins {{ v_d_enriched_organisation }}.{% endblocktrans %}
+        {% blocktrans %}Es freut uns, dass du uns im Rahmen der solidarischen Landwirtschaft auf dem Huebhof unterstützt.{% endblocktrans %}
         {% if not no_subscription %}
             {% blocktrans %}Du wurdest als {{ v_subscription }}-BezieherIn zur Warteliste hinzugefügt.{% endblocktrans %}
         {% endif %}
