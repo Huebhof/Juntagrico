@@ -13,9 +13,13 @@
 }
 .requiredField {
     visibility: hidden;
+    position: relative;
 }
 .requiredField:after {
     visibility: visible;
+    position: absolute;
+    top: 0;
+    left: 0;
     content: "TEST";
 }
 
