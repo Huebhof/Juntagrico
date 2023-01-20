@@ -21,7 +21,7 @@ label[for="id_agb"]:after {
     position: absolute;
     top: 0;
     left: 0;
-    content: "This text replaces the original.";
+    content: "TEST";
 }
 
 /* img[src="/static/juntagrico/img/single_empty.png"] {
