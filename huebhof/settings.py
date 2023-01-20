@@ -225,7 +225,7 @@ VOCABULARY = {
     'co_member' : 'Mitabonnent',
     'co_member_pl' : 'Mitabonnenten',
     'price' : 'Betriebsbeitrag',
-    'member_type' : 'Profil',
+    'member_type' : 'Mitglied',
     'member_type_pl' : 'Mitglieder',
     'depot' : 'Depot',
     'depot_pl' : 'Depots',
