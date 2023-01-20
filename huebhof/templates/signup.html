@@ -56,11 +56,11 @@
         <div class="row">
             <div class="offset-md-2 col-md-8">
                 <form action="" method="post">
-                    {% crispy form %}
+                    {#% crispy form %#}
                     {{ form|crispy }}
                     <input type="checkbox" name="agb" class="checkboxinput custom-control-input" required="" id="id_agb">
                     <label for="id_agb" class="custom-control-label requiredField">
-                    "Ich erkläre meinen Willen, "SOLAWI HUEBHOF" beizutreten. Hiermit beantrage ich meine Aufnahme."
+                    Ich erkläre meinen Willen, SOLAWI HUEBHOF beizutreten. Hiermit beantrage ich meine Aufnahme.
                     </label>
                     <input type="submit" name="submit" value="Anmelden" class="btn btn-primary btn-success" id="submit-id-submit">
                 </form>
