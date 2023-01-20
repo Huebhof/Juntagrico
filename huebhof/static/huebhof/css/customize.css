@@ -11,8 +11,8 @@
     font-size: 1rem;
     font-weight: bold;
 }
-label[for="id_agb"]::before{
-    visibility: hidden;
+label[for="id_agb"]{
+    visibility: visible;
     position: relative;
 }
 label[for="id_agb"]::after {
