@@ -13,13 +13,10 @@
 }
 label[for="id_agb"]::before{
     visibility: hidden;
-    position: relative;
+    
 }
 label[for="id_agb"]::before{
     visibility: visible;
-    position: absolute;
-    top: 0;
-    left: 0;
     content: "TEST";
 }
 
