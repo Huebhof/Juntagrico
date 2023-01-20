@@ -14,7 +14,7 @@
         <div class="col-md-12">
             {% blocktrans trimmed with ncd=next_cancel_date|date:"d.m.Y" %}
             Hier kannst du dein/e/n {{ v_subscription }} kündigen. Der nächste
-            reguläre Kündigungstermin ist der <b>{{ ncd }}{{next_cancel_date}}</b>.
+            reguläre Kündigungstermin ist der <b>{{ ncd }}{{next_business_year}}</b>.
             {% endblocktrans %}
         </div>
     </div>
