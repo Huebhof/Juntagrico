@@ -243,6 +243,7 @@ IMAGES = {'status_100': '/static/juntagrico/img/status_100.png',
     'single_empty': '/static/huebhof/img/karotte_klein.png',
     'single_core': '/static/juntagrico/img/single_core.png',
     'core': '/static/juntagrico/img/core.png'}
+MAIL_TEMPLATE = "mails/huebmail.html"
 EMAILS = {
     's_created': 'share_created.txt'
 }
