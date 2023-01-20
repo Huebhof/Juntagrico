@@ -230,7 +230,6 @@ VOCABULARY = {
     'depot' : 'Depot',
     'depot_pl' : 'Depots',
     'package': 'Tasche',
-    'Verbindlich bestellen':'test',
 }
 STYLES = {'static': ['/huebhof/css/customize.css']}
 FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
@@ -243,7 +242,7 @@ IMAGES = {'status_100': '/static/juntagrico/img/status_100.png',
     'single_empty': '/static/huebhof/img/karotte_klein.png',
     'single_core': '/static/juntagrico/img/single_core.png',
     'core': '/static/juntagrico/img/core.png'}
-MAIL_TEMPLATE = "mails/email.html"
+MAIL_TEMPLATE = "huebmails/email.html"
 EMAILS = {
     's_created': 'huebmails/share_created.txt',
     'welcome': 'huebmails/welcome_mail.txt'
