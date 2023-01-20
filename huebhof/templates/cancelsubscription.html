@@ -17,6 +17,14 @@
             reguläre Kündigungstermin ist der <b>{{ ncd }}</b>.
             {% endblocktrans %}
         </div>
+        <div class="col-md-4">
+            {% blocktrans trimmed with ncd=next_cancel_date|date:"F" nby=next_business_year|date:"F" %}
+            Die {{ v_subscription }}-Bestandteile (auch die Kündigung) kann in der Regel nur jährlich geändert
+            werden
+            und muss bis spätestens Ende {{ ncd }} gemacht werden,
+            damit die Änderung auf Anfang {{ nby }} in Kraft tritt.
+            {% endblocktrans %}
+        </div>
     </div>
     <div class="row mb-3">
         <div class="col-md-12">
