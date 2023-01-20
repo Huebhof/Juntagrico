@@ -133,6 +133,7 @@ if DEBUG is True:
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
+LOCALE_PATHS = ('locale',)
 
 IMPERSONATE = {
     'REDIRECT_URL': '/my/profile',
