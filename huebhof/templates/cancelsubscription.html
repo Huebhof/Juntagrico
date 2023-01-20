@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load juntagrico.config %}
+{% load juntagrico.subscription %}
 {% block page_title %}
     {% vocabulary "subscription" as v_subscription %}
     <h3>
@@ -11,9 +12,9 @@
     {% vocabulary "subscription" as v_subscription %}
     <div class="row mb-3">
         <div class="col-md-12">
-            {% blocktrans trimmed with ed=end_date|date:"d.m.Y" %}
+            {% blocktrans trimmed with ncd=next_cancel_date|date:"d.m.Y" %}
             Hier kannst du dein/e/n {{ v_subscription }} kündigen. Der nächste
-            reguläre Kündigungstermin ist der <b>{{ ed }}</b>.
+            reguläre Kündigungstermin ist der <b>{{ ncd }}</b>.
             {% endblocktrans %}
         </div>
     </div>
