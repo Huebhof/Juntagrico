@@ -11,7 +11,7 @@
     font-size: 1rem;
     font-weight: bold;
 }
-label[for="id_agb"]{
+/*label[for="id_agb"]{
     visibility: visible;
     position: relative;
 }
