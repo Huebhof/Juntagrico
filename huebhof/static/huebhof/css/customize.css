@@ -12,11 +12,11 @@
     font-weight: bold;
 }
 
-.custom-control-label.requiredField {
+label[for="id_agb"] {
     visibility: hidden;
     position: relative;
 }
-.custom-control-label.requiredField:after {
+label[for="id_agb"]:after {
     visibility: visible;
     position: absolute;
     top: 0;
