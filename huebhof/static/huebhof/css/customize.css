@@ -12,6 +12,11 @@
     font-weight: bold;
 }
 
+.custom-control-label {
+    visibility: hidden;
+    position: relative;
+}
+
 /* img[src="/static/juntagrico/img/single_empty.png"] {
 
       content: url("/static/huebhof/img/karotte_klein.png");
