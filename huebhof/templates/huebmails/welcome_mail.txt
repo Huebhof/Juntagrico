@@ -25,6 +25,8 @@
 {% endif %}
 
 {% blocktrans trimmed %}
-Bis bald und liebe Grüsse die {{ c_organisation_name }}-Betriebsgruppe
+Bis bald und liebe Grüsse das {{ c_organisation_name }}-Team
+
+
 {% endblocktrans %}
 {% endblock %}
