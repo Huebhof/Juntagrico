@@ -245,7 +245,7 @@ IMAGES = {'status_100': '/static/juntagrico/img/status_100.png',
     'core': '/static/juntagrico/img/core.png'}
 MAIL_TEMPLATE = "mails/email.html"
 EMAILS = {
-    's_created': 'mails/share_created.txt',
-    'welcome': 'mails/welcome_mail.txt'
+    's_created': 'huebmails/share_created.txt',
+    'welcome': 'huebmails/welcome_mail.txt'
 }
 TIME_ZONE = 'Europe/Zurich'
