@@ -195,7 +195,7 @@ EXTRA_SUB_INFO = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_New
 Business Year / Membership
 """
 BUSINESS_YEAR_START = {"day": 1, "month": 5} # Defining the start of the business year
-BUSINESS_YEAR_CANCELATION_MONTH = 12 # The date until you can cancel your subscriptions
+BUSINESS_YEAR_CANCELATION_MONTH = 8 # The date until you can cancel your subscriptions
 MEMBERSHIP_END_MONTH = 9
 MEMBERSHIP_END_NOTICE_PERIOD = 3
 
