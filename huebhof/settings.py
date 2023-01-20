@@ -214,7 +214,7 @@ ASSIGNMENT_UNIT = "HOURS"
 Appearance
 """
 VOCABULARY = {
-    'member': 'Mitglied',
+    'member': 'Profil',
     'member_pl' : 'Mitglieder',
     'assignment' : 'Arbeitseinsatz',
     'assignment_pl' : 'Arbeitseinsätze',
