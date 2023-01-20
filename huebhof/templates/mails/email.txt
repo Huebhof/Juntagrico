@@ -4,4 +4,4 @@
 {% endspaceless %}
 
 ============
-weitere Infos: http://{% config "server_url" %}
+weitere Infos: https://{% config "server_url" %}
