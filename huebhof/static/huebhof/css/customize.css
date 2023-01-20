@@ -16,6 +16,13 @@
     visibility: hidden;
     position: relative;
 }
+.custom-control-label:after {
+    visibility: visible;
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: "This text replaces the original.";
+}
 
 /* img[src="/static/juntagrico/img/single_empty.png"] {
 
