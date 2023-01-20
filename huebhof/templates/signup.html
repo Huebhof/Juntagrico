@@ -57,11 +57,8 @@
             <div class="offset-md-2 col-md-8">
                 <form action="" method="post">
                     {% crispy form %}
-                    Layout(
-                        Fieldset(
-                            'agb',
-                            )
-                            )
+                    {{ form }}
+    <button type="submit" class="btn btn-success">Save person</button>
                 </form>
             </div>
         </div>
