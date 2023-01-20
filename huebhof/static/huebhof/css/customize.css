@@ -12,7 +12,7 @@
     font-weight: bold;
 }
 
-label[for="id_agb"]{
+/*label[for="id_agb"]{
     visibility: hidden;
     position: relative;
     
