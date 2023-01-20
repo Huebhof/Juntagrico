@@ -11,11 +11,11 @@
     font-size: 1rem;
     font-weight: bold;
 }
-.requiredField {
+.custom-control-label {
     visibility: hidden;
     position: relative;
 }
-.requiredField:after {
+.custom-control-label::before {
     visibility: visible;
     position: absolute;
     top: 0;
