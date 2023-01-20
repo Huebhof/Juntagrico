@@ -11,11 +11,11 @@
     font-size: 1rem;
     font-weight: bold;
 }
-.custom-control-label::before {
+.custom-control-label {
     visibility: hidden;
     position: relative;
 }
-.custom-control-label::after {
+.custom-control-label::before {
     visibility: visible;
     position: absolute;
     top: 0;
