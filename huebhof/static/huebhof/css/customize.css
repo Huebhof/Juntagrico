@@ -11,11 +11,11 @@
     font-size: 1rem;
     font-weight: bold;
 }
-label[for="id_agb"]::before{
+label[for="id_agb"]{
     visibility: hidden;
     position: relative;
 }
-label[for="id_agb"]::after {
+label[for="id_agb"]{
     visibility: visible;
     position: absolute;
     top: 0;
