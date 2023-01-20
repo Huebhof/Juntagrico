@@ -11,10 +11,10 @@
     font-size: 1rem;
     font-weight: bold;
 }
-.offset-md-3 col-md-9 {
+.requiredField {
     visibility: hidden;
 }
-.offset-md-3 col-md-9:after {
+.requiredField:after {
     visibility: visible;
     content: "TEST";
 }
