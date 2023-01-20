@@ -230,7 +230,6 @@ VOCABULARY = {
     'depot' : 'Depot',
     'depot_pl' : 'Depots',
     'package': 'Tasche',
-    'v_subscription': 'Profil',
 }
 STYLES = {'static': ['/huebhof/css/customize.css']}
 FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
