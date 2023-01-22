@@ -23,9 +23,21 @@
         <form action="" method="post">
             {% csrf_token %}
             <div id="start_date" class="form-group row">
-               
+                <label class="col-md-3">
+                    {% trans "Gewünschtes Startdatum" %}
+                </label>
                 <div class="col-md-9">
-                    
+                    <label>
+                        
+                        {% blocktrans trimmed %}
+                        
+                        {% endblocktrans %}
+                    </label>
+                    {% if subscriptionform.start_date.errors %}
+                        <div class="alert alert-danger">
+                            {% trans "Das gewählte Startdatum ist nicht gültig" %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
             <div class="form-actions row">
