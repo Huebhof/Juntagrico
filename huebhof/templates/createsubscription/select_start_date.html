@@ -14,12 +14,12 @@
         <div class="row mb-4">
             <div class="col-md-12">
                 {% trans "Info" %}:
-                {% blocktrans trimmed with sd="22.01.2023"%}
+                {% blocktrans %}
                 Normalerweise ist der {{ v_subscription }}-Start der Start eines Geschäftsjahres. Das nächste
                 Startdatum wäre der <b>01.05.2023</b>.
                 Es kann jedoch vorkommen, dass unter dem Jahr 1 {{ v_subscription }} frei wird. Würdest du
                 gerne schon früher einsteigen falls 1 {{ v_subscription }} frei wird, dann kannst du das
-                Startdatum unten anpassen. {{sd}}
+                Startdatum unten anpassen.
 
                 {% endblocktrans %}
             </div>
@@ -32,8 +32,9 @@
                 </label>
                 <div class="col-md-9">
                     <label>
+                        
+                        {% blocktrans trimmed trimmed with sd="01.05.2023"%}
                         {{ subscriptionform.sd }}
-                        {% blocktrans trimmed %}
                         Gilt nur insofern 1 {{ v_subscription }}
                         zum gewünschten Datum frei ist.
                         {% endblocktrans %}
