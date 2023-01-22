@@ -16,7 +16,7 @@
                 {% trans "Info" %}:
                 {% blocktrans %}
                 Normalerweise ist der {{ v_subscription }}-Start der Start eines Geschäftsjahres. Das nächste
-                Startdatum wäre der <b>01.05.2023</b>. {{ period.start_day }}
+                Startdatum wäre der <b>01.05.2023</b>. {{ start_day }}
                 Es kann jedoch vorkommen, dass unter dem Jahr 1 {{ v_subscription }} frei wird. Würdest du
                 gerne schon früher einsteigen falls 1 {{ v_subscription }} frei wird, dann kannst du das
                 Startdatum unten anpassen.
@@ -31,7 +31,7 @@
                 </label>
                 <div class="col-md-9">
                     <label>
-                        {{ subscriptionform.date }}
+                        {{ subscriptionform.start_date }}
                         {% blocktrans trimmed %}
                         Gilt nur insofern 1 {{ v_subscription }}
                         zum gewünschten Datum frei ist.
