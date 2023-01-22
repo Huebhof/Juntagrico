@@ -24,8 +24,7 @@ class HuebhofConfig(AppConfig):
                     Config.organisation_long_name()
                 )
             else:
-                return _('Ich erkläre meinen Willen, "{}" beizutreten. '
-                         'Hiermit beantrage ich meine Aufnahme.').format(Config.organisation_long_name())
+                return _('Ich habe den Abovertrag gelesen und bin mit diesem einverstanden').format(Config.organisation_long_name())
 
         from juntagrico.forms import RegisterMemberForm
         RegisterMemberForm.agb_label = staticmethod(agb_label)
