@@ -4,7 +4,7 @@
 {% block all_page_title %}
     <div class="page-title offset-md-2 col-md-8">
         <h3>
-            {% trans "Abo Startdatum" %}
+            {% trans "Wähle dein Startdatum" %}
         </h3>
     </div>
 {% endblock %}
@@ -17,7 +17,9 @@
                 {% blocktrans trimmed with sd=start_date|date:"d.m.Y" %}
                 Normalerweise ist der {{ v_subscription }}-Start der Start eines Geschäftsjahres. Das nächste
                 Startdatum wäre der <b>01.05.2023</b>.
-                
+                Es kann jedoch vorkommen, dass unter dem Jahr 1 {{ v_subscription }} frei wird. Würdest du
+                gerne schon früher einsteigen falls 1 {{ v_subscription }} frei wird, dann kannst du das
+                Startdatum unten anpassen.
                 {% endblocktrans %}
             </div>
         </div>
@@ -25,13 +27,14 @@
             {% csrf_token %}
             <div id="start_date" class="form-group row">
                 <label class="col-md-3">
-                    {% trans "" %}
+                    {% trans "Gewünschtes Startdatum" %}
                 </label>
                 <div class="col-md-9">
                     <label>
                         {{ subscriptionform.start_date }}
                         {% blocktrans trimmed %}
-                        
+                        Gilt nur insofern 1 {{ v_subscription }}
+                        zum gewünschten Datum frei ist.
                         {% endblocktrans %}
                     </label>
                     {% if subscriptionform.start_date.errors %}
