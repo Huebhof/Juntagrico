@@ -25,13 +25,13 @@
         </div>
         <form action="" method="post">
             {% csrf_token %}
-            <div id="" class="form-group row">
+            <div id="start_date" class="form-group row">
                 <label class="col-md-3">
                     {% trans "Gewünschtes Startdatum" %}
                 </label>
                 <div class="col-md-9">
                     <label>
-                        {{ subscriptionform.start_date }}
+                        
                         {% blocktrans trimmed %}
                         Gilt nur insofern 1 {{ v_subscription }}
                         zum gewünschten Datum frei ist.
