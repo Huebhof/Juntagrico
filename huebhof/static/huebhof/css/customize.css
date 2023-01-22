@@ -12,18 +12,6 @@
     font-weight: bold;
 }
 
-.btn btn-primary btn-success {
-    visibility: hidden;
-    position: relative;
-}
-
-.btn btn-primary btn-success:after {
-    visibility: visible;
-    position: absolute;
-    top: 0;
-    left: 0;
-    content: "This text replaces the original.";
-}
 
 /* img[src="/static/juntagrico/img/single_empty.png"] {
 
