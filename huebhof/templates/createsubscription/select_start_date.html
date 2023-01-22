@@ -21,7 +21,8 @@
                 gerne schon früher einsteigen falls 1 {{ v_subscription }} frei wird, dann kannst du das
                 Startdatum unten anpassen.
 
-                {{ value|date:"D d M Y" }}
+                {{ now|date:"Y-m-d" }}T{{ now|date:"H:i:s" }}
+                {{ subscription.start_date |date:"Y-m-d" }}
 
                 {% endblocktrans %}
             </div>
