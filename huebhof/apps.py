@@ -18,8 +18,7 @@ class HuebhofConfig(AppConfig):
                 if link().strip():
                     documents_html.append('<a target="_blank" href="{}">{}</a>'.format(link(), _(text)))
             if documents_html:
-                return _('Ich habe {} gelesen und erkläre fghjfghjgfjhmeinen Willen, "{}" beizutreten. '
-                         'Hiermit beantrage ich meine Aufnahme.').format(
+                return _('Ich habe {} gelesen und bin mit diesem einverstanden.').format(
                     (' ' + _('und') + ' ').join(documents_html),
                     Config.organisation_long_name()
                 )
