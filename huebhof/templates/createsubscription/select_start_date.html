@@ -17,12 +17,11 @@
                 {% blocktrans trimmed with sd=start_date|date:"d.m.Y" %}
                 Normalerweise ist der {{ v_subscription }}-Start der Start eines Geschäftsjahres. Das nächste
                 Startdatum wäre der <b>01.05.2023</b>.
-                
                 {% endblocktrans %}
             </div>
         </div>
         <form action="" method="post">
-            
+            {% csrf_token %}
             <div id="start_date" class="form-group row">
                
                 <div class="col-md-9">
