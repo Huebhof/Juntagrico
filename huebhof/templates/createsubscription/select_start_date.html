@@ -32,9 +32,10 @@
                 </label>
                 <div class="col-md-9">
                     <label>
+                        {% blocktrans trimmed with sd=start_date|date:"d.m.Y" %}
                         {{ subscriptionform.start_date }}
                         
-                        {% blocktrans trimmed with sd=start_date|date:"d.m.Y" %}
+                        
                         Gilt nur insofern 1 {{ v_subscription }}
                         zum gewünschten Datum frei ist. {{sd}}
                         {% endblocktrans %}
