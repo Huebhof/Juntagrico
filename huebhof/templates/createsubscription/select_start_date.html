@@ -21,8 +21,7 @@
                 gerne schon früher einsteigen falls 1 {{ v_subscription }} frei wird, dann kannst du das
                 Startdatum unten anpassen.
 
-                {% now "Y" as current_year %}
-                {% blocktranslate %}Copyright {{ current_year }}{% endblocktranslate %}
+                {{ value|date:"D d M Y" }}
 
                 {% endblocktrans %}
             </div>
