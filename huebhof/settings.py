@@ -247,5 +247,6 @@ MAIL_TEMPLATE = "mails/email.html"
 EMAILS = {
     's_created': 'huebmails/share_created.txt',
     'welcome': 'huebmails/welcome_mail.txt',
+    'j_signup': 'huebmails/job_signup_mail.txt',
 }
 TIME_ZONE = 'Europe/Zurich'
