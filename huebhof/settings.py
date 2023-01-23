@@ -239,7 +239,7 @@ IMAGES = {'status_100': '/static/juntagrico/img/status_100.png',
     'status_50': '/static/juntagrico/img/status_50.png',
     'status_25': '/static/juntagrico/img/status_25.png',
     'status_0': '/static/juntagrico/img/status_0.png',
-    'single_full': '/static/huebhof/img/karotte_klein_grau',
+    'single_full': '/static/huebhof/img/karotte_klein_grau.png',
     'single_empty': '/static/huebhof/img/karotte_klein.png',
     'single_core': '/static/juntagrico/img/single_core.png',
     'core': '/static/juntagrico/img/core.png'}
