@@ -162,10 +162,10 @@ Contact Information
 """
 ORGANISATION_NAME = "HUEBHOF"
 ORGANISATION_LONG_NAME = "SOLAWI HUEBHOF"
-ORGANISATION_ADDRESS = {"name":"GmbH Huebhof", 
-            "street" : "Hagenholzstrasse",
-            "number" : "108b",
-            "zip" : "8050",
+ORGANISATION_ADDRESS = {"name":"Huebhof GmbH", 
+            "street" : "Prosteistrasse",
+            "number" : "26",
+            "zip" : "8051",
             "city" : "Zürich",
             "extra" : ""}
 # ORGANISATION_PHONE = ""
