@@ -1,0 +1,36 @@
+{% extends "mails/email.txt" %}
+{% load i18n %}
+{% load l10n %}
+{% load juntagrico.config %}
+{% block content %}
+{% config "organisation_name" as organisation_name %}
+{% config "organisation_address" as addr %}
+{% config "currency" as currency %}
+{% blocktrans with fn=member.first_name %}Dear {{ fn }}{% endblocktrans %}
+
+{% blocktrans %}Your current {{ organisation_name }} Bill is ready.{% endblocktrans %}
+{% blocktrans with number=bill.id period=bill.business_year concerning=bill.item_kinds amount=bill.amount|floatformat:2 %}
+Bill-Number:         {{ number }}
+Period:              {{ period }}
+Concerning:          {{ concerning }}
+Amount:              {{ currency }} {{ amount }}{% endblocktrans %} 
+
+{% trans "Find details on the website at" %} {{ serverurl }}{% url 'jb:user-bill' bill.id %}
+
+{% trans "Please pay specifying bill number to:" %}
+IBAN {{ payment_type.iban }}
+{{ payment_type.name }}
+{% trans "in favor of" %}
+{{ addr.name }}, {{ addr.zip }} {{ addr.city }}
+
+{% config "duedate_notice_url" as notice_url %}
+{% if notice_url %}
+    {% trans "The billed amount is due for payment according to the due date notice found here:" %}
+    {{ notice_url }}.
+{% endif %}
+{% trans "123412342341Please always specify the bill number with your payments to allow correct attribution." %}
+
+{% blocktrans trimmed %}
+Best regards, your {{ organisation_name }}-Operations-Group.
+{% endblocktrans %}
+{% endblock %}

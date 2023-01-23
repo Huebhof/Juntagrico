@@ -248,5 +248,6 @@ EMAILS = {
     's_created': 'huebmails/share_created.txt',
     'welcome': 'huebmails/welcome_mail.txt',
     'j_signup': 'huebmails/job_signup_mail.txt',
+    'b_sub': 'huebmails/bill_sub.txt',
 }
 TIME_ZONE = 'Europe/Zurich'
