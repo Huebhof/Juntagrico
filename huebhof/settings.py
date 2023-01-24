@@ -234,13 +234,13 @@ VOCABULARY = {
 }
 STYLES = {'static': ['/huebhof/css/customize.css']}
 FAVICON = "/static/huebhof/img/huebhof_33x33.ico"
-IMAGES = {'status_100': '/static/juntagrico/img/status_100.png',
+IMAGES = {'status_100': '/static/huebhof/img/karotte_voll.png',
     'status_75': '/static/juntagrico/img/status_75.png',
     'status_50': '/static/juntagrico/img/status_50.png',
     'status_25': '/static/juntagrico/img/status_25.png',
-    'status_0': '/static/juntagrico/img/status_0.png',
-    'single_full': '/static/huebhof/img/karotte_klein_grau.png',
-    'single_empty': '/static/huebhof/img/karotte_klein.png',
+    'status_0': '/static/huebhof/img/karotte_leer.png',
+    'single_full': '/static/huebhof/img/karotte_leer.png',
+    'single_empty': '/static/huebhof/img/karotte_voll.png',
     'single_core': '/static/juntagrico/img/single_core.png',
     'core': '/static/juntagrico/img/core.png'}
 MAIL_TEMPLATE = "mails/email.html"
