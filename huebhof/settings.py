@@ -251,3 +251,4 @@ EMAILS = {
     'b_sub': 'huebmails/bill_sub.txt',
 }
 TIME_ZONE = 'Europe/Zurich'
+USE_TZ = True
