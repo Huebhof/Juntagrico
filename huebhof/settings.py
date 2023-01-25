@@ -239,8 +239,8 @@ IMAGES = {'status_100': '/static/huebhof/img/karotte_voll.png',
     'status_50': '/static/juntagrico/img/status_50.png',
     'status_25': '/static/juntagrico/img/status_25.png',
     'status_0': '/static/huebhof/img/karotte_leer.png',
-    'single_full': '/static/huebhof/img/karotte_leer.png',
-    'single_empty': '/static/huebhof/img/karotte_voll.png',
+    'single_full': '/static/huebhof/img/karotte_voll.png',
+    'single_empty': '/static/huebhof/img/karotte_leer.png',
     'single_core': '/static/juntagrico/img/single_core.png',
     'core': '/static/juntagrico/img/core.png'}
 MAIL_TEMPLATE = "mails/email.html"
