@@ -10,13 +10,13 @@
 {% vocabulary "member_type" as v_member_type %}
 {% blocktrans %}Wir freuen uns, dich auf dem {{ v_d_enriched_organisation }} zu begrüssen.{% endblocktrans %}
 
-Um dich auf https://{% config "server_url" %} einloggen zu können benutze folgende Daten:
+{% blocktrans %}Um dich auf https://my.huebhof.org einloggen zu können benutze folgende Daten:{% endblocktrans %}
 
 {% trans "Email" %}: {{ member.email }}
 {% trans "Passwort" %}: {{ password }}
 
 {% blocktrans %}Nutze den Bestätigungslink um deine E-Mail-Adresse zu bestätigen.{% endblocktrans %}
-{% trans "Bestätigungslink" %}: {{ serverurl }}{% url 'confirm' member.get_hash %}
+{% trans "Bestätigungslink" %}: https://my.huebhof.org{% url 'confirm' member.get_hash %}
 
 {% if c_faq_doc.strip %}
 {% blocktrans with fd=c_faq_doc|safe %}Für weitere Fragen schaust du in den FAQ ({{ fd }}) nach oder schreibst eine Mail an {{ c_info_email }}.{% endblocktrans %}
