@@ -23,6 +23,11 @@
         {% if request|activemenu:"jobs" == 'active' %}
             <ul class="nav flex-column sub-menu">
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'jobs' %}">
+                        {% trans "Alle Einsätze" %}
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'memberjobs' %}">
                         {% trans "Meine Einsätze" %}
                     </a>
