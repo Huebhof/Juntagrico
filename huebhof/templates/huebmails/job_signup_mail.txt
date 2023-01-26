@@ -16,6 +16,7 @@ Du hast dich für den {{ c_organisation_name }}-Arbeitseinsatz "{{ jtg }}" am {{
 
 {% trans "Zeit" %}:            {{ job.time |date:"d.m.Y H:i" }}-{{ job.end_time|date:"H:i" }}
 {% trans "Ort" %}:             {{ job.type.location }}
+
 {% trans "Teilnehmer:innen" %}:
 {{ job.participant_names }}
 
