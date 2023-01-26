@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% load juntagrico.config %}
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'juntagrico/external/leaflet/leaflet.css' %}" />
+{% endblock %}
+{% block page_title %}
+    {% vocabulary "depot" as v_depot %}
+    <h3>
+        {% blocktrans %}{{ v_depot }} ändern{% endblocktrans %}
+    </h3>
+{% endblock %}
+{% block content %}
+    {% vocabulary "depot" as v_depot %}
+    {% vocabulary "subscription" as v_subscription %}
+    {% if saved %}
+        <div class="alert alert-success">
+            {% if subscription.state == 'waiting' %}
+                {% blocktrans %}Dein/e {{ v_depot }} wurde geändert.{% endblocktrans %}
+            {% else %}
+                {% blocktrans trimmed with spe=subscription.primary_member.email sde=subscription.depot.name%}
+                Achtung: Dein {{ v_depot }} ändert erst bei der nächsten Generierung der {{ v_depot }}liste.
+                Solange keine Email an {{ spe }} mit der Bestätigung für dein neues {{ v_depot }} gesendet wurde, ist noch dein altes {{ v_depot }}
+                {{ sde }} aktiv.
+                {% endblocktrans %}
+            {% endif %}
+            <br/>
+            <a href="{% url 'sub-detail-id' subscription.id %}">
+                {% blocktrans %}Zurück zur {{ v_subscription }}-Übersicht{% endblocktrans %}
+            </a>
+        </div>
+    {% else %}
+        <form method="post" class="createsubscription">
+            {% csrf_token %}
+            <div class="form-group row">
+                <label class="control-label col-md-3" for="depot">
+                    {% blocktrans %}Alte/s/r {{ v_depot }}{% endblocktrans %}
+                </label>
+                <div class="controls col-md-9">
+                    {{ subscription.depot.name }}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="control-label col-md-3" for="depot">
+                    {% blocktrans %}Neue/s/r {{ v_depot }}{% endblocktrans %}
+                </label>
+                <div class="controls col-md-9" id="map-container">
+                    <select name="depot" id="depot" class="form-control">
+                        {% for depot in depots %}
+                            <option value="{{ depot.id }}" id="depot{{ depot.sort_order }}" {% if depot == subscription.depot %}selected{% endif %}>
+                                {{ depot.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <label for="depot">
+                        {% blocktrans %}Wähle 1 {{ v_depot }} aus als zukünftiger {{ v_subscription }}-Abholort. {% endblocktrans %}
+                    </label>
+                </div>
+            </div>
+            <div class="offset-md-3 form-actions">
+                {% blocktrans trimmed %}
+                Achtung: Dein {{ v_depot }} ändert erst bei der nächsten Generierung der {{ v_depot }}liste. Wir informieren dich per E-Mail, wenn die Änderung
+                deines {{ v_depot }} aktiv ist.
+                {% endblocktrans %}
+                <br/>
+                <br/>
+                <button type="submit" class="btn btn-success">
+                    {% blocktrans %}{{ v_depot }} ändern{% endblocktrans %}
+                </button>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}
+{% block scripts %}
+    {{ subscription.depot.name|json_script:'selected_depot' }}
+    {{ depots.map_info|json_script:'depots' }}
+    <script type="text/javascript" src="{% static 'juntagrico/external/leaflet/leaflet.js' %}"></script>
+    <script type="text/javascript" src="{% static 'juntagrico/external/require.min.js' %}"data-main="{% static 'juntagrico/js/initChangeDepot.js' %}">
+    </script>
+{% endblock %}
