@@ -15,8 +15,9 @@ Du hast dich für den {{ c_organisation_name }}-Arbeitseinsatz "{{ jtg }}" am {{
 {{ job.type.description|striptags }}
 
 {% trans "Zeit" %}:            {{ job.time |date:"d.m.Y H:i" }}-{{ job.end_time|date:"H:i" }}
-{% trans "Teilnehmer" %}:      {{ job.participant_names }}
 {% trans "Ort" %}:             {{ job.type.location }}
+{% trans "Teilnehmer:innen" %}:
+{{ job.participant_names }}
 
 {% blocktrans trimmed%}
 Wir freuen uns, dich zu sehen und zählen auf dich!
