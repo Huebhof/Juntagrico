@@ -23,7 +23,7 @@ class HuebhofConfig(AppConfig):
                     Config.organisation_long_name()
                 )
             else:
-                return _('Ich erkläre meinen fhjhfhjfghjfjghWillen, "{}" beizutreten. '
+                return _('Ich erkläre meinen Willen, "{}" beizutreten. '
                          'Hiermit beantrage ich meine Aufnahme.').format(Config.organisation_long_name())
 
         from juntagrico.forms import RegisterMemberForm
