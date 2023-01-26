@@ -10,7 +10,7 @@
 {% vocabulary "member_type" as v_member_type %}
 {% blocktrans %}Wir freuen uns, dich auf dem {{ v_d_enriched_organisation }} zu begrüssen.{% endblocktrans %}
 
-{% blocktrans %}Um dich auf {{serverurl}} einloggen zu können benutze folgende Daten:{% endblocktrans %}
+{% blocktrans %}Um dich auf https://{% config "server_url" %} einloggen zu können benutze folgende Daten:{% endblocktrans %}
 
 {% trans "Email" %}: {{ member.email }}
 {% trans "Passwort" %}: {{ password }}
