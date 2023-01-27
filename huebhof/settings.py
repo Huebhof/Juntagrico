@@ -249,7 +249,7 @@ EMAILS = {
     'welcome': 'huebmails/welcome_mail.txt',
     'j_signup': 'huebmails/job_signup_mail.txt',
 }
-BILL_EMAILS = {
+BILLS_EMAILS = {
     'b_sub': 'huebmails/bill_notification.txt',
 }
 TIME_ZONE = 'Europe/Zurich'
