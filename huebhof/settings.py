@@ -224,7 +224,7 @@ VOCABULARY = {
     'subscription' : 'Abo',
     'subscription_pl' : 'Abos',
     'co_member' : 'Mitabonnent:in',
-    'co_member_pl' : 'Mitabonnenten:innen',
+    'co_member_pl' : 'Mitabonnent:innen',
     'price' : 'Betriebsbeitrag',
     'member_type' : 'Mitglied',
     'member_type_pl' : 'Mitglieder',
