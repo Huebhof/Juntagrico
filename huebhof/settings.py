@@ -163,7 +163,7 @@ Contact Information
 ORGANISATION_NAME = "HUEBHOF"
 ORGANISATION_LONG_NAME = "SOLAWI HUEBHOF"
 ORGANISATION_ADDRESS = {"name":"Huebhof GmbH", 
-            "street" : "Prosteistrasse",
+            "street" : "Probsteistrasse",
             "number" : "26",
             "zip" : "8051",
             "city" : "Zürich",
