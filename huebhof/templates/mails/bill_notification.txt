@@ -37,6 +37,6 @@ Und auch dieses Jahr darfst du natürlich wieder etwas mehr für's Abo bezahlen 
 {% trans "Please always specify the bill number with your payments to allow correct attribution." %}
 
 {% blocktrans trimmed %}
-Best regards, your {{ organisation_name }}-Team.
+Bis bald und liebe Grüsse, das {{ organisation_name }}-Team.
 {% endblocktrans %}
 {% endblock %}
