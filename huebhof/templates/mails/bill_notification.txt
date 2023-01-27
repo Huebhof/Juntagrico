@@ -17,9 +17,9 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 
 {% trans "Find details on the website at" %} https://my.huebhof.org{% url 'jb:user-bill' bill.id %}
 
-{% trans "Please pay specifying bill number to:" %}
-IBAN {{ payment_type.iban }}
+{% trans "Bitte einzahlen mit Angabe der Rechnungsnummer auf:" %}
 {{ payment_type.name }}
+IBAN {{ payment_type.iban }}
 {{ bill_part }}
 {% trans "in favor of" %}
 {{ addr.name }}, {{ addr.zip }} {{ addr.city }}
@@ -37,6 +37,6 @@ Und auch dieses Jahr darfst du natürlich wieder etwas mehr für's Abo bezahlen 
 {% trans "Please always specify the bill number with your payments to allow correct attribution." %}
 
 {% blocktrans trimmed %}
-Bis bald und liebe Grüsse, das {{ organisation_name }}-Team.
+Bis bald und liebe Grüsse das {{ organisation_name }}-Team.
 {% endblocktrans %}
 {% endblock %}
