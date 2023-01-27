@@ -20,11 +20,10 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 {% trans "Bitte einzahlen mit Angabe der Rechnungsnummer auf:" %}
 {{ payment_type.name }}
 IBAN {{ payment_type.iban }}
-{% bill.id %}
+{% blocktrans trimmed %}test{% bill.id %}{% endblocktrans %}
 {% trans "in favor of:" %}
 {{ addr.name }}
 {{ addr.zip }} {{ addr.city }}
-{% endblocktrans %}
 
 Nur du erhälst eine Rechnung für dein Abo, falls du dein Abo teilst, bitten wir dich, die Rechnung an deine:n Abopartner:in weiterzuleiten.
 So kann er/sie auch seinen/ihren Anteil der Rechnung zahlen.
