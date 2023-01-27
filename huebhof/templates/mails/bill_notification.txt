@@ -26,11 +26,8 @@ IBAN: {{ payment_type.iban }}
 
 Zugunsten von:
 {{ addr.name }}
-{{ addr.street }}
+{{ addr.street }} {{ addr.number }}
 {{ addr.zip }} {{ addr.city }}
-
-Nur du erhälst eine Rechnung für dein Abo, falls du dein Abo teilst, bitten wir dich, die Rechnung an deine:n Abopartner:in weiterzuleiten.
-So kann er/sie auch seinen/ihren Anteil der Rechnung zahlen.
 
 Und auch dieses Jahr darfst du natürlich wieder etwas mehr für's Abo bezahlen :-).
 
