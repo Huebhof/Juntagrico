@@ -250,7 +250,7 @@ EMAILS = {
     'j_signup': 'huebmails/job_signup_mail.txt',
 }
 BILL_EMAILS = {
-    'b_sub': 'huebmails/bill_sub.txt',
+    'b_sub': 'huebmails/bill_notification.txt',
 }
 TIME_ZONE = 'Europe/Zurich'
 USE_TZ = True
