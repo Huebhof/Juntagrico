@@ -20,6 +20,7 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 {% trans "Bitte einzahlen mit Angabe der Rechnungsnummer auf:" %}
 {{ payment_type.name }}
 IBAN {{ payment_type.iban }}
+{% trans "Referenznummer" %} :{% bill.id %}
 {% trans "in favor of:" %}
 {{ addr.name }}
 {{ addr.zip }} {{ addr.city }}
