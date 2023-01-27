@@ -249,8 +249,8 @@ EMAILS = {
     'welcome': 'huebmails/welcome_mail.txt',
     'j_signup': 'huebmails/job_signup_mail.txt',
 }
-BILLS_EMAILS = {
-    'b_sub': 'huebmails/bill_notification.txt',
-}
+# BILL_EMAILS = {
+#     'b_sub': 'huebmails/bill_notification.txt',
+# }
 TIME_ZONE = 'Europe/Zurich'
 USE_TZ = True
