@@ -21,9 +21,10 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 
 {{ payment_type.name }}
 IBAN: {{ payment_type.iban }}
-{% blocktrans with number=bill.id id_member=member.id %}Referenznummer: {{id_member}}{% endblocktrans %}
-{% blocktrans with number=bill.id id_member=member.id %}Mitteilung an Empfänger: Rechnungsnummer {{ number }}{% endblocktrans %}
-{% trans "in favor of:" %}
+{% blocktrans with number=bill.id.rjust(10, '0') id_member=member.id %}Referenznummer: {{id_member}}{{number}}{% endblocktrans %}
+{% blocktrans with number=bill.id %}Mitteilung an Empfänger: Rechnungsnummer {{ number }}{% endblocktrans %}
+
+Zugunsten von:
 {{ addr.name }}
 {{ addr.zip }} {{ addr.city }}
 
@@ -31,13 +32,6 @@ Nur du erhälst eine Rechnung für dein Abo, falls du dein Abo teilst, bitten wi
 So kann er/sie auch seinen/ihren Anteil der Rechnung zahlen.
 
 Und auch dieses Jahr darfst du natürlich wieder etwas mehr für's Abo bezahlen :-).
-
-{% config "duedate_notice_url" as notice_url %}
-{% if notice_url %}
-    {% trans "The billed amount is due for payment according to the due date notice found here:" %}
-    {{ notice_url }}.
-{% endif %}
-{% trans "Please always specify the bill number with your payments to allow correct attribution." %}
 
 {% blocktrans trimmed %}
 Bis bald und liebe Grüsse das {{ organisation_name }}-Team.
