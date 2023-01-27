@@ -21,7 +21,7 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 
 {{ payment_type.name }}
 IBAN: {{ payment_type.iban }}
-{% blocktrans with number=bill.id.rjust(10, '0') id_member=member.id %}Referenznummer: {{id_member}}{{number}}{% endblocktrans %}
+{#{% blocktrans with number=bill.id.rjust(10, '0') id_member=member.id %}Referenznummer: {{id_member}}{{number}}{% endblocktrans %}#}
 {% blocktrans with number=bill.id %}Mitteilung an Empfänger: Rechnungsnummer {{ number }}{% endblocktrans %}
 
 Zugunsten von:
