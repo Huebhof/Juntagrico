@@ -20,7 +20,7 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 {% trans "Bitte innerhalb 30 Tagen auf folgendes Konto einzahlen:" %}
 
 {{ payment_type.name }}
-IBAN {{ payment_type.iban }}
+IBAN {{ payment_type.iban }}{% endblocktrans %}
 {% blocktrans with number=bill.id id_member=member.id %}Referenznummer {{id_member}}
 Mitteilung an Empfänger: Rechnungsnummer {{ number }}{% endblocktrans %}
 
