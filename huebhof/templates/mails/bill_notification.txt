@@ -17,7 +17,7 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 
 {% trans "Find details on the website at" %} https://my.huebhof.org{% url 'jb:user-bill' bill.id %}
 
-{% blocktrans with number=bill.id id=bill.member.id %}Bitte einzahlen mit Angabe der Rechnungsnummer {{ number }} auf: 
+{% blocktrans with number=bill.id id_member=bill.member.id %}Bitte einzahlen mit Angabe der Rechnungsnummer {{ number }} auf: 
 {{ payment_type.name }}
 IBAN {{ payment_type.iban }}
 Referenznummer {{id}}
