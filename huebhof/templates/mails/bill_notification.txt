@@ -26,6 +26,7 @@ IBAN: {{ payment_type.iban }}
 
 Zugunsten von:
 {{ addr.name }}
+{{ addr.street }}
 {{ addr.zip }} {{ addr.city }}
 
 Nur du erhälst eine Rechnung für dein Abo, falls du dein Abo teilst, bitten wir dich, die Rechnung an deine:n Abopartner:in weiterzuleiten.
