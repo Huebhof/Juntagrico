@@ -31,6 +31,6 @@ IBAN {{ payment_type.iban }}
 {% trans "Please always specify the bill number with your payments to allow correct attribution." %}
 
 {% blocktrans trimmed %}
-Best regards, your {{ organisation_name }}-Operations-Group.
+Best regards, your {{ organisation_name }}-Operations-Group sdfgsdfgdsfgdsgfsdgfdsfgdfgsdgsg.
 {% endblocktrans %}
 {% endblock %}
