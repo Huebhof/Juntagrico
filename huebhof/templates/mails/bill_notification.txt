@@ -15,13 +15,19 @@ Period:              {{ period }}
 Concerning:          {{ concerning }}
 Amount:              {{ currency }} {{ amount }}{% endblocktrans %} 
 
-{% trans "Find details on the website at" %} {{ serverurl }}{% url 'jb:user-bill' bill.id %}
+{% trans "Find details on the website at" %} https://my.huebhof.org{% url 'jb:user-bill' bill.id %}
 
 {% trans "Please pay specifying bill number to:" %}
 IBAN {{ payment_type.iban }}
 {{ payment_type.name }}
+
 {% trans "in favor of" %}
 {{ addr.name }}, {{ addr.zip }} {{ addr.city }}
+
+Nur du erhälst eine Rechnung für dein Abo, falls du dein Abo teilst, bitten wir dich, die Rechnung an deine:n Abopartner:in weiterzuleiten.
+So kann er/sie auch seinen/ihren Anteil der Rechnung zahlen.
+
+Und auch dieses Jahr darfst du natürlich wieder etwas mehr für's Abo bezahlen :-).
 
 {% config "duedate_notice_url" as notice_url %}
 {% if notice_url %}
@@ -31,6 +37,6 @@ IBAN {{ payment_type.iban }}
 {% trans "Please always specify the bill number with your payments to allow correct attribution." %}
 
 {% blocktrans trimmed %}
-Best regards, your {{ organisation_name }}-Operations-Group sdfgsdfgdsfgdsgfsdgfdsfgdfgsdgsg.
+Best regards, your {{ organisation_name }}-Team.
 {% endblocktrans %}
 {% endblock %}
