@@ -20,7 +20,7 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 {% blocktrans with number=bill.id id_member=bill.member.id %}Bitte einzahlen mit Angabe der Rechnungsnummer {{ number }} auf: 
 {{ payment_type.name }}
 IBAN {{ payment_type.iban }}
-Referenznummer {{id}}
+Referenznummer {{id_member}}
 {% trans "in favor of:" %}
 {{ addr.name }}
 {{ addr.zip }} {{ addr.city }}{% endblocktrans %}
