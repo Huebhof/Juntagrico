@@ -20,8 +20,7 @@ Amount:              {{ currency }} {{ amount }}{% endblocktrans %}
 {% trans "Please pay specifying bill number to:" %}
 IBAN {{ payment_type.iban }}
 {{ payment_type.name }}
-{{ qr_svg | safe }}
-
+{{ bill_part }}
 {% trans "in favor of" %}
 {{ addr.name }}, {{ addr.zip }} {{ addr.city }}
 
