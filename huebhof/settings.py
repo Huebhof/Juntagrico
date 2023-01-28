@@ -250,8 +250,12 @@ EMAILS = {
     'j_signup': 'huebmails/job_signup_mail.txt',
 }
 FROM_FILTER = {
-    'filter_expression': 'admin@huebhof\.org',
-    'replacement_from': 'admin@huebhof.org'
+    'filter_expression': r'.*@huebhof\.org',
+    'replacement_from': 'solawi@huebhof.org'
+}
+#FROM_FILTER = {
+#    'filter_expression': 'admin@huebhof\.org',
+#    'replacement_from': 'admin@huebhof.org'
 }
 # BILL_EMAILS = {
 #     'b_sub': 'huebmails/bill_notification.txt',
