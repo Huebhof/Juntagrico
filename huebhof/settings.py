@@ -249,11 +249,6 @@ EMAILS = {
     'welcome': 'huebmails/welcome_mail.txt',
     'j_signup': 'huebmails/job_signup_mail.txt',
 }
-SERVER_EMAIL = "solawi@huebhof.org"
-FROM_FILTER = {
-    'filter_expression': 'admin@huebhof\.org',
-    'replacement_from': 'admin@huebhof.org'
-}
 #FROM_FILTER = {
 #    'filter_expression': 'admin@huebhof\.org',
 #    'replacement_from': 'admin@huebhof.org'
