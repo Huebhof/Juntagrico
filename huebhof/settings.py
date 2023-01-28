@@ -256,7 +256,7 @@ FROM_FILTER = {
 #FROM_FILTER = {
 #    'filter_expression': 'admin@huebhof\.org',
 #    'replacement_from': 'admin@huebhof.org'
-}
+#}
 # BILL_EMAILS = {
 #     'b_sub': 'huebmails/bill_notification.txt',
 # }
