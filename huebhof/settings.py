@@ -249,7 +249,7 @@ EMAILS = {
     'welcome': 'huebmails/welcome_mail.txt',
     'j_signup': 'huebmails/job_signup_mail.txt',
 }
-DEFAULT_FROM_EMAIL = 'solawi@huebhof.org'
+SERVER_EMAIL = "solawi@huebhof.org"
 FROM_FILTER = {
     'filter_expression': 'admin@huebhof\.org',
     'replacement_from': 'admin@huebhof.org'
