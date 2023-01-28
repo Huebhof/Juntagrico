@@ -251,7 +251,7 @@ EMAILS = {
 }
 FROM_FILTER = {
     'filter_expression': 'admin@huebhof\.org',
-    'replacement_from': 'solawi@huebhof.org'
+    'replacement_from': 'admin@huebhof.org'
 }
 #FROM_FILTER = {
 #    'filter_expression': 'admin@huebhof\.org',
