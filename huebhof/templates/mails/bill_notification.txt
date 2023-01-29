@@ -15,7 +15,7 @@ Period:              {{ period }}
 Concerning:          {{ concerning }}
 Amount:              {{ currency }} {{ amount }}{% endblocktrans %} 
 
-{% trans "Details zu deiner Rechnung findest du in deinem Huebhof-Konto unter:" %} https://my.huebhof.org{% url 'jb:user-bill' bill.id %}
+{% trans "Details zur Rechnung findest du in deinem Huebhof-Konto unter:" %} https://my.huebhof.org{% url 'jb:user-bill' bill.id %}
 
 {% trans "Bitte begleiche deine Rechnung innerhalb von 30 Tagen ab Erhalt:" %}
 
