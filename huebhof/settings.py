@@ -180,7 +180,7 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "BIC" : "ABSOCH22",
             "NAME" : "Alternative Bank Schweiz AG",
             "ESR" : ""}
-# DEFAULT_FROM_EMAIL = "solawi@huebhof.org"
+DEFAULT_FROM_EMAIL = "solawi@huebhof.org"
 BILLS_USERMENU = True
 
 """
