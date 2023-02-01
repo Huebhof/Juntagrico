@@ -251,7 +251,7 @@ EMAILS = {
     'password': 'huebmails/password_reset_mail.txt',
  #   'j_reminder': 'mails/job_reminder_mail.txt',
  #   'j_canceled': 'mails/job_canceled_mail.txt',
-    'confirm': 'huebmails/confirm.txt',
+    'confirm': 'huebmails/email_confirm.txt',
  #   'j_changed': 'mails/job_time_changed_mail.txt',
     'j_signup': 'huebmails/job_signup_mail.txt',
  #   'd_changed': 'mails/depot_changed_mail.txt',
