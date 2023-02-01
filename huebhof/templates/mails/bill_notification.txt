@@ -30,7 +30,8 @@ Zugunsten von:
 {{ addr.street }} {{ addr.number }}
 {{ addr.zip }} {{ addr.city }}
 
-Und auch dieses Jahr darfst du natürlich wieder etwas mehr für's Abo bezahlen :-).
+Du entscheidest selbst, ob du den reduzierten Preis -wie auf der Rechnung gedruckt- oder mehr bezahlen möchtest.
+Wir sind allen, die in der Lage sind, für das erste Betriebsjahr einen vollen Jahresbeitrag (950.- Abo Gelb/ 1350.- Abo Blau) zu leisten, riesig dankbar- damit können wir die Kosten für das laufende Jahr decken.
 
 {% blocktrans trimmed %}
 Bis bald und liebe Grüsse das {{ organisation_name }}-Team.
