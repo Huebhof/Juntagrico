@@ -248,7 +248,7 @@ EMAILS = {
     'welcome': 'huebmails/welcome_mail.txt',
  #   'co_welcome': 'mails/welcome_added_mail.txt',
  #   'co_added': 'mails/added_mail.txt',
- #   'password': 'mails/password_reset_mail.txt',
+    'password': 'huebmails/password_reset_mail.txt',
  #   'j_reminder': 'mails/job_reminder_mail.txt',
  #   'j_canceled': 'mails/job_canceled_mail.txt',
     'confirm': 'huebmails/confirm.txt',
