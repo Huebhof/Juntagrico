@@ -261,7 +261,7 @@ EMAILS = {
  #   'm_canceled': 'mails/membership_canceled_mail.txt',
 }
 FROM_FILTER = {
-    'filter_expression': 'solawi@huebhof\.org',
+    'filter_expression': 'admin@huebhof\.org',
     'replacement_from': 'admin@huebhof.org'
 }
 # BILL_EMAILS = {
