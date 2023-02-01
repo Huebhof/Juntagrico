@@ -180,7 +180,7 @@ ORGANISATION_BANK_CONNECTION = {"PC" : "-",
             "BIC" : "ABSOCH22",
             "NAME" : "Alternative Bank Schweiz AG",
             "ESR" : ""}
-DEFAULT_FROM_EMAIL = "solawi@huebhof.org"
+# DEFAULT_FROM_EMAIL = "solawi@huebhof.org"
 BILLS_USERMENU = True
 
 """
@@ -261,7 +261,7 @@ EMAILS = {
  #   'm_canceled': 'mails/membership_canceled_mail.txt',
 }
 FROM_FILTER = {
-    'filter_expression': 'admin@huebhof\.org',
+    'filter_expression': '.*@huebhof\.org',
     'replacement_from': 'admin@huebhof.org'
 }
 # BILL_EMAILS = {
