@@ -203,7 +203,7 @@ MEMBERSHIP_END_NOTICE_PERIOD = 3
 """
 Shares
 """
-ENABLE_SHARES = False #Enable all share related funtionality
+ENABLE_SHARES = True #Enable all share related funtionality
 SHARE_PRICE = "250"
 
 """
