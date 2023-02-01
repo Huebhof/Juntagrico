@@ -260,6 +260,7 @@ EMAILS = {
  #   's_canceled': 'mails/subscription_canceled_mail.txt',
  #   'm_canceled': 'mails/membership_canceled_mail.txt',
 }
+SERVER_EMAIL="admin@huebhof.org"
 FROM_FILTER = {
     'filter_expression': 'admin@huebhof\.org',
     'replacement_from': 'admin@huebhof.org'
