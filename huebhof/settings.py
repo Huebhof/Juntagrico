@@ -260,6 +260,10 @@ EMAILS = {
  #   's_canceled': 'mails/subscription_canceled_mail.txt',
  #   'm_canceled': 'mails/membership_canceled_mail.txt',
 }
+ADMINS = [
+    ('Admin', os.environ.get('JUNTAGRICO_ADMIN_EMAIL')),
+]
+MANAGERS = ADMINS
 SERVER_EMAIL="admin@huebhof.org"
 FROM_FILTER = {
     'filter_expression': '.*@huebhof\.org',
