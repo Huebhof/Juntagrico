@@ -269,4 +269,3 @@ FROM_FILTER = {
 # }
 TIME_ZONE = 'Europe/Zurich'
 USE_TZ = True
-ADMIN_SHELL_ONLY_DEBUG_MODE = False
