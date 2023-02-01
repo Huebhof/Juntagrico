@@ -262,7 +262,7 @@ EMAILS = {
 }
 FROM_FILTER = {
     'filter_expression': '.*@huebhof\.org',
-    'replacement_from': 'admin@huebhof.org'
+    'replacement_from': 'solawi@huebhof.org'
 }
 # BILL_EMAILS = {
 #     'b_sub': 'huebmails/bill_notification.txt',
