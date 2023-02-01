@@ -262,7 +262,7 @@ EMAILS = {
 }
 SERVER_EMAIL="admin@huebhof.org"
 FROM_FILTER = {
-    'filter_expression': 'admin@huebhof\.org',
+    'filter_expression': '.*@huebhof\.org',
     'replacement_from': 'admin@huebhof.org'
 }
 # BILL_EMAILS = {
