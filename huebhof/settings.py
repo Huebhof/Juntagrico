@@ -16,6 +16,10 @@ DEBUG = os.environ.get("JUNTAGRICO_DEBUG", 'False')=='True'
 
 ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof.org']
 
+# Admin Settings
+ADMINS = (
+    ('Admin', os.environ.get('MEHALSGMUES_ADMIN_EMAIL')),
+)
 
 # Application definition
 
