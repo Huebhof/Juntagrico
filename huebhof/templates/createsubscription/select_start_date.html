@@ -16,7 +16,7 @@
                 {% trans "Info" %}:
                 {% blocktrans trimmed with sd=start_date|date:"d.m.Y" %}
                 Normalerweise ist der {{ v_subscription }}-Start der Start eines Geschäftsjahres. Das nächste
-                Startdatum wäre der <b>01.05.2023</b>.
+                Startdatum wäre der <b>01.06.2023</b>.
                 
                 {% endblocktrans %}
             </div>
@@ -29,7 +29,7 @@
                 </label>
                 <div class="col-md-9">
                     <label>
-                        <input type="text" name="start_date" value="01.05.2023" format="%d.%m.%y" class="form-control" required="" id="id_start_date"><input type="hidden" name="initial-start_date" value="2023-05-01" id="initial-id_start_date">
+                        <input type="text" name="start_date" value="01.06.2023" format="%d.%m.%y" class="form-control" required="" id="id_start_date"><input type="hidden" name="initial-start_date" value="2023-05-01" id="initial-id_start_date">
                         {# {{ subscriptionform.start_date }} muss nach 01.05.2023 wieder aktiviert werden#}
                         {% blocktrans trimmed %}
                         Gilt nur insofern 1 {{ v_subscription }}
