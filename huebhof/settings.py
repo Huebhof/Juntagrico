@@ -193,7 +193,7 @@ External Documents
 # BUSINESS_REGULATIONS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your business regulations document
 # BYLAWS = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your bylaws document
 # FAQ_DOC = "https://huebhof.org/wp-content/uploads/2022/11/Huebhof2023_News_1.pdf" # URL to your FAQ document
-EXTRA_SUB_INFO = "https://huebhof.org/wp-content/uploads/2023/01/Abovertrag-Ernteanteil-Gemuese.pdf" # If you use extra subscriptions this describes the URL to the document describing them
+EXTRA_SUB_INFO = "https://huebhof.org/wp-content/uploads/2023/07/Abovertrag_Huebhof.pdf" # If you use extra subscriptions this describes the URL to the document describing them
 # ACTIVITY_AREA_INFO = "" # URL to your document describing your activity areas
 
 """
