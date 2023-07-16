@@ -279,3 +279,9 @@ FROM_FILTER = {
 # BILL_EMAILS = {
 #     'b_sub': 'huebmails/bill_notification.txt',
 # }
+
+DEFAULT_MAILER = 'juntagrico.util.mailer.batch.Mailer'
+BATCH_MAILER = {
+    'batch_size': 39,
+    'wait_time': 65
+}
