@@ -247,6 +247,14 @@ IMAGES = {'status_100': '/static/huebhof/img/karotte_voll.png',
     'single_empty': '/static/huebhof/img/karotte_leer.png',
     'single_core': '/static/juntagrico/img/single_core.png',
     'core': '/static/juntagrico/img/core.png'}
+
+TIME_ZONE = 'Europe/Zurich'
+USE_TZ = True
+
+"""
+EMAIL
+"""
+
 MAIL_TEMPLATE = "mails/email.html"
 EMAILS = {
     'welcome': 'huebmails/welcome_mail.txt',
@@ -271,5 +279,3 @@ FROM_FILTER = {
 # BILL_EMAILS = {
 #     'b_sub': 'huebmails/bill_notification.txt',
 # }
-TIME_ZONE = 'Europe/Zurich'
-USE_TZ = True
