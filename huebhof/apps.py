@@ -11,7 +11,7 @@ class HuebhofConfig(AppConfig):
 
         def agb_label():
             documents = {
-                'den Abovertrag': Config.extra_sub_info,
+                'die Vereinbarung für einen Ernteanteil': Config.extra_sub_info,
             }
             documents_html = []
             for text, link in documents.items():
