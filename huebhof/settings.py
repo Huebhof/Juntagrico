@@ -245,7 +245,7 @@ IMAGES = {'status_100': '/static/huebhof/img/karotte_voll.png',
     'status_0': '/static/huebhof/img/karotte_leer.png',
     'single_full': '/static/huebhof/img/karotte_voll.png',
     'single_empty': '/static/huebhof/img/karotte_leer.png',
-    'single_core': '/static/juntagrico/img/single_core.png',
+    'single_core': '/static/juntagrico/img/kern.png',
     'core': '/static/juntagrico/img/core.png'}
 
 TIME_ZONE = 'Europe/Zurich'
