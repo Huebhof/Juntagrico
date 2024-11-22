@@ -31,11 +31,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
+    'huebhof',
     'juntagrico',
+    'fontawesomefree',
+    'import_export',
     'impersonate',
     'crispy_forms',
     'adminsortable2',
-    'huebhof',
     'polymorphic',
     'juntagrico_billing',
 ]
@@ -143,7 +145,7 @@ IMPERSONATE = {
     'REDIRECT_URL': '/my/profile',
 }
 
-LOGIN_REDIRECT_URL = "/my/home"
+LOGIN_REDIRECT_URL = "/"
 
 """
     File & Storage Settings
@@ -173,8 +175,13 @@ ORGANISATION_ADDRESS = {"name":"Huebhof GmbH",
             "city" : "Zürich",
             "extra" : ""}
 # ORGANISATION_PHONE = ""
-INFO_EMAIL = "solawi@huebhof.org"
-SERVER_URL = "www.huebhof.org"
+CONTACTS = {
+"general" : "solawi@huebhof.org"
+}
+ORGANISATION_WEBSITE = {
+    'name' : "www.huebhof.org",
+    'url': "https://www.huebhof.org"
+}
 
 """
 Accounting
