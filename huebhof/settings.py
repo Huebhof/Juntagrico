@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('JUNTAGRICO_SECRET_KEY')
 
 DEBUG = os.environ.get("JUNTAGRICO_DEBUG", 'False')=='True'
 
-ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof.org']
+ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof.org' ]
 
 # Admin Settings
 ADMINS = [
@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'huebhof',
+    'juntagrico_billing',
     'juntagrico',
     'fontawesomefree',
     'import_export',
@@ -39,11 +40,10 @@ INSTALLED_APPS = [
     'crispy_forms',
     'adminsortable2',
     'polymorphic',
-    'juntagrico_billing',
+    
 ]
 
 ROOT_URLCONF = 'huebhof.urls'
-
 DATABASES = {
     'default': {
         'ENGINE': os.environ.get('JUNTAGRICO_DATABASE_ENGINE','django.db.backends.sqlite3'), 
@@ -139,6 +139,14 @@ if DEBUG is True:
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+    },
+}
 LOCALE_PATHS = ('locale',)
 
 IMPERSONATE = {
@@ -162,6 +170,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 """
 JUNTAGRICO SETTINGS
 """
+
+IMPORT_EXPORT_EXPORT_PERMISSION_CODE = 'view'
 
 """
 Contact Information
