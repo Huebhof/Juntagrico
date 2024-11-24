@@ -59,7 +59,6 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'huebhof/templates')],  # location of your overriding templates
-        'APP_DIRS': True,  # Option 1: This is needed for addons that override templates
         'OPTIONS': {
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
