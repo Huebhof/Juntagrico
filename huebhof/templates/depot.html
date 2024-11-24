@@ -56,7 +56,7 @@
                 {% trans "Zugangsbeschreibung" %}
             </div>
             <div class="col-md-9">
-                {{ depot.access_information|safe }}
+                {{ depot.access_information|richtext|safe }}
             </div>
         </div>
     {% endif %}
