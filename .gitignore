@@ -7,3 +7,4 @@ static/*
 ssl/*
 /.project
 *.db
+.venv

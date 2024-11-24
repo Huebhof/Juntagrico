@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('JUNTAGRICO_SECRET_KEY')
 
 DEBUG = os.environ.get("JUNTAGRICO_DEBUG", 'False')=='True'
 
-ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof.org']
+ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof.org' ]
 
 # Admin Settings
 ADMINS = [
@@ -31,17 +31,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
+    'huebhof',
+    'juntagrico_billing',
     'juntagrico',
+    'fontawesomefree',
+    'import_export',
     'impersonate',
     'crispy_forms',
     'adminsortable2',
-    'huebhof',
     'polymorphic',
-    'juntagrico_billing',
+    
 ]
 
 ROOT_URLCONF = 'huebhof.urls'
-
 DATABASES = {
     'default': {
         'ENGINE': os.environ.get('JUNTAGRICO_DATABASE_ENGINE','django.db.backends.sqlite3'), 
@@ -57,6 +59,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'huebhof/templates')],  # location of your overriding templates
+        'APP_DIRS': True,  # Option 1: This is needed for addons that override templates
         'OPTIONS': {
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
@@ -137,13 +140,21 @@ if DEBUG is True:
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+    },
+}
 LOCALE_PATHS = ('locale',)
 
 IMPERSONATE = {
     'REDIRECT_URL': '/my/profile',
 }
 
-LOGIN_REDIRECT_URL = "/my/home"
+LOGIN_REDIRECT_URL = "/"
 
 """
     File & Storage Settings
@@ -161,6 +172,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 JUNTAGRICO SETTINGS
 """
 
+IMPORT_EXPORT_EXPORT_PERMISSION_CODE = 'view'
+
 """
 Contact Information
 """
@@ -173,8 +186,13 @@ ORGANISATION_ADDRESS = {"name":"Huebhof GmbH",
             "city" : "Zürich",
             "extra" : ""}
 # ORGANISATION_PHONE = ""
-INFO_EMAIL = "solawi@huebhof.org"
-SERVER_URL = "www.huebhof.org"
+CONTACTS = {
+"general" : "solawi@huebhof.org"
+}
+ORGANISATION_WEBSITE = {
+    'name' : "www.huebhof.org",
+    'url': "https://www.huebhof.org"
+}
 
 """
 Accounting
@@ -256,29 +274,11 @@ EMAIL
 """
 
 MAIL_TEMPLATE = "mails/email.html"
-EMAILS = {
-    'welcome': 'huebmails/welcome_mail.txt',
-    'co_welcome': 'huebmails/co_member_welcome.txt',
- #   'co_added': 'mails/added_mail.txt',
-    'password': 'huebmails/password_reset_mail.txt',
- #   'j_reminder': 'mails/job_reminder_mail.txt',
- #   'j_canceled': 'mails/job_canceled_mail.txt',
-    'confirm': 'huebmails/email_confirm.txt',
- #   'j_changed': 'mails/job_time_changed_mail.txt',
-    'j_signup': 'huebmails/job_signup_mail.txt',
- #   'd_changed': 'mails/depot_changed_mail.txt',
-    's_created': 'huebmails/share_created.txt',
- #   'n_sub': 'mails/new_subscription.txt',
- #   's_canceled': 'mails/subscription_canceled_mail.txt',
- #   'm_canceled': 'mails/membership_canceled_mail.txt',
-}
+
 FROM_FILTER = {
     'filter_expression': 'admin@huebhof\.org',
     'replacement_from': 'admin@huebhof.org'
 }
-# BILL_EMAILS = {
-#     'b_sub': 'huebmails/bill_notification.txt',
-# }
 
 DEFAULT_MAILER = 'juntagrico.util.mailer.batch.Mailer'
 BATCH_MAILER = {

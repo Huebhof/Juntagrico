@@ -1,0 +1,29 @@
+{% extends "mails/email.txt" %}
+{% load i18n %}
+{% load juntagrico.config %}
+{% block content %}
+{% config "organisation_name" as c_organisation_name %}
+
+{% blocktrans trimmed with jtg=job.type.get_name jt=job.time|date:"d.m.Y H:i" jet=job.end_time|date:"H:i" %}
+Du hast dich für den {{ c_organisation_name }}-Arbeitseinsatz "{{ jtg }}" am {{ jt }}-{{ jet }} eingeschrieben.
+{% endblocktrans %}
+
+{% trans "Details" %}:
+
+{% trans "Job" %}:
+{{ job.type.description|striptags }}
+
+{% trans "Zeit" %}:            {{ job.time |date:"d.m.Y H:i" }}-{{ job.end_time|date:"H:i" }}
+{% trans "Ort" %}:             {{ job.type.location }}
+
+{% trans "Teilnehmer:innen" %}:
+{{ job.participant_names }}
+
+{% blocktrans trimmed%}
+Wir freuen uns, dich zu sehen und zählen auf dich!
+{% endblocktrans %}
+
+{% blocktrans trimmed %}
+Bis bald und liebe Grüsse das {{ c_organisation_name }}-Team
+{% endblocktrans %}
+{% endblock %}

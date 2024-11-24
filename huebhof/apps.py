@@ -29,12 +29,3 @@ class HuebhofConfig(AppConfig):
         from juntagrico.forms import RegisterMemberForm
         RegisterMemberForm.agb_label = staticmethod(agb_label)
         
-        from juntagrico_billing.entity.bill import Bill
-        from juntagrico_billing.util.qrbill import calc_refnumber
-        import textwrap
-
-        def format_refnumber(bill):
-            num = calc_refnumber(bill)
-            return " ".join(textwrap.wrap(num.zfill(27), 5, initial_indent='   ')).strip()
-
-        Bill.refnumber = format_refnumber
