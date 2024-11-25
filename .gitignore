@@ -8,3 +8,4 @@ ssl/*
 /.project
 *.db
 .venv
+/dbimport/*
