@@ -83,9 +83,41 @@ More complex
 #Heroku
 
 you have to login to a heroku bash and setup the db and create the admin user as desbribed in the UNIX section
-    
-    
 
 
+python --version
+
+Virtuelle Umgebung erstellen und aktivieren:
+
+python -m venv venv
+venv\Scripts\activate
+
+requirements installieren und anzeigen:
+
+pip install -r requirements.txt
+pip list
+
+setuptools installieren und anzeigen:
+
+pip install setuptools
+pip show setuptools
+
+juntagrico DB migrieren:
+
+python manage.py migrate
+
+Umgebungsvariablen setzten:
+
+$env:JUNTAGRICO_SECRET_KEY = "fake"
+set JUNTAGRICO_SECRET_KEY=fake
+
+$env:JUNTAGRICO_DEBUG= "True"
+set JUNTAGRICO_DEBUG=True
+
+Server starten:
+
+python manage.py runserver
+
+http://localhost:8000/
 
 
