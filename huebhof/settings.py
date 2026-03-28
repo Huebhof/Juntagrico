@@ -128,7 +128,7 @@ WHITELIST_EMAILS = ['admin@huebhof.org']
 def whitelist_email_from_env(var_env_name):
     email = os.environ.get(var_env_name)
     if email:
-        WHITELIST_EMAILS.append(email.replace('@gmail.com', '(\+\S+)?@gmail.com'))
+        WHITELIST_EMAILS.append(email.replace('@gmail.com', r'(\+\S+)?@gmail.com'))
 
 
 if DEBUG is True:
@@ -267,7 +267,7 @@ EMAIL
 """
 
 FROM_FILTER = {
-    'filter_expression': 'admin@huebhof\.org',
+    'filter_expression': r'admin@huebhof\.org',
     'replacement_from': 'admin@huebhof.org'
 }
 
