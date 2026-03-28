@@ -3,18 +3,17 @@ Django settings for huebhof project.
 """
 
 import os
+from juntagrico import defaults
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('JUNTAGRICO_SECRET_KEY')
 
 DEBUG = os.environ.get("JUNTAGRICO_DEBUG", 'False')=='True'
 
-ALLOWED_HOSTS = ['huebhof.juntagrico.science', 'localhost', 'my.huebhof.org', 'huebhof-staging.juntagrico.science']
+ALLOWED_HOSTS = ['huebhof.juntagrico.science','127.0.0.1', 'localhost', 'my.huebhof.org', 'huebhof-staging.juntagrico.science']
 
 # Admin Settings
 ADMINS = [
@@ -30,17 +29,18 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.admin',
+    'juntagrico.apps.JuntagricoAdminConfig',
     'huebhof',
     'juntagrico_billing',
     'juntagrico',
-    'fontawesomefree',
     'import_export',
     'impersonate',
     'crispy_forms',
     'adminsortable2',
     'polymorphic',
-    
+    'crispy_bootstrap4',
+    'django_select2',
+    'djrichtextfield',    
 ]
 
 ROOT_URLCONF = 'huebhof.urls'
@@ -85,6 +85,8 @@ WSGI_APPLICATION = 'huebhof.wsgi.application'
 
 LANGUAGE_CODE = 'de'
 
+DJRICHTEXTFIELD_CONFIG = defaults.richtextfield_config(LANGUAGE_CODE)
+
 SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
@@ -120,8 +122,6 @@ EMAIL_HOST_PASSWORD = os.environ.get('JUNTAGRICO_EMAIL_PASSWORD')
 EMAIL_PORT = int(os.environ.get('JUNTAGRICO_EMAIL_PORT', '25'))
 EMAIL_USE_TLS = os.environ.get('JUNTAGRICO_EMAIL_TLS', 'False')=='True'
 EMAIL_USE_SSL = os.environ.get('JUNTAGRICO_EMAIL_SSL', 'False')=='True'
-
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 WHITELIST_EMAILS = ['admin@huebhof.org']
 
@@ -266,14 +266,16 @@ USE_TZ = True
 EMAIL
 """
 
-MAIL_TEMPLATE = "mails/email.html"
-
 FROM_FILTER = {
     'filter_expression': 'admin@huebhof\.org',
     'replacement_from': 'admin@huebhof.org'
 }
 
-DEFAULT_MAILER = 'juntagrico.util.mailer.batch.Mailer'
+EMAIL_BACKEND = os.environ.get(
+    'JUNTAGRICO_EMAIL_BACKEND',
+    'juntagrico.backends.email.BatchEmailBackend'
+)
+
 BATCH_MAILER = {
     'batch_size': 39,
     'wait_time': 65
