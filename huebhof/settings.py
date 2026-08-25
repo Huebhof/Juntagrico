@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'juntagrico.apps.JuntagricoAdminConfig',
     'huebhof',
+    'huebhof_hueblikum',
     'juntagrico_billing',
     'juntagrico',
     'import_export',
@@ -280,3 +281,9 @@ BATCH_MAILER = {
     'batch_size': 39,
     'wait_time': 65
 }
+
+"""
+HUEBLIKUM EXPORT
+"""
+
+HUEBLIKUM_SYNC_TOKEN = os.environ.get('HUEBLIKUM_SYNC_TOKEN', '')
