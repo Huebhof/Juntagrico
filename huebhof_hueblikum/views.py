@@ -4,6 +4,7 @@ from django.conf import settings
 from django.http import HttpResponseForbidden, JsonResponse
 
 from juntagrico.entity.member import Member
+from juntagrico.entity.subs import Subscription
 
 
 def _authorized(request):
@@ -15,7 +16,10 @@ def _authorized(request):
 
 
 def members(request):
-    """Aktive Ernteanteil-Bezueger (= Vereinsmitglieder) fuer die hueblikum-App.
+    """Haupt-Ernteanteil-BezieherInnen (= Vereinsmitglieder) fuer die hueblikum-App.
+
+    Nur die primary_member von aktiven Subscriptions, nicht alle Mit-BezieherInnen
+    eines Ernteanteils - nur Haupt-BezieherInnen sind automatisch Vereinsmitglieder.
 
     Nur GET, geschuetzt durch ein statisches Bearer-Token (HUEBLIKUM_SYNC_TOKEN).
     """
@@ -32,6 +36,6 @@ def members(request):
             'addr_zipcode': member.addr_zipcode,
             'addr_location': member.addr_location,
         }
-        for member in Member.objects.has_active_subscription()
+        for member in Member.objects.filter(subscription_primary__in=Subscription.objects.active()).distinct()
     ]
     return JsonResponse({'members': data})

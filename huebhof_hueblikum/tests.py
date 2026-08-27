@@ -40,10 +40,10 @@ class MembersEndpointTest(TestCase):
             )
         self.assertEqual(response.status_code, 403)
 
-    def test_valid_token_returns_active_members(self):
+    def test_valid_token_returns_primary_members(self):
         member = make_member('active@example.com')
         with mock.patch(
-            'huebhof_hueblikum.views.Member.objects.has_active_subscription',
+            'huebhof_hueblikum.views.Member.objects.filter',
             return_value=Member.objects.filter(pk=member.pk),
         ):
             response = self.client.get(
@@ -58,10 +58,13 @@ class MembersEndpointTest(TestCase):
         self.assertEqual(entry['first_name'], 'first_name')
         self.assertEqual(entry['addr_location'], 'Zürich')
 
-    def test_inactive_members_excluded(self):
-        make_member('inactive@example.com')
+    def test_co_members_without_own_subscription_excluded(self):
+        # Mit-BezieherInnen desselben Ernteanteils, die nicht selbst
+        # primary_member sind, duerfen hier nicht auftauchen - nur die
+        # Haupt-BezieherIn ist automatisch Vereinsmitglied.
+        make_member('co-member@example.com')
         with mock.patch(
-            'huebhof_hueblikum.views.Member.objects.has_active_subscription',
+            'huebhof_hueblikum.views.Member.objects.filter',
             return_value=Member.objects.none(),
         ):
             response = self.client.get(
