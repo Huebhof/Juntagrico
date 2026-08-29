@@ -56,7 +56,8 @@ class MembersEndpointTest(TestCase):
         self.assertEqual(entry['juntagrico_id'], member.id)
         self.assertEqual(entry['email'], 'active@example.com')
         self.assertEqual(entry['first_name'], 'first_name')
-        self.assertEqual(entry['addr_location'], 'Zürich')
+        # Adresse wird bewusst nicht exportiert (Datenminimierung, siehe views.py).
+        self.assertNotIn('addr_location', entry)
 
     def test_co_members_without_own_subscription_excluded(self):
         # Mit-BezieherInnen desselben Ernteanteils, die nicht selbst
