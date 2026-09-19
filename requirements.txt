@@ -1,6 +1,6 @@
 juntagrico~=2.0.0
 juntagrico-billing~=2.0.0
 gunicorn~=25.1.0
-psycopg[binary]>=3.1.8,<3.3
+psycopgpsycopg>=3.1.8
 setuptools<82
 requests>=2.31,<3
