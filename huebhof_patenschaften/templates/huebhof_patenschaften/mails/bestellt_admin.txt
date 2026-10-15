@@ -1,0 +1,13 @@
+{% extends "mails/email.txt" %}
+{% load i18n juntagrico.config patenschaften %}
+{% block content %}
+{% config "currency" as c_currency %}
+{% trans "Hallo" %}
+
+{% blocktrans with m=member %}{{ m }} hat soeben folgende Patenschaft(en) bestellt{% endblocktrans %}:
+{% for p in patenschaften %}- {{ p.typ.name }}: {{ c_currency }} {{ p.jahresbeitrag|chf }}{% if not p.aktiviert_am %} ({% trans "noch nicht aktiviert" %}){% endif %}
+{% endfor %}
+{% trans "Total pro Jahr" %}: {{ c_currency }} {{ summe|chf }}
+
+{{ serverurl }}{% url 'patenschaften-manage' %}?status=bestellt
+{% endblock %}

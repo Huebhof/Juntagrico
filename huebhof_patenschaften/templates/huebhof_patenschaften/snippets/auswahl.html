@@ -1,0 +1,28 @@
+{% load i18n patenschaften juntagrico.config %}
+{% config "currency" as c_currency %}
+{% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>
+{% endif %}
+<div class="row">
+    {% for typ, field in form.zeilen %}
+        <div class="col-md-6 mb-3">
+            <div class="card h-100 patenschaft-typ">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ typ.name }}</h5>
+                    {% if typ.beschreibung %}
+                        <div class="card-text mb-3">{{ typ.beschreibung|linebreaks }}</div>
+                    {% endif %}
+                    <div class="mt-auto">
+                        <p class="mb-2"><strong>{{ c_currency }} {{ typ.jahresbeitrag|chf }}</strong> {% trans "pro Jahr" %}</p>
+                        <label for="{{ field.id_for_label }}" class="sr-only">{% trans "Anzahl" %} {{ typ.name }}</label>
+                        <div class="input-group" style="max-width: 11rem;">
+                            <div class="input-group-prepend"><span class="input-group-text">{% trans "Anzahl" %}</span></div>
+                            {{ field }}
+                        </div>
+                        {% if field.errors %}<div class="text-danger small">{{ field.errors|join:" " }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>

@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'juntagrico.apps.JuntagricoAdminConfig',
     'huebhof',
     'huebhof_hueblikum',
+    'huebhof_patenschaften',
     'juntagrico_billing',
     'juntagrico',
     'import_export',
@@ -287,3 +288,10 @@ HUEBLIKUM EXPORT
 """
 
 HUEBLIKUM_SYNC_TOKEN = os.environ.get('HUEBLIKUM_SYNC_TOKEN', '')
+
+"""
+PATENSCHAFTEN
+"""
+
+SIGNUP_MANAGER = 'huebhof_patenschaften.signup.PatenschaftSignupManager'
+PATENSCHAFTEN_AUTO_AKTIVIEREN = True

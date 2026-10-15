@@ -1,0 +1,9 @@
+{% extends "mails/email.txt" %}
+{% load i18n %}
+{% block content %}
+{% blocktrans with fn=member.first_name %}Hallo {{ fn }}{% endblocktrans %}
+
+{% if patenschaft.aktiviert_am %}{% blocktrans with t=patenschaft.typ.name e=patenschaft.ende|date:"d.m.Y" %}Deine Patenschaft "{{ t }}" ist gekündigt und läuft noch bis am {{ e }}.{% endblocktrans %}{% else %}{% blocktrans with t=patenschaft.typ.name %}Deine Bestellung der Patenschaft "{{ t }}" wurde storniert.{% endblocktrans %}{% endif %}
+
+{% trans "Herzlichen Dank für deine Unterstützung!" %}
+{% endblock %}

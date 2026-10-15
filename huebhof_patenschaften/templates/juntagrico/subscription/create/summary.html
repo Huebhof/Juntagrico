@@ -1,0 +1,20 @@
+{% extends "juntagrico/subscription/create/summary.html" %}
+{% load i18n patenschaften juntagrico.config %}
+
+{% block comment %}
+    {% url 'cs-patenschaften' as patenschaften_url %}
+    {% if patenschaften is not None %}
+        {% config "currency" as c_currency %}
+        {% patenschaften_auswahl patenschaften as gewaehlte_patenschaften %}
+        <h4>{% trans "Patenschaften" %} <a href="{{ patenschaften_url }}?mod" class="edit"><i class="bi bi-pencil-square"></i></a></h4>
+        <p>
+            {% for z in gewaehlte_patenschaften %}
+                {{ z.anzahl }} &times; {{ z.typ.name }}: {{ c_currency }} {{ z.summe|chf }} {% trans "pro Jahr" %}
+                {% if not forloop.last %}<br>{% endif %}
+            {% empty %}
+                {% trans "Keine Patenschaft" %}
+            {% endfor %}
+        </p>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

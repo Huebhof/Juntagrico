@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load i18n patenschaften juntagrico.config %}
+
+{% block page_title %}
+    <h3>{% trans "Meine Patenschaften" %}</h3>
+{% endblock %}
+
+{% block content %}
+    {% config "currency" as c_currency %}
+
+    <div class="row mb-5">
+        <div class="col-md-12">
+            {% if laufend %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Patenschaft" %}</th>
+                            <th>{% trans "Jahresbeitrag" %}</th>
+                            <th>{% trans "Seit" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in laufend %}
+                            <tr>
+                                <td>{{ p.typ.name }}</td>
+                                <td>{{ c_currency }} {{ p.jahresbeitrag|chf }}</td>
+                                <td>{{ p.aktiviert_am|default:p.bestellt_am|date:"d.m.Y" }}</td>
+                                <td>
+                                    {% if p.status == 'gekuendigt' %}
+                                        <span class="badge badge-warning">{% blocktrans with e=p.ende|date:"d.m.Y" %}Gekündigt, läuft bis {{ e }}{% endblocktrans %}</span>
+                                    {% elif p.status == 'bestellt' %}
+                                        <span class="badge badge-info">{% trans "Bestellt, wird geprüft" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-success">{% trans "Aktiv" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-right">
+                                    {% if p.kann_gekuendigt_werden %}
+                                        <form method="post" action="{% url 'patenschaften-kuendigen' p.id %}" class="d-inline patenschaft-kuendigen"
+                                              data-confirm="{% if p.status == 'bestellt' %}{% trans 'Bestellung stornieren?' %}{% else %}{% blocktrans with e=naechstes_ende|date:'d.m.Y' %}Patenschaft per {{ e }} kündigen?{% endblocktrans %}{% endif %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                {% if p.status == 'bestellt' %}{% trans "Stornieren" %}{% else %}{% trans "Kündigen" %}{% endif %}
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>{% trans "Total pro Jahr" %}</th>
+                            <th>{{ c_currency }} {{ jahressumme|chf }}</th>
+                            <th colspan="3"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+                <p class="text-muted small">
+                    {% blocktrans trimmed with e=naechstes_ende|date:"d.m.Y" %}
+                        Eine Kündigung gilt per Ende des Geschäftsjahres. Wenn du heute kündigst, läuft die Patenschaft bis am {{ e }}.
+                    {% endblocktrans %}
+                </p>
+            {% else %}
+                <p>{% trans "Du hast zurzeit keine Patenschaft." %}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if hat_typen %}
+        <h4>{% if laufend %}{% trans "Weitere Patenschaft übernehmen" %}{% else %}{% trans "Patenschaft übernehmen" %}{% endif %}</h4>
+        <p>
+            {% trans "Mit einer Patenschaft unterstützt du den Hof zusätzlich mit einem jährlichen Beitrag." %}
+            {% if info_url %}<a href="{{ info_url }}" target="_blank">{% trans "Mehr erfahren" %}</a>{% endif %}
+        </p>
+        <form method="post" action="">
+            {% csrf_token %}
+            {% include "huebhof_patenschaften/snippets/auswahl.html" %}
+            <button type="submit" class="btn btn-success">{% trans "Verbindlich bestellen" %}</button>
+        </form>
+    {% endif %}
+
+    {% if vergangen %}
+        <h4 class="mt-5">{% trans "Frühere Patenschaften" %}</h4>
+        <ul class="text-muted">
+            {% for p in vergangen %}
+                <li>{{ p.typ.name }}: {{ p.get_status_display }} {% if p.ende %}{% trans "per" %} {{ p.ende|date:"d.m.Y" }}{% endif %}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        document.querySelectorAll('form.patenschaft-kuendigen').forEach(function (f) {
+            f.addEventListener('submit', function (e) {
+                if (!window.confirm(f.dataset.confirm)) { e.preventDefault(); }
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "juntagrico/menu/user.html" %}
+{% load i18n juntagrico.common %}
+{% block extend %}
+    <li class="nav-item">
+        <a class="nav-link {{ request|activemenu:"patenschaften" }}" href="{% url 'patenschaften-mine' %}">
+            {% trans "Patenschaften" %}
+        </a>
+    </li>
+    {{ block.super }}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "juntagrico/menu/admin.html" %}
+{% load i18n %}
+{% block extend %}
+    {% if perms.huebhof_patenschaften.view_patenschaft or perms.huebhof_patenschaften.change_patenschaft %}
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'patenschaften-manage' %}">
+                {% trans "Patenschaften" %}
+            </a>
+        </li>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

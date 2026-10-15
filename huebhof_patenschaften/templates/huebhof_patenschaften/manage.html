@@ -1,0 +1,113 @@
+{% extends "juntagrico/manage/base.html" %}
+{% load i18n patenschaften juntagrico.config %}
+
+{% block page_title %}
+    <h3>{% trans "Patenschaften" %}</h3>
+{% endblock %}
+
+{% block content %}
+    {% config "currency" as c_currency %}
+    <div class="row mt-3">
+        <div class="col-lg-8">
+            <table class="table table-sm patenschaften-uebersicht">
+                <thead>
+                    <tr>
+                        <th>{% trans "Typ" %}</th>
+                        <th class="text-right">{% trans "Bestellt" %}</th>
+                        <th class="text-right">{% trans "Aktiv" %}</th>
+                        <th class="text-right">{% trans "Gekündigt" %}</th>
+                        <th class="text-right">{% trans "Jahresbeiträge laufend" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for z in uebersicht %}
+                        <tr>
+                            <td>{{ z.typ.name }}{% if not z.typ.sichtbar %} <span class="text-muted">({% trans "nicht bestellbar" %})</span>{% endif %}</td>
+                            <td class="text-right">{{ z.bestellt }}</td>
+                            <td class="text-right">{{ z.aktiv }}</td>
+                            <td class="text-right">{{ z.gekuendigt }}</td>
+                            <td class="text-right">{{ c_currency }} {{ z.summe|chf }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>{% trans "Total" %}</th>
+                        <th class="text-right">{{ total.bestellt }}</th>
+                        <th class="text-right">{{ total.aktiv }}</th>
+                        <th class="text-right">{{ total.gekuendigt }}</th>
+                        <th class="text-right">{{ c_currency }} {{ total.summe|chf }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+            <p class="small">
+                <a href="{% url 'admin:huebhof_patenschaften_patenschafttyp_changelist' %}">{% trans "Patenschaftstypen verwalten" %}</a>
+                &middot;
+                <a href="{% url 'admin:huebhof_patenschaften_patenschaft_export' %}">{% trans "Export (Excel/CSV)" %}</a>
+            </p>
+        </div>
+    </div>
+
+    <ul class="nav nav-pills mb-2">
+        {% for key, label in status_filter %}
+            <li class="nav-item">
+                <a class="nav-link{% if key == status %} active{% endif %}" href="?status={{ key }}">{{ label }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    {{ block.super }}
+{% endblock %}
+
+{% block list %}
+    {% config "currency" as c_currency %}
+    <table id="filter-table" class="list table">
+        <thead>
+            <tr>
+                <th class="filter">{% trans "Pat:in" %}</th>
+                <th class="filter">{% trans "Typ" %}</th>
+                <th>{% trans "Jahresbeitrag" %}</th>
+                <th class="filter">{% trans "Status" %}</th>
+                <th>{% trans "Bestellt am" %}</th>
+                <th>{% trans "Aktiviert am" %}</th>
+                <th>{% trans "Gekündigt am" %}</th>
+                <th>{% trans "Ende" %}</th>
+                <th class="filter">{% trans "Notizen" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in object_list %}
+                <tr>
+                    <td>
+                        {% include 'juntagrico/manage/member/snippets/display_linked.html' with member=p.member %}
+                        <div class="d-none patenschaft_id{% if p.status == 'bestellt' and not p.aktiviert_am %} aktivierbar{% endif %}">
+                            {{ p.id }}{# spaces are required here #}
+                        </div>
+                    </td>
+                    <td><a href="{% url 'admin:huebhof_patenschaften_patenschaft_change' p.id %}?next={{ request.get_full_path|urlencode }}">{{ p.typ.name }}</a></td>
+                    <td data-order="{{ p.jahresbeitrag }}">{{ c_currency }} {{ p.jahresbeitrag|chf }}</td>
+                    <td>{{ p.get_status_display }}</td>
+                    <td data-order="{{ p.bestellt_am|date:'Y-m-d' }}">{{ p.bestellt_am|date:"d.m.Y" }}</td>
+                    <td data-order="{{ p.aktiviert_am|date:'Y-m-d' }}">{{ p.aktiviert_am|date:"d.m.Y" }}</td>
+                    <td data-order="{{ p.gekuendigt_am|date:'Y-m-d' }}">{{ p.gekuendigt_am|date:"d.m.Y" }}</td>
+                    <td data-order="{{ p.ende|date:'Y-m-d' }}">{{ p.ende|date:"d.m.Y" }}</td>
+                    <td>{{ p.notizen }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block datatable_constructor %}
+    {{ block.super }}
+    {% if perms.huebhof_patenschaften.change_patenschaft %}
+        config.layout.topStart.features.buttons.push(
+            id_action_button(
+                '<i class="bi bi-check2-circle"></i> {% trans "Aktivieren" %}',
+                '{% url "patenschaften-aktivieren" %}',
+                '{% csrf_token %}',
+                '.aktivierbar', 'ids',
+                ['{% trans "1 Patenschaft aktivieren?" %}', '{% trans "{count} Patenschaften aktivieren?" %}']
+            )
+        )
+    {% endif %}
+{% endblock %}

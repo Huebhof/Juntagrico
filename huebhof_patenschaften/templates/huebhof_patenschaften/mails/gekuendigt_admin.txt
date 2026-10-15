@@ -1,0 +1,9 @@
+{% extends "mails/email.txt" %}
+{% load i18n %}
+{% block content %}
+{% trans "Hallo" %}
+
+{% if patenschaft.aktiviert_am %}{% blocktrans with m=member t=patenschaft.typ.name e=patenschaft.ende|date:"d.m.Y" %}{{ m }} hat die Patenschaft "{{ t }}" gekündigt. Sie läuft bis am {{ e }}.{% endblocktrans %}{% else %}{% blocktrans with m=member t=patenschaft.typ.name %}{{ m }} hat die Bestellung der Patenschaft "{{ t }}" storniert.{% endblocktrans %}{% endif %}
+
+{{ serverurl }}{% url 'patenschaften-manage' %}?status=gekuendigt
+{% endblock %}
