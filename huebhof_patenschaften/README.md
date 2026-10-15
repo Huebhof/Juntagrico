@@ -22,7 +22,7 @@ Im Admin-Menü gibt es nach den Ernteanteilen das Aufklappmenü **Patenschaften*
 
 | Menüpunkt | Inhalt |
 |---|---|
-| **Aktive** | Kennzahlen pro Typ (bestellt, aktiv, gekündigt, Summe Jahresbeiträge) und Liste der Patenschaften. Filter: alle offenen, bestellt, aktiv, gekündigt, alle inkl. beendete. E-Mail an die ausgewählten Pat:innen, Sammelaktivierung, Export (Excel/CSV). Klick auf den Typ öffnet die einzelne Patenschaft. |
+| **Aktive** | Kennzahlen pro Typ (bestellt, aktiv, gekündigt, Summe Jahresbeiträge) und Liste der Patenschaften. Filter: aktiv (Standard), gekündigt (laufen noch), alle inkl. beendete. Bestellte, noch nicht aktive Patenschaften stehen unter "Pendente Änderungen". Werkzeugleiste: E-Mail an die ausgewählten Pat:innen, E-Mails kopieren, Knöpfe "Excel" und "CSV" (Export mit dem gewählten Statusfilter; Suche und Spaltenfilter werden nicht berücksichtigt). Klick auf den Typ öffnet die einzelne Patenschaft. |
 | **Pendente Änderungen** | Wie bei den Ernteanteilen: pro Mitglied die bestellten, noch nicht aktivierten Patenschaften (nach Bestelldatum gruppiert). Auswählen und "Ausgewählte anwenden" aktiviert sie auf das Änderungsdatum (Standard heute, einstellbar wie bei den Ernteanteilen). Kündigungen müssen nicht angewendet werden. |
 | **Patenschaftstypen** | Typen anlegen und bearbeiten (Name, Beschreibung, Jahresbeitrag, Bestellbar, Sortierung, Rechnungspositionstyp). Löschen nur ohne Patenschaften, sonst "Bestellbar" ausschalten. |
 | **Patenschaft erfassen** | Für Bestellungen, die nicht über den Mitgliederbereich kommen: Mitglied, Typ, Anzahl, Jahresbeitrag (leer = Preis des Typs), Bestell- und Aktivierungsdatum (leer = bleibt "bestellt"), Notizen, optional Bestätigungsmail. "Erfassen und weitere erfassen" für mehrere nacheinander. |
@@ -74,8 +74,8 @@ Wie in juntagrico werden die Rechte in der **Datenverwaltung** vergeben, am best
 
 | Berechtigung | Erlaubt |
 |---|---|
-| `huebhof_patenschaften.view_patenschaft` | Menü "Patenschaften → Aktive": Kennzahlen und Liste ansehen, E-Mail an Pat:innen (zusätzlich `juntagrico.can_send_mails` nötig). |
-| `huebhof_patenschaften.change_patenschaft` | Zusätzlich "Pendente Änderungen" (aktivieren), einzelne Patenschaften bearbeiten und kündigen, Sammelaktivierung. |
+| `huebhof_patenschaften.view_patenschaft` | Menü "Patenschaften → Aktive": Kennzahlen und Liste ansehen, exportieren, E-Mail an Pat:innen (zusätzlich `juntagrico.can_send_mails` nötig). |
+| `huebhof_patenschaften.change_patenschaft` | Zusätzlich "Pendente Änderungen" (aktivieren), einzelne Patenschaften bearbeiten und kündigen. |
 | `huebhof_patenschaften.add_patenschaft` | Menü "Patenschaft erfassen". Ohne `view_`/`change_patenschaft` bleibt man nach dem Erfassen im Formular. |
 | `huebhof_patenschaften.delete_patenschaft` | Patenschaften im Django-Admin löschen (normalerweise kündigen statt löschen). |
 | `huebhof_patenschaften.view_patenschafttyp` | Menü "Patenschaftstypen": Liste ansehen. |
@@ -88,7 +88,7 @@ Wie in juntagrico werden die Rechte in der **Datenverwaltung** vergeben, am best
 
 Das Menü "Patenschaften" erscheint, sobald jemand eines der Rechte zum Ansehen, Erfassen oder Verwalten hat; es zeigt nur die erlaubten Unterpunkte. Links in den Listen (z.B. auf eine einzelne Patenschaft) erscheinen nur, wenn die Zielseite erlaubt ist.
 
-Der **Export (Excel/CSV)** und das Inline beim Mitglied laufen über den Django-Admin und brauchen deshalb zusätzlich den **Status "Mitarbeiter" (Staff)**.
+Der **Export** in der Liste braucht nur `view_patenschaft`. Das Inline beim Mitglied läuft über den Django-Admin und braucht deshalb zusätzlich den **Status "Mitarbeiter" (Staff)**.
 
 ### Vorschlag für Gruppen
 

@@ -1,5 +1,5 @@
 {% extends "juntagrico/manage/base.html" %}
-{% load i18n patenschaften juntagrico.config %}
+{% load i18n l10n patenschaften juntagrico.config %}
 
 {% block page_title %}
     <h3>{% trans "Patenschaften" %}</h3>
@@ -40,11 +40,6 @@
                     </tr>
                 </tfoot>
             </table>
-            {% if request.user.is_staff %}{# Export läuft über den Django-Admin #}
-                <p>
-                    <a href="{% url 'admin:huebhof_patenschaften_patenschaft_export' %}">{% trans "Export (Excel/CSV)" %}</a>
-                </p>
-            {% endif %}
         </div>
     </div>
 
@@ -79,12 +74,9 @@
                 <tr>
                     <td>
                         {% include 'juntagrico/manage/member/snippets/display_linked.html' with member=p.member %}
-                        <div class="d-none patenschaft_id{% if p.status == 'bestellt' and not p.aktiviert_am %} aktivierbar{% endif %}">
-                            {{ p.id }}{# spaces are required here #}
-                        </div>
                     </td>
                     <td>{% if perms.huebhof_patenschaften.change_patenschaft %}<a href="{% url 'patenschaften-bearbeiten' p.id %}">{{ p.typ.name }}</a>{% else %}{{ p.typ.name }}{% endif %}</td>
-                    <td data-order="{{ p.jahresbeitrag }}">{{ c_currency }} {{ p.jahresbeitrag|chf }}</td>
+                    <td data-order="{{ p.jahresbeitrag|unlocalize }}">{{ c_currency }} {{ p.jahresbeitrag|chf }}</td>
                     <td>{{ p.get_status_display }}</td>
                     <td data-order="{{ p.bestellt_am|date:'Y-m-d' }}">{{ p.bestellt_am|date:"d.m.Y" }}</td>
                     <td data-order="{{ p.aktiviert_am|date:'Y-m-d' }}">{{ p.aktiviert_am|date:"d.m.Y" }}</td>
@@ -99,15 +91,12 @@
 
 {% block datatable_constructor %}
     {{ block.super }}
-    {% if perms.huebhof_patenschaften.change_patenschaft %}
-        config.layout.topStart.features.buttons.push(
-            id_action_button(
-                '<i class="bi bi-check2-circle"></i> {% trans "Aktivieren" %}',
-                '{% url "patenschaften-aktivieren" %}',
-                '{% csrf_token %}',
-                '.aktivierbar', 'ids',
-                ['{% trans "1 Patenschaft aktivieren?" %}', '{% trans "{count} Patenschaften aktivieren?" %}']
-            )
-        )
-    {% endif %}
+    // Export der Liste mit dem aktuellen Statusfilter (serverseitig, gleiche Spalten wie im Django-Admin).
+    // Zwei einfache Knöpfe statt Aufklappmenü: das Menü würde in der fixierten Werkzeugleiste verdeckt.
+    {% for dateiformat, label in export_knoepfe %}
+        config.layout.topStart.features.buttons.push({
+            text: '<i class="bi bi-download"></i> {{ label }}',
+            action: function () { window.location = '{% url "patenschaften-export" %}?status={{ status }}&format={{ dateiformat }}' }
+        })
+    {% endfor %}
 {% endblock %}

@@ -190,7 +190,7 @@ class MitgliederbereichTests(PatenschaftTestCase):
         self.assertEqual(storniert.status, 'storniert')
         # Admin aktiviert
         self.client.force_login(self.admin.user)
-        response = self.client.post(reverse('patenschaften-aktivieren'), {'ids': str(p.id)})
+        response = self.client.post(reverse('patenschaften-pendent-anwenden'), {'patenschaften[]': [p.id]})
         self.assertEqual(response.status_code, 302)
         p.refresh_from_db()
         self.assertEqual(p.status, 'aktiv')
@@ -201,7 +201,7 @@ class AdminTests(PatenschaftTestCase):
         Patenschaft.objects.create(member=self.member, typ=self.baum, aktiviert_am=datetime.date.today())
         Patenschaft.objects.create(member=self.member2, typ=self.biene)
         self.client.force_login(self.admin.user)
-        for status in ('offen', 'bestellt', 'aktiv', 'gekuendigt', 'alle'):
+        for status in ('aktiv', 'gekuendigt', 'alle', 'unbekannt'):
             response = self.client.get(reverse('patenschaften-manage'), {'status': status})
             self.assertEqual(response.status_code, 200)
         response = self.client.get(reverse('patenschaften-manage'))
@@ -471,7 +471,6 @@ class BerechtigungTests(PatenschaftTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, reverse('patenschaften-bearbeiten', args=[self.p.id]))
         self.assertNotContains(response, reverse('patenschaften-typ', args=[self.baum.id]))
-        self.assertNotContains(response, 'Export (Excel/CSV)')  # kein Staff
         self.assertErlaubt(reverse('patenschaften-bearbeiten', args=[self.p.id]), False)
         self.assertErlaubt(reverse('patenschaften-erfassen'), False)
         self.assertErlaubt(reverse('patenschaften-typen'), False)
@@ -567,3 +566,41 @@ class PendentTests(PatenschaftTestCase):
         self.assertEqual(response.status_code, 403)
         self.a.refresh_from_db()
         self.assertEqual(self.a.status, 'bestellt')
+
+
+class ExportTests(PatenschaftTestCase):
+    def setUp(self):
+        Patenschaft.objects.create(member=self.member, typ=self.baum, aktiviert_am=datetime.date.today(), notizen='aktiv')
+        Patenschaft.objects.create(member=self.member2, typ=self.biene, notizen='nur bestellt')
+
+    def test_csv_mit_statusfilter(self):
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('patenschaften-export'), {'status': 'aktiv', 'format': 'csv'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('patenschaften_aktiv_', response['Content-Disposition'])
+        inhalt = response.content.decode()
+        self.assertIn('Baumpatenschaft', inhalt)
+        self.assertNotIn('nur bestellt', inhalt)
+
+    def test_excel(self):
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('patenschaften-export'), {'status': 'alle', 'format': 'xlsx'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.content.startswith(b'PK'))  # xlsx ist ein Zip-Archiv
+        self.assertTrue(response['Content-Disposition'].endswith('.xlsx"'))
+
+    def test_knopf_in_liste(self):
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('patenschaften-manage'), {'status': 'gekuendigt'})
+        self.assertContains(response, reverse('patenschaften-export') + '?status=gekuendigt&format=xlsx')
+        self.assertNotContains(response, reverse('admin:huebhof_patenschaften_patenschaft_export'))
+
+    def test_ansehen_reicht_ohne_staff(self):
+        user = self.member2.user
+        user.user_permissions.set(Permission.objects.filter(codename='view_patenschaft'))
+        self.client.force_login(user)
+        self.assertEqual(self.client.get(reverse('patenschaften-export')).status_code, 200)
+
+    def test_ohne_recht(self):
+        self.client.force_login(self.member.user)
+        self.assertNotEqual(self.client.get(reverse('patenschaften-export')).status_code, 200)

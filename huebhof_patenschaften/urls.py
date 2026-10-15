@@ -11,7 +11,7 @@ urlpatterns = [
          name='patenschaften-kuendigen'),
     # Administration
     path('manage/patenschaften/', views.PatenschaftenManageView.as_view(), name='patenschaften-manage'),
-    path('manage/patenschaften/aktivieren/', views.patenschaften_aktivieren, name='patenschaften-aktivieren'),
+    path('manage/patenschaften/export/', views.export, name='patenschaften-export'),
     path('manage/patenschaften/pendent/', views.pendent, name='patenschaften-pendent'),
     path('manage/patenschaften/pendent/anwenden/', views.pendent_anwenden, name='patenschaften-pendent-anwenden'),
     path('manage/patenschaften/erfassen/', views.erfassen, name='patenschaften-erfassen'),

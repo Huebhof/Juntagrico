@@ -1,8 +1,11 @@
+import datetime
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Q, Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
@@ -14,10 +17,16 @@ from juntagrico.view_decorators import highlighted_menu, using_change_date
 from juntagrico.views_subscription import SignupView
 
 from . import mailer, services
+from .admin import PatenschaftResource
 from .config import PatenschaftConfig
 from .forms import PatenschaftAuswahlForm, PatenschaftBearbeitenForm, PatenschaftBestellenForm, \
     PatenschaftErfassenForm, PatenschaftTypForm
 from .models import Patenschaft, PatenschaftTyp
+
+
+def any_permission_required(*perms):
+    """Wie permission_required, aber eine der Berechtigungen genügt."""
+    return user_passes_test(lambda u: any(u.has_perm(p) for p in perms))
 
 
 # ---------------------------------------------------------------- Bestellprozess
@@ -92,8 +101,7 @@ def patenschaft_kuendigen(request, patenschaft_id):
 # ---------------------------------------------------------------- Administration
 
 STATUS_FILTER = {
-    'offen': (_('Alle laufenden und bestellten'), lambda qs: qs.offen()),
-    'bestellt': (_('Bestellt, noch nicht aktiv'), lambda qs: qs.bestellt()),
+    # bestellte, noch nicht aktive Patenschaften: siehe "Pendente Änderungen"
     'aktiv': (_('Aktiv'), lambda qs: qs.aktiv()),
     'gekuendigt': (_('Gekündigt, laufen noch'), lambda qs: qs.gekuendigt()),
     'alle': (_('Alle inkl. beendete'), lambda qs: qs),
@@ -105,8 +113,8 @@ class PatenschaftenManageView(MultiplePermissionsRequiredMixin, ListView):
     template_name = 'huebhof_patenschaften/manage.html'
 
     def get_status(self):
-        status = self.request.GET.get('status', 'offen')
-        return status if status in STATUS_FILTER else 'offen'
+        status = self.request.GET.get('status', 'aktiv')
+        return status if status in STATUS_FILTER else 'aktiv'
 
     def get_queryset(self):
         qs = Patenschaft.objects.select_related('typ', 'member')
@@ -118,6 +126,7 @@ class PatenschaftenManageView(MultiplePermissionsRequiredMixin, ListView):
         context.update(
             status=self.get_status(),
             status_filter=[(k, v[0]) for k, v in STATUS_FILTER.items()],
+            export_knoepfe=[('xlsx', _('Excel')), ('csv', _('CSV'))],
         )
         # Kennzahlen pro Typ (bewusst in Python, kleine Datenmengen)
         zeilen = []
@@ -140,24 +149,28 @@ class PatenschaftenManageView(MultiplePermissionsRequiredMixin, ListView):
         return context
 
 
-@require_POST
-@permission_required('huebhof_patenschaften.change_patenschaft', raise_exception=True)
-def patenschaften_aktivieren(request):
-    ids = [i for i in request.POST.get('ids', '').replace('_', ',').split(',') if i.strip().isdigit()]
-    anzahl = 0
-    for p in Patenschaft.objects.bestellt().filter(id__in=ids):
-        p.aktivieren()
-        anzahl += 1
-    messages.success(request, _('{} Patenschaft(en) aktiviert.').format(anzahl))
-    return redirect(request.META.get('HTTP_REFERER') or 'patenschaften-manage')
+EXPORT_FORMATE = {
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'csv': 'text/csv; charset=utf-8',
+}
+
+
+@any_permission_required('huebhof_patenschaften.view_patenschaft', 'huebhof_patenschaften.change_patenschaft')
+def export(request):
+    """Export der Liste mit dem gewählten Statusfilter als Excel oder CSV (gleiche Spalten wie im Django-Admin)."""
+    status = request.GET.get('status')
+    status = status if status in STATUS_FILTER else 'aktiv'
+    dateiformat = request.GET.get('format') if request.GET.get('format') in EXPORT_FORMATE else 'xlsx'
+    qs = STATUS_FILTER[status][1](Patenschaft.objects.select_related('typ', 'member'))
+    daten = PatenschaftResource().export(queryset=qs).export(dateiformat)
+    if dateiformat == 'csv':
+        daten = '﻿' + daten  # BOM, damit Excel Umlaute richtig liest
+    response = HttpResponse(daten, content_type=EXPORT_FORMATE[dateiformat])
+    response['Content-Disposition'] = f'attachment; filename="patenschaften_{status}_{datetime.date.today()}.{dateiformat}"'
+    return response
 
 
 # ---------------------------------------------------------------- Verwaltung: Typen und Patenschaften erfassen
-
-def any_permission_required(*perms):
-    """Wie permission_required, aber eine der Berechtigungen genügt."""
-    return user_passes_test(lambda u: any(u.has_perm(p) for p in perms))
-
 
 @any_permission_required('huebhof_patenschaften.view_patenschafttyp', 'huebhof_patenschaften.change_patenschafttyp',
                          'huebhof_patenschaften.add_patenschafttyp')
