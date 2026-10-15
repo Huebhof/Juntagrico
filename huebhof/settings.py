@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'huebhof',
     'huebhof_hueblikum',
     'juntagrico_billing',
+    'huebhof_patenschaften',
     'juntagrico',
     'import_export',
     'impersonate',
@@ -287,3 +288,10 @@ HUEBLIKUM EXPORT
 """
 
 HUEBLIKUM_SYNC_TOKEN = os.environ.get('HUEBLIKUM_SYNC_TOKEN', '')
+
+"""
+PATENSCHAFTEN
+"""
+
+SIGNUP_MANAGER = 'huebhof_patenschaften.signup.PatenschaftSignupManager'
+PATENSCHAFTEN_AUTO_AKTIVIEREN = False  # wie bei den Ernteanteilen: Admins aktivieren manuell

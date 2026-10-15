@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block page_title %}
+    <h3>{% if typ %}{{ typ.name }}{% else %}{% trans "Neuer Patenschaftstyp" %}{% endif %}</h3>
+{% endblock %}
+
+{% block content %}
+    {% crispy form %}
+    {% if typ and perms.huebhof_patenschaften.delete_patenschafttyp and not typ.patenschaften.exists %}
+        <form method="POST" class="mt-4" onsubmit="return confirm('{% trans "Patenschaftstyp löschen?" %}')">
+            {% csrf_token %}
+            <button type="submit" name="loeschen" class="btn btn-outline-danger btn-sm">{% trans "Löschen" %}</button>
+        </form>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "juntagrico/signup/base.html" %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Patenschaft übernehmen" %}
+{% endblock %}
+
+{% block intro %}
+    <p>
+        {% blocktrans trimmed %}
+            Mit einer Patenschaft unterstützt du den Hof zusätzlich mit einem jährlichen Beitrag.
+            Patenschaften sind freiwillig und unabhängig von deinem Ernteanteil.
+            Du kannst auch mehrere übernehmen.
+        {% endblocktrans %}
+        {% if info_url %}<a href="{{ info_url }}" target="_blank">{% trans "Mehr erfahren" %}</a>{% endif %}
+    </p>
+{% endblock %}
+
+{% block content %}
+    <form method="post" action="">
+        {% csrf_token %}
+        {% include "huebhof_patenschaften/snippets/auswahl.html" %}
+        <p class="text-muted small">
+            {% trans "Wenn du keine Patenschaft möchtest, lass alle Felder auf 0 und fahre fort." %}
+        </p>
+        <div class="d-flex justify-content-between mt-3">
+            <a href="{% url 'cs-cancel' %}" class="btn btn-secondary">{% trans "Abbrechen" %}</a>
+            <button type="submit" class="btn btn-success">{% trans "Weiter" %}</button>
+        </div>
+    </form>
+{% endblock %}

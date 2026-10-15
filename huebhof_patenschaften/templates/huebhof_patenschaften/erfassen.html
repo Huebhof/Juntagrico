@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block page_title %}
+    <h3>{% trans "Patenschaft erfassen" %}</h3>
+{% endblock %}
+
+{% block content %}
+    <p>
+        {% trans "Für Bestellungen, die nicht über den Mitgliederbereich eingehen. Bei einer Anzahl grösser 1 wird pro Patenschaft ein eigener Eintrag erstellt." %}
+    </p>
+    {% crispy form %}
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    {{ beitraege|json_script:"patenschaft-beitraege" }}
+    <script type="text/javascript">
+        // Jahresbeitrag des gewählten Typs als Platzhalter anzeigen
+        $(function () {
+            const beitraege = JSON.parse(document.getElementById('patenschaft-beitraege').textContent);
+            $('#id_typ').on('change', function () {
+                $('#id_jahresbeitrag').attr('placeholder', beitraege[this.value] || '');
+            }).trigger('change');
+        });
+    </script>
+{% endblock %}
