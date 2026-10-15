@@ -535,6 +535,21 @@ class PendentTests(PatenschaftTestCase):
         self.assertContains(response, '2026-03-01')
         self.assertContains(response, 'href="%s"' % reverse('patenschaften-pendent'))  # Menüpunkt
 
+    def test_checkboxen_gehoeren_zum_formular(self):
+        """Regression: gleiche Nummer bei Mitglied und Patenschaft führte zu doppelten HTML-IDs,
+        die Checkboxen wurden dann nicht mitgeschickt."""
+        import re
+        self.client.force_login(self.admin.user)
+        html = self.client.get(reverse('patenschaften-pendent')).content.decode()
+        html = html[html.index('id="filter-table"'):]  # nur die Tabelle, das Menü kommt zweimal vor
+        ids = re.findall(r'\sid="([^"]+)"', html)
+        self.assertEqual(len(ids), len(set(ids)), 'doppelte HTML-IDs')
+        formulare = set(re.findall(r'<form[^>]*\sid="([^"]+)"', html))
+        checkboxen = re.findall(r'<input type="checkbox" form="([^"]+)"[^>]*name="patenschaften\[\]"', html)
+        self.assertTrue(checkboxen)
+        for form_id in checkboxen:
+            self.assertIn(form_id, formulare)
+
     def test_ausgewaehlte_anwenden(self):
         self.client.force_login(self.admin.user)
         url = reverse('patenschaften-pendent')
