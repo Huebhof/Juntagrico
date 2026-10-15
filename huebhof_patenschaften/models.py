@@ -26,6 +26,10 @@ class PatenschaftTyp(models.Model):
         _('Bestellbar'), default=True,
         help_text=_('Nur bestellbare Patenschaften werden bei der Anmeldung und im Mitgliederbereich angeboten.'))
     sortierung = models.PositiveIntegerField(_('Sortierung'), default=0)
+    rechnungsposition = models.ForeignKey(
+        'juntagrico_billing.BillItemType', verbose_name=_('Rechnungspositionstyp'),
+        null=True, blank=True, on_delete=models.PROTECT, related_name='patenschaft_typen',
+        help_text=_('Bestimmt das Buchungskonto auf der Rechnung. Leer: Rechnungspositionstyp "Patenschaft".'))
 
     objects = PatenschaftTypQuerySet.as_manager()
 
@@ -78,6 +82,9 @@ class Patenschaft(models.Model):
     gekuendigt_am = models.DateField(_('Gekündigt am'), null=True, blank=True)
     ende = models.DateField(_('Ende'), null=True, blank=True)
     notizen = models.TextField(_('Notizen'), blank=True)
+    rechnungspositionen = models.ManyToManyField(
+        'juntagrico_billing.BillItem', verbose_name=_('Rechnungspositionen'), blank=True,
+        related_name='patenschaften')
 
     objects = PatenschaftQuerySet.as_manager()
 

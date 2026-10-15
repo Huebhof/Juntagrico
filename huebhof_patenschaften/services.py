@@ -28,6 +28,15 @@ def bestellen(member, auswahl, date=None):
     return neue
 
 
+@transaction.atomic
+def erfassen(member, typ, anzahl, jahresbeitrag=None, bestellt_am=None, aktiviert_am=None, notizen=''):
+    """Erfassung durch Admins: Daten werden explizit angegeben, PATENSCHAFTEN_AUTO_AKTIVIEREN gilt nicht."""
+    return [Patenschaft.objects.create(
+        member=member, typ=typ, jahresbeitrag=typ.jahresbeitrag if jahresbeitrag is None else jahresbeitrag,
+        bestellt_am=bestellt_am or datetime.date.today(), aktiviert_am=aktiviert_am, notizen=notizen,
+    ) for _ in range(anzahl)]
+
+
 def gruppieren(patenschaften):
     """Gruppiert Patenschaften nach Typ und Status für die Anzeige ("3 × Baumpatenschaft")."""
     gruppen = {}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block page_title %}
+    <h3>{{ patenschaft.typ.name }}: {{ patenschaft.member }}</h3>
+{% endblock %}
+
+{% block content %}
+    <p>
+        {% trans "Status" %}: <strong>{{ patenschaft.get_status_display }}</strong>
+        {% if rechnungen %}
+            &middot; {% trans "Rechnungen" %}:
+            {% for item in rechnungen %}
+                <a href="{% url 'admin:juntagrico_billing_bill_change' item.bill_id %}">{{ item.bill_id }} ({{ item.bill.business_year }})</a>{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        {% endif %}
+    </p>
+    <p class="small text-muted">
+        {% trans "Kündigen: bestellte Patenschaften werden storniert, aktive laufen bis Ende Geschäftsjahr (gleiche Frist wie bei den Ernteanteilen)." %}
+    </p>
+    {% crispy form %}
+{% endblock %}

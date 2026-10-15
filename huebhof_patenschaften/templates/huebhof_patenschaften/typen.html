@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n patenschaften juntagrico.config %}
+
+{% block page_title %}
+    <h3>{% trans "Patenschaftstypen" %}</h3>
+{% endblock %}
+
+{% block content %}
+    {% config "currency" as c_currency %}
+    <p>
+        {% trans "Hier legst du fest, welche Patenschaften angeboten werden. Nur bestellbare Typen erscheinen bei der Anmeldung und im Mitgliederbereich." %}
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <th class="text-right">{% trans "Jahresbeitrag" %}</th>
+                <th>{% trans "Bestellbar" %}</th>
+                <th class="text-right">{% trans "Offene Patenschaften" %}</th>
+                <th>{% trans "Rechnungsposition" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for typ in typen %}
+                <tr>
+                    <td><a href="{% url 'patenschaften-typ' typ.id %}">{{ typ.name }}</a></td>
+                    <td class="text-right">{{ c_currency }} {{ typ.jahresbeitrag|chf }}</td>
+                    <td>{% if typ.sichtbar %}{% trans "Ja" %}{% else %}<span class="text-muted">{% trans "Nein" %}</span>{% endif %}</td>
+                    <td class="text-right">{{ typ.anzahl }}</td>
+                    <td>{{ typ.rechnungsposition|default:"" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">{% trans "Noch keine Patenschaftstypen erfasst." %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if perms.huebhof_patenschaften.add_patenschafttyp %}
+        <a href="{% url 'patenschaften-typ-neu' %}" class="btn btn-success">{% trans "Neuer Patenschaftstyp" %}</a>
+    {% endif %}
+    <a href="{% url 'patenschaften-manage' %}" class="btn btn-outline-secondary">{% trans "Zurück zu den Patenschaften" %}</a>
+{% endblock %}

@@ -22,7 +22,7 @@
                 <tbody>
                     {% for z in uebersicht %}
                         <tr>
-                            <td>{{ z.typ.name }}{% if not z.typ.sichtbar %} <span class="text-muted">({% trans "nicht bestellbar" %})</span>{% endif %}</td>
+                            <td><a href="{% url 'patenschaften-typ' z.typ.id %}">{{ z.typ.name }}</a>{% if not z.typ.sichtbar %} <span class="text-muted">({% trans "nicht bestellbar" %})</span>{% endif %}</td>
                             <td class="text-right">{{ z.bestellt }}</td>
                             <td class="text-right">{{ z.aktiv }}</td>
                             <td class="text-right">{{ z.gekuendigt }}</td>
@@ -40,10 +40,14 @@
                     </tr>
                 </tfoot>
             </table>
-            <p class="small">
-                <a href="{% url 'admin:huebhof_patenschaften_patenschafttyp_changelist' %}">{% trans "Patenschaftstypen verwalten" %}</a>
-                &middot;
-                <a href="{% url 'admin:huebhof_patenschaften_patenschaft_export' %}">{% trans "Export (Excel/CSV)" %}</a>
+            <p>
+                {% if perms.huebhof_patenschaften.add_patenschaft %}
+                    <a href="{% url 'patenschaften-erfassen' %}" class="btn btn-success">{% trans "Patenschaft erfassen" %}</a>
+                {% endif %}
+                {% if perms.huebhof_patenschaften.change_patenschafttyp %}
+                    <a href="{% url 'patenschaften-typen' %}" class="btn btn-outline-secondary">{% trans "Patenschaftstypen" %}</a>
+                {% endif %}
+                <a href="{% url 'admin:huebhof_patenschaften_patenschaft_export' %}" class="btn btn-link">{% trans "Export (Excel/CSV)" %}</a>
             </p>
         </div>
     </div>
@@ -83,7 +87,7 @@
                             {{ p.id }}{# spaces are required here #}
                         </div>
                     </td>
-                    <td><a href="{% url 'admin:huebhof_patenschaften_patenschaft_change' p.id %}?next={{ request.get_full_path|urlencode }}">{{ p.typ.name }}</a></td>
+                    <td><a href="{% url 'patenschaften-bearbeiten' p.id %}">{{ p.typ.name }}</a></td>
                     <td data-order="{{ p.jahresbeitrag }}">{{ c_currency }} {{ p.jahresbeitrag|chf }}</td>
                     <td>{{ p.get_status_display }}</td>
                     <td data-order="{{ p.bestellt_am|date:'Y-m-d' }}">{{ p.bestellt_am|date:"d.m.Y" }}</td>

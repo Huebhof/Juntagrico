@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import views, views_billing
 
 urlpatterns = [
     # Bestellprozess (url-Name muss mit dem SignupManager übereinstimmen)
@@ -12,4 +12,15 @@ urlpatterns = [
     # Administration
     path('manage/patenschaften/', views.PatenschaftenManageView.as_view(), name='patenschaften-manage'),
     path('manage/patenschaften/aktivieren/', views.patenschaften_aktivieren, name='patenschaften-aktivieren'),
+    path('manage/patenschaften/erfassen/', views.erfassen, name='patenschaften-erfassen'),
+    path('manage/patenschaften/<int:patenschaft_id>/', views.bearbeiten, name='patenschaften-bearbeiten'),
+    path('manage/patenschaften/typen/', views.typen, name='patenschaften-typen'),
+    path('manage/patenschaften/typen/neu/', views.typ_bearbeiten, name='patenschaften-typ-neu'),
+    path('manage/patenschaften/typen/<int:typ_id>/', views.typ_bearbeiten, name='patenschaften-typ'),
+    # juntagrico_billing: gleiche Pfade wie dort, damit Patenschaften im Rechnungsablauf mitlaufen
+    # (siehe views_billing.py; funktioniert, weil diese URLs vor juntagrico_billing.urls eingebunden sind).
+    # Gleiche Namen wie dort, damit die Seite dieselbe body-id erhält.
+    path('jb/pending_bills', views_billing.pending_bills, name='pending-bills-list'),
+    path('jb/bills_generate', views_billing.bills_generate, name='bills-generate'),
+    path('jb/bill_recalc/<int:bill_id>', views_billing.bill_recalc, name='bill-recalc'),
 ]

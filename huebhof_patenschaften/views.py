@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db.models import Sum
+from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
@@ -12,7 +13,8 @@ from juntagrico.views_subscription import SignupView
 
 from . import mailer, services
 from .config import PatenschaftConfig
-from .forms import PatenschaftAuswahlForm, PatenschaftBestellenForm
+from .forms import PatenschaftAuswahlForm, PatenschaftBearbeitenForm, PatenschaftBestellenForm, \
+    PatenschaftErfassenForm, PatenschaftTypForm
 from .models import Patenschaft, PatenschaftTyp
 
 
@@ -146,3 +148,75 @@ def patenschaften_aktivieren(request):
         anzahl += 1
     messages.success(request, _('{} Patenschaft(en) aktiviert.').format(anzahl))
     return redirect(request.META.get('HTTP_REFERER') or 'patenschaften-manage')
+
+
+# ---------------------------------------------------------------- Verwaltung: Typen und Patenschaften erfassen
+
+@permission_required('huebhof_patenschaften.change_patenschafttyp')
+def typen(request):
+    return render(request, 'huebhof_patenschaften/typen.html', {
+        'typen': PatenschaftTyp.objects.annotate(
+            anzahl=Count('patenschaften', filter=Q(patenschaften__in=Patenschaft.objects.offen()))
+        ).select_related('rechnungsposition'),
+    })
+
+
+@permission_required('huebhof_patenschaften.change_patenschafttyp')
+def typ_bearbeiten(request, typ_id=None):
+    typ = get_object_or_404(PatenschaftTyp, pk=typ_id) if typ_id else None
+    if typ is None and not request.user.has_perm('huebhof_patenschaften.add_patenschafttyp'):
+        raise PermissionDenied
+    if request.method == 'POST' and 'loeschen' in request.POST and typ:
+        if typ.patenschaften.exists() or not request.user.has_perm('huebhof_patenschaften.delete_patenschafttyp'):
+            messages.error(request, _('Typen mit Patenschaften können nicht gelöscht werden. '
+                                      'Entferne stattdessen das Häkchen bei "Bestellbar".'))
+            return redirect('patenschaften-typ', typ_id=typ.id)
+        typ.delete()
+        messages.success(request, _('Patenschaftstyp gelöscht.'))
+        return redirect('patenschaften-typen')
+    form = PatenschaftTypForm(request.POST or None, instance=typ)
+    if form.is_valid():
+        form.save()
+        messages.success(request, _('Patenschaftstyp gespeichert.'))
+        return redirect('patenschaften-typen')
+    return render(request, 'huebhof_patenschaften/typ_form.html', {'form': form, 'typ': typ})
+
+
+@permission_required('huebhof_patenschaften.add_patenschaft')
+def erfassen(request):
+    initial = {}
+    if request.GET.get('member', '').isdigit():
+        initial['member'] = request.GET['member']
+    form = PatenschaftErfassenForm(request.POST or None, initial=initial)
+    if form.is_valid():
+        d = form.cleaned_data
+        neue = services.erfassen(d['member'], d['typ'], d['anzahl'], d['jahresbeitrag'],
+                                 d['bestellt_am'], d['aktiviert_am'], d['notizen'])
+        if d['bestaetigung']:
+            mailer.bestaetigung_an_pate(d['member'], neue)
+        messages.success(request, _('{} Patenschaft(en) für {} erfasst.').format(len(neue), d['member']))
+        if 'weitere' in request.POST:
+            return redirect('patenschaften-erfassen')
+        return redirect('patenschaften-manage')
+    return render(request, 'huebhof_patenschaften/erfassen.html', {
+        'form': form,
+        'beitraege': {str(t.id): f'{t.jahresbeitrag:.2f}' for t in PatenschaftTyp.objects.all()},
+    })
+
+
+@permission_required('huebhof_patenschaften.change_patenschaft')
+def bearbeiten(request, patenschaft_id):
+    patenschaft = get_object_or_404(Patenschaft.objects.select_related('member', 'typ'), pk=patenschaft_id)
+    if request.method == 'POST' and 'kuendigen' in request.POST:
+        patenschaft.kuendigen()
+        messages.success(request, _('Patenschaft gekündigt.'))
+        return redirect('patenschaften-bearbeiten', patenschaft_id=patenschaft.id)
+    form = PatenschaftBearbeitenForm(request.POST or None, instance=patenschaft)
+    if form.is_valid():
+        form.save()
+        messages.success(request, _('Patenschaft gespeichert.'))
+        return redirect('patenschaften-manage')
+    return render(request, 'huebhof_patenschaften/bearbeiten.html', {
+        'form': form, 'patenschaft': patenschaft,
+        'rechnungen': patenschaft.rechnungspositionen.select_related('bill__business_year'),
+    })

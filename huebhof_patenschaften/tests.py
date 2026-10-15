@@ -4,12 +4,17 @@ from decimal import Decimal
 from django.contrib.auth.models import Permission
 from django.core import mail
 from django.test import override_settings
-from django.urls import reverse
+from django.urls import resolve, reverse
 
 from juntagrico.entity.depot import Depot
 from juntagrico.entity.subtypes import SubscriptionType
 from juntagrico.tests import JuntagricoTestCase
 
+from juntagrico_billing.models.bill import Bill, BillItem, BillItemType, BusinessYear
+from juntagrico_billing.models.settings import Settings
+from juntagrico_billing.util.billing import recalc_bill
+
+from . import billing
 from .models import Patenschaft, PatenschaftTyp
 
 SIGNUP_MANAGER = 'huebhof_patenschaften.signup.PatenschaftSignupManager'
@@ -195,8 +200,11 @@ class AdminTests(PatenschaftTestCase):
         response = self.client.get(reverse('patenschaften-manage'))
         self.assertContains(response, 'Baumpatenschaft')
         self.assertContains(response, 'Bienenpatenschaft')
-        # Menüpunkt im Admin-Menü
-        self.assertContains(response, 'href="%s"' % reverse('patenschaften-manage'))
+        # Aufklappmenü im Admin-Menü, auf Patenschaften-Seiten offen
+        self.assertContains(response, 'href="%s?status=aktiv"' % reverse('patenschaften-manage'))
+        self.assertContains(response, 'href="%s"' % reverse('patenschaften-typen'))
+        self.assertContains(response, 'href="%s"' % reverse('patenschaften-erfassen'))
+        self.assertContains(response, 'collapse show" id="patenschaftenman"')
 
     def test_kein_zugriff_ohne_recht(self):
         self.client.force_login(self.member.user)
@@ -219,3 +227,202 @@ class AdminTests(PatenschaftTestCase):
         self.client.post(reverse('patenschaften-mine'), {f'typ_{self.baum.id}': 1})
         self.assertEqual(len(mail.outbox), 2)  # Bestätigung + Admin
         self.assertIn(self.admin.email, mail.outbox[1].bcc)
+
+
+class VerrechnungTests(PatenschaftTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        Settings.objects.create(debtor_account='1100')
+        cls.jahr = BusinessYear.objects.create(
+            start_date=datetime.date(2026, 1, 1), end_date=datetime.date(2026, 12, 31), name='2026')
+        cls.konto_baum = BillItemType.objects.create(name='Baumpatenschaft', booking_account='3400')
+        cls.baum.rechnungsposition = cls.konto_baum
+        cls.baum.save()
+        aktiv = datetime.date(2025, 3, 1)
+        # member4 hat keinen Ernteanteil, member hat einen
+        cls.p_baum = Patenschaft.objects.create(member=cls.member4, typ=cls.baum, aktiviert_am=aktiv)
+        cls.p_biene = Patenschaft.objects.create(member=cls.member4, typ=cls.biene, aktiviert_am=aktiv)
+        # nicht verrechenbar: storniert, vor dem Jahr beendet, erst nach dem Jahr aktiv, Beitrag 0
+        storniert = Patenschaft.objects.create(member=cls.member2, typ=cls.baum)
+        storniert.kuendigen()
+        Patenschaft.objects.create(member=cls.member3, typ=cls.baum, aktiviert_am=aktiv, ende=datetime.date(2025, 12, 31))
+        Patenschaft.objects.create(member=cls.member3, typ=cls.biene, aktiviert_am=datetime.date(2027, 1, 1))
+        Patenschaft.objects.create(member=cls.member3, typ=cls.biene, aktiviert_am=aktiv, jahresbeitrag=Decimal('0'))
+
+    def test_verrechenbar(self):
+        self.assertEqual(set(billing.verrechenbar(self.jahr)), {self.p_baum, self.p_biene})
+
+    def test_neue_rechnung(self):
+        neu, ergaenzt = billing.verrechnen(self.jahr, billing.verrechenbar(self.jahr))
+        self.assertEqual((len(neu), len(ergaenzt)), (1, 0))
+        bill = neu[0]
+        self.assertEqual(bill.member, self.member4)
+        self.assertEqual(bill.amount, 170.0)
+        self.assertFalse(bill.published)
+        # eigener Positionstyp mit Buchungskonto, sonst Standard "Patenschaft"
+        item_baum = self.p_baum.rechnungspositionen.get()
+        self.assertEqual(item_baum.custom_item_type, self.konto_baum)
+        self.assertEqual(str(item_baum), 'Baumpatenschaft')
+        self.assertEqual(str(self.p_biene.rechnungspositionen.get()), 'Patenschaft Bienenpatenschaft')
+        # kein zweites Mal im selben Jahr, im Folgejahr wieder
+        self.assertFalse(billing.verrechenbar(self.jahr).exists())
+        folgejahr = BusinessYear.objects.create(
+            start_date=datetime.date(2027, 1, 1), end_date=datetime.date(2027, 12, 31), name='2027')
+        # die beiden verrechneten und die ab 2027 aktive
+        self.assertEqual(billing.verrechenbar(folgejahr).count(), 3)
+
+    def test_an_unveroeffentlichte_rechnung_anfuegen(self):
+        bestehend = Bill.objects.create(business_year=self.jahr, member=self.member4, amount=500.0,
+                                        bill_date=datetime.date(2026, 1, 1), booking_date=datetime.date(2026, 1, 1))
+        BillItem.objects.create(bill=bestehend, description='Ernteanteil', amount=500.0)
+        neu, ergaenzt = billing.verrechnen(self.jahr, billing.verrechenbar(self.jahr))
+        self.assertEqual((neu, ergaenzt), ([], [bestehend]))
+        bestehend.refresh_from_db()
+        self.assertEqual(bestehend.amount, 670.0)
+        # Neuberechnung durch juntagrico_billing lässt die Patenschaften stehen
+        recalc_bill(bestehend)
+        bestehend.refresh_from_db()
+        self.assertEqual(bestehend.items.filter(patenschaften__isnull=False).count(), 2)
+
+    def test_veroeffentlichte_rechnung_bleibt_unveraendert(self):
+        Bill.objects.create(business_year=self.jahr, member=self.member4, amount=500.0, published=True,
+                            bill_date=datetime.date(2026, 1, 1), booking_date=datetime.date(2026, 1, 1))
+        neu, ergaenzt = billing.verrechnen(self.jahr, billing.verrechenbar(self.jahr))
+        self.assertEqual((len(neu), len(ergaenzt)), (1, 0))
+
+    def test_jb_urls_zeigen_auf_addon(self):
+        from . import views_billing
+        self.assertEqual(resolve(reverse('jb:pending-bills-list')).func, views_billing.pending_bills)
+        self.assertEqual(resolve(reverse('jb:bills-generate')).func, views_billing.bills_generate)
+        self.assertEqual(resolve(reverse('jb:bill-recalc', args=[1])).func, views_billing.bill_recalc)
+
+    def test_anstehende_rechnungen(self):
+        self.client.force_login(self.admin.user)
+        self.client.post(reverse('jb:bills-setyear'), {'year': '2026'})
+        response = self.client.get(reverse('jb:pending-bills-list'))
+        self.assertContains(response, '1 &times; Baumpatenschaft')
+        self.assertContains(response, '1 &times; Bienenpatenschaft')
+        self.assertContains(response, 'data-order="170.00"')  # Betrag ohne Ernteanteil
+        self.assertNotContains(response, 'Patenschaften verrechnen')  # kein separater Menüpunkt mehr
+
+    def test_alle_erstellen_eine_rechnung_pro_mitglied(self):
+        mit_ernteanteil = Patenschaft.objects.create(member=self.member, typ=self.baum,
+                                                     aktiviert_am=datetime.date(2025, 3, 1))
+        self.client.force_login(self.admin.user)
+        self.client.post(reverse('jb:bills-setyear'), {'year': '2026'})
+        response = self.client.post(reverse('jb:bills-generate'))
+        self.assertRedirects(response, reverse('jb:unpublished-bills-list'))
+        # Mitglied mit Ernteanteil: eine Rechnung mit Ernteanteil und Patenschaft
+        bill = self.member.bills.get(business_year=self.jahr)
+        self.assertTrue(bill.items.filter(subscription_part__isnull=False).exists())
+        self.assertEqual(list(bill.items.filter(patenschaften__isnull=False)), list(mit_ernteanteil.rechnungspositionen.all()))
+        self.assertAlmostEqual(bill.amount, sum(i.amount for i in bill.items.all()))
+        # Mitglied ohne Ernteanteil: eigene Rechnung nur mit Patenschaften
+        bill4 = self.member4.bills.get(business_year=self.jahr)
+        self.assertEqual(bill4.amount, 170.0)
+        self.assertFalse(billing.verrechenbar(self.jahr).exists())
+        url = reverse('admin:huebhof_patenschaften_patenschaft_change', args=[self.p_baum.id])
+        self.assertContains(self.client.get(url), reverse('admin:juntagrico_billing_bill_change', args=[bill4.id]))
+
+    def test_neu_berechnen_fuegt_patenschaften_an(self):
+        bill = Bill.objects.create(business_year=self.jahr, member=self.member4, amount=0.0,
+                                   bill_date=datetime.date(2026, 1, 1), booking_date=datetime.date(2026, 1, 1))
+        self.client.force_login(self.admin.user)
+        next_url = reverse('admin:juntagrico_billing_bill_change', args=[bill.id])
+        response = self.client.get(reverse('jb:bill-recalc', args=[bill.id]) + '?next=' + next_url)
+        self.assertRedirects(response, next_url)
+        bill.refresh_from_db()
+        self.assertEqual(bill.amount, 170.0)
+        # zweites Mal ändert nichts
+        self.client.get(reverse('jb:bill-recalc', args=[bill.id]))
+        bill.refresh_from_db()
+        self.assertEqual(bill.items.count(), 2)
+
+    def test_nur_buchhaltung(self):
+        self.client.force_login(self.member.user)
+        self.assertNotEqual(self.client.get(reverse('jb:pending-bills-list')).status_code, 200)
+        self.client.post(reverse('jb:bills-generate'))
+        self.assertFalse(Bill.objects.exists())
+
+
+class VerwaltungTests(PatenschaftTestCase):
+    def test_typ_erstellen_bearbeiten_loeschen(self):
+        self.client.force_login(self.admin.user)
+        self.assertContains(self.client.get(reverse('patenschaften-typen')), 'Baumpatenschaft')
+        self.assertEqual(self.client.get(reverse('patenschaften-typ-neu')).status_code, 200)
+        response = self.client.post(reverse('patenschaften-typ-neu'), {
+            'name': 'Hühnerpatenschaft', 'beschreibung': 'Gack', 'jahresbeitrag': '80', 'sichtbar': 'on',
+            'sortierung': '3', 'rechnungsposition': ''})
+        self.assertRedirects(response, reverse('patenschaften-typen'))
+        huhn = PatenschaftTyp.objects.get(name='Hühnerpatenschaft')
+        self.assertEqual(huhn.jahresbeitrag, Decimal('80'))
+        response = self.client.post(reverse('patenschaften-typ', args=[huhn.id]), {
+            'name': 'Huhn', 'jahresbeitrag': '90', 'sortierung': '3'})
+        self.assertRedirects(response, reverse('patenschaften-typen'))
+        huhn.refresh_from_db()
+        self.assertEqual((huhn.name, huhn.sichtbar), ('Huhn', False))
+        self.client.post(reverse('patenschaften-typ', args=[huhn.id]), {'loeschen': ''})
+        self.assertFalse(PatenschaftTyp.objects.filter(id=huhn.id).exists())
+
+    def test_typ_mit_patenschaften_nicht_loeschbar(self):
+        Patenschaft.objects.create(member=self.member, typ=self.baum)
+        self.client.force_login(self.admin.user)
+        self.client.post(reverse('patenschaften-typ', args=[self.baum.id]), {'loeschen': ''})
+        self.assertTrue(PatenschaftTyp.objects.filter(id=self.baum.id).exists())
+
+    def test_erfassen(self):
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('patenschaften-erfassen'), {'member': self.member2.id})
+        self.assertContains(response, f'<option value="{self.member2.id}" selected>')
+        mail.outbox.clear()
+        response = self.client.post(reverse('patenschaften-erfassen'), {
+            'member': self.member2.id, 'typ': self.baum.id, 'anzahl': 3, 'jahresbeitrag': '',
+            'bestellt_am': '2026-02-01', 'aktiviert_am': '2026-03-01', 'notizen': 'Telefon', 'bestaetigung': 'on'})
+        self.assertRedirects(response, reverse('patenschaften-manage'))
+        neue = Patenschaft.objects.filter(member=self.member2)
+        self.assertEqual(neue.count(), 3)
+        p = neue.first()
+        self.assertEqual((p.jahresbeitrag, p.aktiviert_am, p.notizen),
+                         (Decimal('120'), datetime.date(2026, 3, 1), 'Telefon'))
+        self.assertEqual(len(mail.outbox), 1)
+        # eigener Beitrag, ohne Aktivierung, ohne Mail, "weitere erfassen"
+        mail.outbox.clear()
+        response = self.client.post(reverse('patenschaften-erfassen'), {
+            'member': self.member3.id, 'typ': self.biene.id, 'anzahl': 1, 'jahresbeitrag': '75',
+            'bestellt_am': '2026-02-01', 'aktiviert_am': '', 'weitere': ''})
+        self.assertRedirects(response, reverse('patenschaften-erfassen'))
+        p = Patenschaft.objects.get(member=self.member3)
+        self.assertEqual((p.jahresbeitrag, p.status), (Decimal('75'), 'bestellt'))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_bearbeiten_und_kuendigen(self):
+        p = Patenschaft.objects.create(member=self.member, typ=self.baum, aktiviert_am=datetime.date.today())
+        self.client.force_login(self.admin.user)
+        url = reverse('patenschaften-bearbeiten', args=[p.id])
+        self.assertContains(self.client.get(url), 'Kündigen')
+        response = self.client.post(url, {'typ': self.baum.id, 'jahresbeitrag': '100',
+                                           'bestellt_am': p.bestellt_am.isoformat(),
+                                           'aktiviert_am': p.aktiviert_am.isoformat(), 'notizen': 'Rabatt'})
+        self.assertRedirects(response, reverse('patenschaften-manage'))
+        p.refresh_from_db()
+        self.assertEqual((p.jahresbeitrag, p.notizen), (Decimal('100'), 'Rabatt'))
+        self.client.post(url, {'kuendigen': ''})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'gekuendigt')
+        self.assertNotContains(self.client.get(url), 'name="kuendigen"')
+
+    def test_uebersicht_verlinkt_frontend(self):
+        p = Patenschaft.objects.create(member=self.member, typ=self.baum, aktiviert_am=datetime.date.today())
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('patenschaften-manage'))
+        for url in (reverse('patenschaften-erfassen'), reverse('patenschaften-typen'),
+                    reverse('patenschaften-bearbeiten', args=[p.id]), reverse('patenschaften-typ', args=[self.baum.id])):
+            self.assertContains(response, f'href="{url}"')
+
+    def test_kein_zugriff_ohne_recht(self):
+        self.client.force_login(self.member.user)
+        p = Patenschaft.objects.create(member=self.member, typ=self.baum)
+        for url in (reverse('patenschaften-typen'), reverse('patenschaften-typ-neu'),
+                    reverse('patenschaften-erfassen'), reverse('patenschaften-bearbeiten', args=[p.id])):
+            self.assertNotEqual(self.client.get(url).status_code, 200, url)

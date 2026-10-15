@@ -1,12 +1,39 @@
 {% extends "juntagrico/menu/admin.html" %}
 {% load i18n %}
-{% block extend %}
+{% block subscriptions %}
+    {{ block.super }}
     {% if perms.huebhof_patenschaften.view_patenschaft or perms.huebhof_patenschaften.change_patenschaft %}
+        {# Aufklappmenü wie bei den Ernteanteilen; offen, solange man auf einer Patenschaften-Seite ist #}
+        {% with offen=request.path|slice:":21" %}
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'patenschaften-manage' %}">
+            <a class="nav-link{% if offen != '/manage/patenschaften' %} collapsed{% endif %}" data-toggle="collapse" href="#patenschaftenman">
+                <i class="bi bi-caret-down turn"></i>
                 {% trans "Patenschaften" %}
             </a>
+            <div class="collapse{% if offen == '/manage/patenschaften' %} show{% endif %}" id="patenschaftenman">
+                <ul class="nav flex-column subadmin-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'patenschaften-manage' %}?status=aktiv">
+                            {% trans "Aktive" %}
+                        </a>
+                    </li>
+                    {% if perms.huebhof_patenschaften.change_patenschafttyp %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'patenschaften-typen' %}">
+                                {% trans "Patenschaftstypen" %}
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if perms.huebhof_patenschaften.add_patenschaft %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'patenschaften-erfassen' %}">
+                                {% trans "Patenschaft erfassen" %}
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
         </li>
+        {% endwith %}
     {% endif %}
-    {{ block.super }}
 {% endblock %}
