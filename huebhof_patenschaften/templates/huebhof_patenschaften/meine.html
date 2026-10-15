@@ -80,6 +80,14 @@
             {% include "huebhof_patenschaften/snippets/auswahl.html" %}
             <button type="submit" class="btn btn-success">{% trans "Verbindlich bestellen" %}</button>
         </form>
+    {% else %}
+        <p class="text-muted">{% trans "Zurzeit werden keine Patenschaften angeboten." %}</p>
+        {% if perms.huebhof_patenschaften.add_patenschafttyp or perms.huebhof_patenschaften.change_patenschafttyp %}
+            <div class="alert alert-info">
+                {% trans "Hinweis für Admins: Es gibt keinen bestellbaren Patenschaftstyp. Sobald einer erfasst ist, können Mitglieder hier und bei der Anmeldung Patenschaften bestellen." %}
+                <a href="{% url 'patenschaften-typen' %}">{% trans "Patenschaftstypen verwalten" %}</a>
+            </div>
+        {% endif %}
     {% endif %}
 
     {% if vergangen %}

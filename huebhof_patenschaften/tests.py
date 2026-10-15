@@ -604,3 +604,29 @@ class ExportTests(PatenschaftTestCase):
     def test_ohne_recht(self):
         self.client.force_login(self.member.user)
         self.assertNotEqual(self.client.get(reverse('patenschaften-export')).status_code, 200)
+
+
+class OhneTypenTests(PatenschaftTestCase):
+    def setUp(self):
+        PatenschaftTyp.objects.update(sichtbar=False)
+
+    def test_mitglied_sieht_hinweis(self):
+        self.client.force_login(self.member.user)
+        response = self.client.get(reverse('patenschaften-mine'))
+        self.assertContains(response, 'Zurzeit werden keine Patenschaften angeboten')
+        self.assertNotContains(response, 'Verbindlich bestellen')
+        self.assertNotContains(response, reverse('patenschaften-typen'))
+
+    def test_admin_sieht_link_zu_typen(self):
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('patenschaften-mine'))
+        self.assertContains(response, 'Hinweis für Admins')
+        self.assertContains(response, reverse('patenschaften-typen'))
+
+    def test_mit_typ_bestellformular(self):
+        self.baum.sichtbar = True
+        self.baum.save()
+        self.client.force_login(self.member.user)
+        response = self.client.get(reverse('patenschaften-mine'))
+        self.assertContains(response, 'Verbindlich bestellen')
+        self.assertNotContains(response, 'Zurzeit werden keine Patenschaften angeboten')
