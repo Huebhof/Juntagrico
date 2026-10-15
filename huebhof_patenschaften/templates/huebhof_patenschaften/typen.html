@@ -23,7 +23,7 @@
         <tbody>
             {% for typ in typen %}
                 <tr>
-                    <td><a href="{% url 'patenschaften-typ' typ.id %}">{{ typ.name }}</a></td>
+                    <td>{% if perms.huebhof_patenschaften.change_patenschafttyp %}<a href="{% url 'patenschaften-typ' typ.id %}">{{ typ.name }}</a>{% else %}{{ typ.name }}{% endif %}</td>
                     <td class="text-right">{{ c_currency }} {{ typ.jahresbeitrag|chf }}</td>
                     <td>{% if typ.sichtbar %}{% trans "Ja" %}{% else %}<span class="text-muted">{% trans "Nein" %}</span>{% endif %}</td>
                     <td class="text-right">{{ typ.anzahl }}</td>
@@ -37,5 +37,7 @@
     {% if perms.huebhof_patenschaften.add_patenschafttyp %}
         <a href="{% url 'patenschaften-typ-neu' %}" class="btn btn-success">{% trans "Neuer Patenschaftstyp" %}</a>
     {% endif %}
-    <a href="{% url 'patenschaften-manage' %}" class="btn btn-outline-secondary">{% trans "Zurück zu den Patenschaften" %}</a>
+    {% if perms.huebhof_patenschaften.view_patenschaft or perms.huebhof_patenschaften.change_patenschaft %}
+        <a href="{% url 'patenschaften-manage' %}" class="btn btn-outline-secondary">{% trans "Zurück zu den Patenschaften" %}</a>
+    {% endif %}
 {% endblock %}

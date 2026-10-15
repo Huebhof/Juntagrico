@@ -115,7 +115,9 @@ class SignupTests(PatenschaftTestCase):
         response = self.client.post(reverse('cs-summary'), {'comment': ''})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Patenschaft.objects.filter(member=self.member4, typ=self.baum).count(), 2)
-        self.assertEqual(Patenschaft.objects.filter(member=self.member4).aktiv().count(), 3)
+        # wie bei den Ernteanteilen: bestellt, Aktivierung durch Admins
+        self.assertEqual(Patenschaft.objects.filter(member=self.member4).bestellt().count(), 3)
+        self.assertFalse(Patenschaft.objects.filter(member=self.member4).aktiv().exists())
         self.assertTrue(any('Baumpatenschaft' in m.body for m in mail.outbox))
 
     def test_ohne_patenschaft(self):
@@ -146,6 +148,7 @@ class SignupTests(PatenschaftTestCase):
 
 
 class MitgliederbereichTests(PatenschaftTestCase):
+    @override_settings(PATENSCHAFTEN_AUTO_AKTIVIEREN=True)
     def test_liste_bestellen_kuendigen(self):
         self.client.force_login(self.member.user)
         response = self.client.get(reverse('patenschaften-mine'))
@@ -175,12 +178,16 @@ class MitgliederbereichTests(PatenschaftTestCase):
         response = self.client.post(reverse('patenschaften-kuendigen', args=[p.id]))
         self.assertEqual(response.status_code, 404)
 
-    @override_settings(PATENSCHAFTEN_AUTO_AKTIVIEREN=False)
-    def test_manuelle_aktivierung(self):
+    def test_manuelle_aktivierung_ist_standard(self):
         self.client.force_login(self.member.user)
-        self.client.post(reverse('patenschaften-mine'), {f'typ_{self.baum.id}': 1})
-        p = Patenschaft.objects.get(member=self.member)
+        self.client.post(reverse('patenschaften-mine'), {f'typ_{self.baum.id}': 2})
+        p, storniert = Patenschaft.objects.filter(member=self.member)
         self.assertEqual(p.status, 'bestellt')
+        self.assertContains(self.client.get(reverse('patenschaften-mine')), 'Bestellt')
+        # noch nicht aktivierte Bestellung kündigen = stornieren
+        self.client.post(reverse('patenschaften-kuendigen', args=[storniert.id]))
+        storniert.refresh_from_db()
+        self.assertEqual(storniert.status, 'storniert')
         # Admin aktiviert
         self.client.force_login(self.admin.user)
         response = self.client.post(reverse('patenschaften-aktivieren'), {'ids': str(p.id)})
@@ -426,3 +433,137 @@ class VerwaltungTests(PatenschaftTestCase):
         for url in (reverse('patenschaften-typen'), reverse('patenschaften-typ-neu'),
                     reverse('patenschaften-erfassen'), reverse('patenschaften-bearbeiten', args=[p.id])):
             self.assertNotEqual(self.client.get(url).status_code, 200, url)
+
+
+class BerechtigungTests(PatenschaftTestCase):
+    """Teilrechte: Menü, Links und Seiten passen zu den vergebenen Berechtigungen."""
+
+    def login_mit(self, *codenames):
+        user = self.member2.user
+        user.user_permissions.set(Permission.objects.filter(
+            content_type__app_label='huebhof_patenschaften', codename__in=codenames))
+        self.client.force_login(user)
+
+    def menu(self):
+        return self.client.get(reverse('home')).content.decode()
+
+    def assertErlaubt(self, url, erlaubt=True):
+        status = self.client.get(url).status_code
+        if erlaubt:
+            self.assertEqual(status, 200, url)
+        else:
+            self.assertIn(status, (302, 403), url)
+
+    def setUp(self):
+        self.p = Patenschaft.objects.create(member=self.member, typ=self.baum, aktiviert_am=datetime.date.today())
+
+    def test_ohne_rechte_kein_menu(self):
+        self.login_mit()
+        self.assertNotIn('patenschaftenman', self.menu())
+
+    def test_nur_ansehen(self):
+        self.login_mit('view_patenschaft')
+        menu = self.menu()
+        self.assertIn(reverse('patenschaften-manage') + '?status=aktiv', menu)
+        self.assertNotIn(reverse('patenschaften-erfassen'), menu)
+        self.assertNotIn(reverse('patenschaften-typen'), menu)
+        response = self.client.get(reverse('patenschaften-manage'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, reverse('patenschaften-bearbeiten', args=[self.p.id]))
+        self.assertNotContains(response, reverse('patenschaften-typ', args=[self.baum.id]))
+        self.assertNotContains(response, 'Export (Excel/CSV)')  # kein Staff
+        self.assertErlaubt(reverse('patenschaften-bearbeiten', args=[self.p.id]), False)
+        self.assertErlaubt(reverse('patenschaften-erfassen'), False)
+        self.assertErlaubt(reverse('patenschaften-typen'), False)
+
+    def test_bearbeiten(self):
+        self.login_mit('view_patenschaft', 'change_patenschaft')
+        self.assertContains(self.client.get(reverse('patenschaften-manage')),
+                            reverse('patenschaften-bearbeiten', args=[self.p.id]))
+        self.assertErlaubt(reverse('patenschaften-bearbeiten', args=[self.p.id]))
+
+    def test_nur_erfassen(self):
+        self.login_mit('add_patenschaft')
+        menu = self.menu()
+        self.assertIn(reverse('patenschaften-erfassen'), menu)
+        self.assertNotIn(reverse('patenschaften-manage') + '?status=aktiv', menu)
+        self.assertErlaubt(reverse('patenschaften-manage'), False)
+        response = self.client.post(reverse('patenschaften-erfassen'), {
+            'member': self.member3.id, 'typ': self.baum.id, 'anzahl': 1,
+            'bestellt_am': '2026-02-01', 'aktiviert_am': '2026-02-01'})
+        # zurück zum Formular, nicht zur Übersicht, die nicht erlaubt ist
+        self.assertRedirects(response, reverse('patenschaften-erfassen'))
+        self.assertTrue(Patenschaft.objects.filter(member=self.member3).exists())
+
+    def test_typen_nur_ansehen(self):
+        self.login_mit('view_patenschafttyp')
+        self.assertIn(reverse('patenschaften-typen'), self.menu())
+        response = self.client.get(reverse('patenschaften-typen'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, reverse('patenschaften-typ', args=[self.baum.id]))
+        self.assertNotContains(response, reverse('patenschaften-typ-neu'))
+        self.assertErlaubt(reverse('patenschaften-typ', args=[self.baum.id]), False)
+        self.assertErlaubt(reverse('patenschaften-typ-neu'), False)
+
+    def test_typen_verwalten_ohne_loeschen(self):
+        self.login_mit('view_patenschafttyp', 'add_patenschafttyp', 'change_patenschafttyp')
+        response = self.client.get(reverse('patenschaften-typen'))
+        self.assertContains(response, reverse('patenschaften-typ', args=[self.versteckt.id]))
+        self.assertContains(response, reverse('patenschaften-typ-neu'))
+        self.assertNotContains(self.client.get(reverse('patenschaften-typ', args=[self.versteckt.id])), 'loeschen')
+        response = self.client.post(reverse('patenschaften-typ', args=[self.versteckt.id]), {'loeschen': ''})
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(PatenschaftTyp.objects.filter(id=self.versteckt.id).exists())
+
+    def test_neuer_typ_nur_mit_add(self):
+        self.login_mit('change_patenschafttyp')
+        self.assertEqual(self.client.get(reverse('patenschaften-typ-neu')).status_code, 403)
+        self.assertErlaubt(reverse('patenschaften-typ', args=[self.baum.id]))
+
+
+class PendentTests(PatenschaftTestCase):
+    def setUp(self):
+        self.a = Patenschaft.objects.create(member=self.member, typ=self.baum, bestellt_am=datetime.date(2026, 3, 1))
+        self.b = Patenschaft.objects.create(member=self.member, typ=self.biene, bestellt_am=datetime.date(2026, 4, 1))
+        self.aktiv = Patenschaft.objects.create(member=self.member2, typ=self.baum, aktiviert_am=datetime.date(2026, 1, 1))
+
+    def test_liste_und_menu(self):
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('patenschaften-pendent'))
+        self.assertContains(response, f'value="{self.a.id}"')
+        self.assertContains(response, f'value="{self.b.id}"')
+        self.assertNotContains(response, f'value="{self.aktiv.id}"')
+        self.assertContains(response, '2026-03-01')
+        self.assertContains(response, 'href="%s"' % reverse('patenschaften-pendent'))  # Menüpunkt
+
+    def test_ausgewaehlte_anwenden(self):
+        self.client.force_login(self.admin.user)
+        url = reverse('patenschaften-pendent')
+        response = self.client.post(reverse('patenschaften-pendent-anwenden'),
+                                    {'patenschaften[]': [self.a.id]}, HTTP_REFERER=url)
+        self.assertRedirects(response, url)
+        self.a.refresh_from_db()
+        self.b.refresh_from_db()
+        self.assertEqual((self.a.status, self.a.aktiviert_am), ('aktiv', datetime.date.today()))
+        self.assertEqual(self.b.status, 'bestellt')
+
+    def test_mit_aenderungsdatum(self):
+        self.client.force_login(self.admin.user)
+        session = self.client.session
+        session['changedate'] = '2026-05-01'
+        session.save()
+        self.client.post(reverse('patenschaften-pendent-anwenden'), {'patenschaften[]': [self.a.id, self.b.id]})
+        self.a.refresh_from_db()
+        self.assertEqual(self.a.aktiviert_am, datetime.date(2026, 5, 1))
+        self.assertFalse(Patenschaft.objects.bestellt().exists())
+
+    def test_nur_mit_change_recht(self):
+        user = self.member2.user
+        user.user_permissions.set(Permission.objects.filter(codename='view_patenschaft'))
+        self.client.force_login(user)
+        self.assertNotIn(reverse('patenschaften-pendent'), self.client.get(reverse('home')).content.decode())
+        self.assertNotEqual(self.client.get(reverse('patenschaften-pendent')).status_code, 200)
+        response = self.client.post(reverse('patenschaften-pendent-anwenden'), {'patenschaften[]': [self.a.id]})
+        self.assertEqual(response.status_code, 403)
+        self.a.refresh_from_db()
+        self.assertEqual(self.a.status, 'bestellt')

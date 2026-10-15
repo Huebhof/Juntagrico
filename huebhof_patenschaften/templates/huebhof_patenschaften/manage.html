@@ -8,7 +8,7 @@
 {% block content %}
     {% config "currency" as c_currency %}
     <div class="row mt-3">
-        <div class="col-lg-8">
+        <div class="col-md-12">
             <table class="table table-sm patenschaften-uebersicht">
                 <thead>
                     <tr>
@@ -22,7 +22,7 @@
                 <tbody>
                     {% for z in uebersicht %}
                         <tr>
-                            <td><a href="{% url 'patenschaften-typ' z.typ.id %}">{{ z.typ.name }}</a>{% if not z.typ.sichtbar %} <span class="text-muted">({% trans "nicht bestellbar" %})</span>{% endif %}</td>
+                            <td>{% if perms.huebhof_patenschaften.change_patenschafttyp %}<a href="{% url 'patenschaften-typ' z.typ.id %}">{{ z.typ.name }}</a>{% else %}{{ z.typ.name }}{% endif %}{% if not z.typ.sichtbar %} <span class="text-muted">({% trans "nicht bestellbar" %})</span>{% endif %}</td>
                             <td class="text-right">{{ z.bestellt }}</td>
                             <td class="text-right">{{ z.aktiv }}</td>
                             <td class="text-right">{{ z.gekuendigt }}</td>
@@ -40,15 +40,11 @@
                     </tr>
                 </tfoot>
             </table>
-            <p>
-                {% if perms.huebhof_patenschaften.add_patenschaft %}
-                    <a href="{% url 'patenschaften-erfassen' %}" class="btn btn-success">{% trans "Patenschaft erfassen" %}</a>
-                {% endif %}
-                {% if perms.huebhof_patenschaften.change_patenschafttyp %}
-                    <a href="{% url 'patenschaften-typen' %}" class="btn btn-outline-secondary">{% trans "Patenschaftstypen" %}</a>
-                {% endif %}
-                <a href="{% url 'admin:huebhof_patenschaften_patenschaft_export' %}" class="btn btn-link">{% trans "Export (Excel/CSV)" %}</a>
-            </p>
+            {% if request.user.is_staff %}{# Export läuft über den Django-Admin #}
+                <p>
+                    <a href="{% url 'admin:huebhof_patenschaften_patenschaft_export' %}">{% trans "Export (Excel/CSV)" %}</a>
+                </p>
+            {% endif %}
         </div>
     </div>
 
@@ -87,7 +83,7 @@
                             {{ p.id }}{# spaces are required here #}
                         </div>
                     </td>
-                    <td><a href="{% url 'patenschaften-bearbeiten' p.id %}">{{ p.typ.name }}</a></td>
+                    <td>{% if perms.huebhof_patenschaften.change_patenschaft %}<a href="{% url 'patenschaften-bearbeiten' p.id %}">{{ p.typ.name }}</a>{% else %}{{ p.typ.name }}{% endif %}</td>
                     <td data-order="{{ p.jahresbeitrag }}">{{ c_currency }} {{ p.jahresbeitrag|chf }}</td>
                     <td>{{ p.get_status_display }}</td>
                     <td data-order="{{ p.bestellt_am|date:'Y-m-d' }}">{{ p.bestellt_am|date:"d.m.Y" }}</td>

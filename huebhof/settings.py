@@ -294,4 +294,4 @@ PATENSCHAFTEN
 """
 
 SIGNUP_MANAGER = 'huebhof_patenschaften.signup.PatenschaftSignupManager'
-PATENSCHAFTEN_AUTO_AKTIVIEREN = True
+PATENSCHAFTEN_AUTO_AKTIVIEREN = False  # wie bei den Ernteanteilen: Admins aktivieren manuell

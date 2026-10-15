@@ -6,6 +6,7 @@ from crispy_forms.layout import HTML, Layout, Submit
 from django import forms
 from django.core.validators import MaxValueValidator
 from django.db.models import Q
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from juntagrico.entity.member import Member
@@ -62,7 +63,7 @@ class JuntagricoDateWidget(_JuntagricoDateWidget):
         return None if value in (None, '') else super().format_value(value)
 
 
-def _helper(*felder, submit=_('Speichern'), extra=None):
+def _helper(*felder, submit=_('Speichern'), extra=None, abbrechen=None):
     helper = FormHelper()
     helper.form_class = 'form-horizontal'
     helper.label_class = 'col-md-3'
@@ -70,8 +71,8 @@ def _helper(*felder, submit=_('Speichern'), extra=None):
     buttons = [Submit('submit', submit, css_class='btn-success')]
     if extra:
         buttons.append(extra)
-    buttons.append(HTML('<a href="{% url \'patenschaften-manage\' %}" class="btn btn-outline-secondary">'
-                        + str(_('Abbrechen')) + '</a>'))
+    buttons.append(HTML('<a href="%s" class="btn btn-outline-secondary">%s</a>'
+                        % (reverse(abbrechen or 'patenschaften-manage'), _('Abbrechen'))))
     helper.layout = Layout(*felder, FormActions(*buttons))
     return helper
 
@@ -87,9 +88,9 @@ class PatenschaftTypForm(forms.ModelForm):
         fields = ['name', 'beschreibung', 'jahresbeitrag', 'sichtbar', 'sortierung', 'rechnungsposition']
         widgets = {'beschreibung': forms.Textarea(attrs={'rows': 4})}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, abbrechen=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = _helper(*self.Meta.fields)
+        self.helper = _helper(*self.Meta.fields, abbrechen=abbrechen)
 
 
 class PatenschaftErfassenForm(forms.Form):
@@ -107,14 +108,14 @@ class PatenschaftErfassenForm(forms.Form):
     notizen = forms.CharField(label=_('Notizen'), required=False, widget=forms.Textarea(attrs={'rows': 3}))
     bestaetigung = forms.BooleanField(label=_('Bestätigung per E-Mail an die Pat:in senden'), required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, abbrechen=None, **kwargs):
         super().__init__(*args, **kwargs)
         today = datetime.date.today()
         self.fields['member'].queryset = Member.objects.filter(
             Q(deactivation_date__isnull=True) | Q(deactivation_date__gt=today)).order_by('last_name', 'first_name')
         self.fields['anzahl'].max_value = PatenschaftConfig.max_anzahl()
         self.fields['anzahl'].validators.append(MaxValueValidator(PatenschaftConfig.max_anzahl()))
-        self.helper = _helper(*self.fields, submit=_('Erfassen'),
+        self.helper = _helper(*self.fields, submit=_('Erfassen'), abbrechen=abbrechen,
                               extra=Submit('weitere', _('Erfassen und weitere erfassen'), css_class='btn-outline-success'))
 
 

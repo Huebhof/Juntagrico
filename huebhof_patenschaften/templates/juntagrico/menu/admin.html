@@ -2,7 +2,8 @@
 {% load i18n %}
 {% block subscriptions %}
     {{ block.super }}
-    {% if perms.huebhof_patenschaften.view_patenschaft or perms.huebhof_patenschaften.change_patenschaft %}
+    {% with p=perms.huebhof_patenschaften %}
+    {% if p.view_patenschaft or p.change_patenschaft or p.add_patenschaft or p.view_patenschafttyp or p.change_patenschafttyp or p.add_patenschafttyp %}
         {# Aufklappmenü wie bei den Ernteanteilen; offen, solange man auf einer Patenschaften-Seite ist #}
         {% with offen=request.path|slice:":21" %}
         <li class="nav-item">
@@ -12,19 +13,28 @@
             </a>
             <div class="collapse{% if offen == '/manage/patenschaften' %} show{% endif %}" id="patenschaftenman">
                 <ul class="nav flex-column subadmin-menu">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'patenschaften-manage' %}?status=aktiv">
-                            {% trans "Aktive" %}
-                        </a>
-                    </li>
-                    {% if perms.huebhof_patenschaften.change_patenschafttyp %}
+                    {% if p.view_patenschaft or p.change_patenschaft %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'patenschaften-manage' %}?status=aktiv">
+                                {% trans "Aktive" %}
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if p.change_patenschaft %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'patenschaften-pendent' %}">
+                                {% trans "Pendente Änderungen" %}
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if p.view_patenschafttyp or p.change_patenschafttyp or p.add_patenschafttyp %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'patenschaften-typen' %}">
                                 {% trans "Patenschaftstypen" %}
                             </a>
                         </li>
                     {% endif %}
-                    {% if perms.huebhof_patenschaften.add_patenschaft %}
+                    {% if p.add_patenschaft %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'patenschaften-erfassen' %}">
                                 {% trans "Patenschaft erfassen" %}
@@ -36,4 +46,5 @@
         </li>
         {% endwith %}
     {% endif %}
+    {% endwith %}
 {% endblock %}

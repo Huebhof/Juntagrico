@@ -1,6 +1,7 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
@@ -8,7 +9,8 @@ from django.views.decorators.http import require_POST
 from django.views.generic import FormView, ListView
 
 from juntagrico.util.auth import MultiplePermissionsRequiredMixin
-from juntagrico.view_decorators import highlighted_menu
+from juntagrico.util import return_to_previous_location
+from juntagrico.view_decorators import highlighted_menu, using_change_date
 from juntagrico.views_subscription import SignupView
 
 from . import mailer, services
@@ -152,7 +154,13 @@ def patenschaften_aktivieren(request):
 
 # ---------------------------------------------------------------- Verwaltung: Typen und Patenschaften erfassen
 
-@permission_required('huebhof_patenschaften.change_patenschafttyp')
+def any_permission_required(*perms):
+    """Wie permission_required, aber eine der Berechtigungen genügt."""
+    return user_passes_test(lambda u: any(u.has_perm(p) for p in perms))
+
+
+@any_permission_required('huebhof_patenschaften.view_patenschafttyp', 'huebhof_patenschaften.change_patenschafttyp',
+                         'huebhof_patenschaften.add_patenschafttyp')
 def typen(request):
     return render(request, 'huebhof_patenschaften/typen.html', {
         'typen': PatenschaftTyp.objects.annotate(
@@ -161,20 +169,23 @@ def typen(request):
     })
 
 
-@permission_required('huebhof_patenschaften.change_patenschafttyp')
+@any_permission_required('huebhof_patenschaften.add_patenschafttyp', 'huebhof_patenschaften.change_patenschafttyp')
 def typ_bearbeiten(request, typ_id=None):
     typ = get_object_or_404(PatenschaftTyp, pk=typ_id) if typ_id else None
-    if typ is None and not request.user.has_perm('huebhof_patenschaften.add_patenschafttyp'):
+    if not request.user.has_perm('huebhof_patenschaften.change_patenschafttyp' if typ
+                                 else 'huebhof_patenschaften.add_patenschafttyp'):
         raise PermissionDenied
     if request.method == 'POST' and 'loeschen' in request.POST and typ:
-        if typ.patenschaften.exists() or not request.user.has_perm('huebhof_patenschaften.delete_patenschafttyp'):
+        if not request.user.has_perm('huebhof_patenschaften.delete_patenschafttyp'):
+            raise PermissionDenied
+        if typ.patenschaften.exists():
             messages.error(request, _('Typen mit Patenschaften können nicht gelöscht werden. '
                                       'Entferne stattdessen das Häkchen bei "Bestellbar".'))
             return redirect('patenschaften-typ', typ_id=typ.id)
         typ.delete()
         messages.success(request, _('Patenschaftstyp gelöscht.'))
         return redirect('patenschaften-typen')
-    form = PatenschaftTypForm(request.POST or None, instance=typ)
+    form = PatenschaftTypForm(request.POST or None, instance=typ, abbrechen='patenschaften-typen')
     if form.is_valid():
         form.save()
         messages.success(request, _('Patenschaftstyp gespeichert.'))
@@ -182,12 +193,17 @@ def typ_bearbeiten(request, typ_id=None):
     return render(request, 'huebhof_patenschaften/typ_form.html', {'form': form, 'typ': typ})
 
 
+def _darf_uebersicht(user):
+    return user.has_perm('huebhof_patenschaften.view_patenschaft') or         user.has_perm('huebhof_patenschaften.change_patenschaft')
+
+
 @permission_required('huebhof_patenschaften.add_patenschaft')
 def erfassen(request):
     initial = {}
     if request.GET.get('member', '').isdigit():
         initial['member'] = request.GET['member']
-    form = PatenschaftErfassenForm(request.POST or None, initial=initial)
+    form = PatenschaftErfassenForm(request.POST or None, initial=initial,
+                                   abbrechen=None if _darf_uebersicht(request.user) else 'home')
     if form.is_valid():
         d = form.cleaned_data
         neue = services.erfassen(d['member'], d['typ'], d['anzahl'], d['jahresbeitrag'],
@@ -195,7 +211,7 @@ def erfassen(request):
         if d['bestaetigung']:
             mailer.bestaetigung_an_pate(d['member'], neue)
         messages.success(request, _('{} Patenschaft(en) für {} erfasst.').format(len(neue), d['member']))
-        if 'weitere' in request.POST:
+        if 'weitere' in request.POST or not _darf_uebersicht(request.user):
             return redirect('patenschaften-erfassen')
         return redirect('patenschaften-manage')
     return render(request, 'huebhof_patenschaften/erfassen.html', {
@@ -220,3 +236,29 @@ def bearbeiten(request, patenschaft_id):
         'form': form, 'patenschaft': patenschaft,
         'rechnungen': patenschaft.rechnungspositionen.select_related('bill__business_year'),
     })
+
+
+# ---------------------------------------------------------------- Pendente Änderungen (wie bei den Ernteanteilen)
+
+@permission_required('huebhof_patenschaften.change_patenschaft')
+def pendent(request):
+    """Noch nicht aktivierte Bestellungen, pro Mitglied, nach Bestelldatum gruppiert."""
+    pro_member = {}
+    for p in Patenschaft.objects.bestellt().select_related('member', 'typ').order_by('bestellt_am', 'typ__sortierung', 'id'):
+        pro_member.setdefault(p.member, []).append(p)
+    return render(request, 'huebhof_patenschaften/pendent.html', {'pendent': list(pro_member.items())})
+
+
+@require_POST
+@permission_required('huebhof_patenschaften.change_patenschaft', raise_exception=True)
+@using_change_date
+def pendent_anwenden(request, change_date):
+    """Aktiviert die ausgewählten Patenschaften auf das Änderungsdatum (Standard: heute)."""
+    ids = request.POST.getlist('patenschaften[]')
+    anzahl = 0
+    with transaction.atomic():
+        for p in Patenschaft.objects.bestellt().filter(id__in=ids):
+            p.aktivieren(change_date)
+            anzahl += 1
+    messages.success(request, _('{} Patenschaft(en) aktiviert.').format(anzahl))
+    return return_to_previous_location(request)

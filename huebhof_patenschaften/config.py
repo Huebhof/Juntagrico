@@ -6,8 +6,9 @@ class PatenschaftConfig:
 
     @staticmethod
     def auto_aktivieren():
-        """True: Patenschaften sind ab Bestellung aktiv. False: Admins aktivieren sie manuell."""
-        return getattr(settings, 'PATENSCHAFTEN_AUTO_AKTIVIEREN', True)
+        """False (Standard, wie bei den Ernteanteilen): Admins aktivieren Bestellungen manuell.
+        True: Patenschaften sind ab Bestellung aktiv."""
+        return getattr(settings, 'PATENSCHAFTEN_AUTO_AKTIVIEREN', False)
 
     @staticmethod
     def im_signup():

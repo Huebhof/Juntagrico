@@ -1,0 +1,84 @@
+{% extends "juntagrico/manage/base.html" %}
+{% load i18n patenschaften juntagrico.config juntagrico.snippets %}
+{# Aufbau wie juntagrico/manage/subscription/pending.html #}
+
+{% block page_title %}
+    <h3>{% trans "Pendente Änderungen der Patenschaften" %}</h3>
+{% endblock %}
+
+{% block content %}
+    {% action_date request %}
+    <p>
+        {% trans "Bestellte Patenschaften, die noch nicht aktiviert sind. Ausgewählte anwenden aktiviert sie auf das Änderungsdatum. Kündigungen müssen nicht angewendet werden, gekündigte Patenschaften enden automatisch." %}
+    </p>
+    {{ block.super }}
+{% endblock %}
+
+{% block list %}
+    {% config "currency" as c_currency %}
+    <table id="filter-table" class="list table">
+        <thead>
+            <tr>
+                <th class="filter">{% trans "Pat:in" %}</th>
+                <th class="filter">{% trans "Bestellt" %}</th>
+                <th>{% trans "Jahresbeitrag" %}</th>
+                <th>{% trans "Aktionen" %}</th>
+                <th class="filter">{% trans "Notizen" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member, patenschaften in pendent %}
+                <tr>
+                    <td>{% include 'juntagrico/manage/member/snippets/display_linked.html' %}</td>
+                    <td class="pl-5">
+                        {% regroup patenschaften by bestellt_am as nach_datum %}
+                        {% for gruppe in nach_datum %}
+                            <div class="parts-for-date">
+                                <span class="pre date" title="{% trans "Bestelldatum" %}">{{ gruppe.grouper|date:"Y-m-d" }}:</span>
+                                {% for p in gruppe.list %}
+                                    <div>
+                                        <input type="checkbox" form="form-paten-{{ member.id }}" checked="checked"
+                                               name="patenschaften[]" id="form-paten-{{ p.id }}" class="form-check-input"
+                                               value="{{ p.id }}">
+                                        <label for="form-paten-{{ p.id }}" class="form-check-label">
+                                            <span class="pre">{{ p.typ.name }}{% if not forloop.last %},{% endif %}</span>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for p in patenschaften %}{{ c_currency }} {{ p.jahresbeitrag|chf }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                    </td>
+                    <td>
+                        <form method="post" id="form-paten-{{ member.id }}" action="{% url 'patenschaften-pendent-anwenden' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary mb-1">
+                                {% trans "Ausgewählte anwenden" %}
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        {% for p in patenschaften %}{% if p.notizen %}{{ p.notizen }}<br>{% endif %}{% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            // Klick auf Checkbox soll die Zeile nicht auswählen
+            $("#filter-table input, #filter-table label").click(function (e) { e.stopPropagation() })
+        })
+    </script>
+{% endblock %}
+
+{% block datatable_constructor %}
+    {{ block.super }}
+    config.info = false
+{% endblock %}
