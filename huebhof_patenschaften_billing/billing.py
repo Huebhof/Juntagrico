@@ -13,11 +13,11 @@ from collections import defaultdict
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 
 from juntagrico.util import temporal
 
-from juntagrico_billing.models.bill import Bill, BillItem, BillItemType
+from juntagrico_billing.models.bill import Bill, BillItem, BillItemType, BusinessYear
 from juntagrico_billing.models.settings import Settings
 
 from huebhof_patenschaften.models import Sponsorship
@@ -153,3 +153,20 @@ def create_bills(business_year, sponsorships, bill_date=None):
             created.append(bill)
         add_to_bill(bill, member_sponsorships)
     return created, extended
+
+
+def billed_per_type(date=None):
+    """Billed amounts of the business year containing the date (default: today), also of unpublished bills.
+    None if there is no such business year in juntagrico_billing."""
+    date = date or datetime.date.today()
+    business_year = BusinessYear.objects.filter(start_date__lte=date, end_date__gte=date).first()
+    if business_year is None:
+        return None
+    rows = SponsorshipBillItem.objects.filter(bill_item__bill__business_year=business_year).values(
+        'sponsorship__type').annotate(amount=Sum('bill_item__amount'))
+    per_type = {row['sponsorship__type']: Decimal(str(round(row['amount'], 2))) for row in rows}
+    return {
+        'year': business_year.name or business_year.start_date.year,
+        'per_type': per_type,
+        'total': sum(per_type.values(), Decimal('0')),
+    }

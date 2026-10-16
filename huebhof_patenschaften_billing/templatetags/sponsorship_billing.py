@@ -19,3 +19,14 @@ def first_year_total(sponsorships):
     if not shares:
         return None
     return dict(shares[0], amount=sum(share['amount'] for share in shares))
+
+
+@register.simple_tag
+def billed_per_type():
+    """Billed amounts of the current business year per sponsorship type, see billing.billed_per_type."""
+    return billing.billed_per_type()
+
+
+@register.filter
+def get_item(mapping, key):
+    return mapping.get(key, 0)

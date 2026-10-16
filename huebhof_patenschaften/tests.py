@@ -214,6 +214,20 @@ class AdminTests(SponsorshipTestCase):
         self.assertContains(response, 'collapse show" id="sponsorshipsman"')
         self.assertContains(response, '<ul class="nav nav-tabs')
 
+    def test_one_row_per_member(self):
+        today = datetime.date.today()
+        for _ in range(3):
+            Sponsorship.objects.create(member=self.member, type=self.tree, activation_date=today)
+        Sponsorship.objects.create(member=self.member, type=self.bee, activation_date=today)
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('sponsorships-manage'))
+        members = response.context['members']
+        self.assertEqual(len(members), 1)
+        self.assertEqual([line['count'] for line in members[0]['lines']], [3, 1])
+        self.assertEqual(members[0]['annual_total'], 3 * self.tree.annual_fee + self.bee.annual_fee)
+        self.assertContains(response, 'Patenschaft 3 von 3')  # menu to choose which one to edit
+        self.assertContains(response, 'Summe pro Jahr')
+
     def test_no_access_without_permission(self):
         self.client.force_login(self.member.user)
         response = self.client.get(reverse('sponsorships-manage'))

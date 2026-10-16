@@ -198,6 +198,32 @@ class ProRataTests(SponsorshipTestCase):
         self.assertIn('(01.01.2026–30.06.2026)', str(bill.items.get()))
 
 
+class BilledOverviewTests(SponsorshipTestCase):
+    """The overview of the management page shows what was billed in the current business year."""
+
+    def test_billed_per_type(self):
+        year = BusinessYear.objects.create(
+            start_date=datetime.date(2026, 1, 1), end_date=datetime.date(2026, 12, 31), name='2026')
+        s = Sponsorship.objects.create(member=self.member4, type=self.tree, activation_date=datetime.date(2025, 1, 1))
+        billing.create_bills(year, [s])
+        billed = billing.billed_per_type(datetime.date(2026, 6, 1))
+        self.assertEqual((billed['year'], billed['per_type'], billed['total']),
+                         ('2026', {self.tree.id: Decimal('120')}, Decimal('120')))
+        self.assertIsNone(billing.billed_per_type(datetime.date(2030, 6, 1)))
+
+    def test_column_in_overview(self):
+        today = datetime.date.today()
+        year = BusinessYear.objects.create(start_date=today.replace(month=1, day=1),
+                                           end_date=today.replace(month=12, day=31), name='Laufend')
+        s = Sponsorship.objects.create(member=self.member4, type=self.tree,
+                                       activation_date=today.replace(year=today.year - 1))
+        billing.create_bills(year, [s])
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('sponsorships-manage'))
+        self.assertContains(response, 'Verrechnet Laufend')
+        self.assertContains(response, '<th class="text-right">120 CHF</th>', html=False)
+
+
 class FirstYearShareTests(SponsorshipTestCase):
     """Pro rata amount shown when ordering (card, signup summary, confirmation mail)."""
 

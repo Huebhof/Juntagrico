@@ -139,6 +139,7 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
                 'total': qs.running().aggregate(s=Sum('annual_fee'))['s'] or 0,
             })
         context['overview'] = rows
+        context['members'] = self.group_by_member(context['object_list'])
         context['totals'] = {
             'ordered': Sponsorship.objects.ordered().count(),
             'active': Sponsorship.objects.active().count(),
@@ -146,6 +147,25 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
             'total': running.aggregate(s=Sum('annual_fee'))['s'] or 0,
         }
         return context
+
+    @staticmethod
+    def group_by_member(sponsorships):
+        """One entry per member, equal sponsorships (same type, fee, status and dates) in one line."""
+        members = []
+        for member, member_sponsorships in services.by_member(sponsorships).items():
+            lines = {}
+            for s in member_sponsorships:
+                key = (s.type_id, s.annual_fee, s.status, s.order_date, s.activation_date, s.cancellation_date,
+                       s.end_date)
+                lines.setdefault(key, []).append(s)
+            running = [s for s in member_sponsorships if s.status in (Sponsorship.ACTIVE, Sponsorship.CANCELED)]
+            members.append({
+                'member': member,
+                'lines': [{'first': group[0], 'count': len(group), 'sponsorships': group} for group in lines.values()],
+                'annual_total': sum(s.annual_fee for s in running),
+                'notes': [s.notes for s in member_sponsorships if s.notes],
+            })
+        return members
 
 
 EXPORT_FORMATS = {
