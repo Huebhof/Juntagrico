@@ -8,12 +8,7 @@
 {% block content %}
     <p>
         {% trans "Status" %}: <strong>{{ sponsorship.get_status_display }}</strong>
-        {% if bill_items %}
-            &middot; {% trans "Rechnungen" %}:
-            {% for item in bill_items %}
-                <a href="{% url 'admin:juntagrico_billing_bill_change' item.bill_id %}">{{ item.bill_id }} ({{ item.bill.business_year }})</a>{% if not forloop.last %}, {% endif %}
-            {% endfor %}
-        {% endif %}
+        {% block status_extra %}{% endblock %}
     </p>
     <p class="small text-muted">
         {% trans "Kündigen: bestellte Patenschaften werden storniert, aktive laufen bis Ende Geschäftsjahr (gleiche Frist wie bei den Ernteanteilen)." %}

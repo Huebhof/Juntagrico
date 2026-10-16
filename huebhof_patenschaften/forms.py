@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from juntagrico.entity.member import Member
 from juntagrico.forms import JuntagricoDateWidget as _JuntagricoDateWidget
 
+from . import extensions
 from .config import SponsorshipConfig
 from .models import Sponsorship, SponsorshipType
 
@@ -92,12 +93,20 @@ class MemberChoiceField(forms.ModelChoiceField):
 class SponsorshipTypeForm(forms.ModelForm):
     class Meta:
         model = SponsorshipType
-        fields = ['name', 'description', 'annual_fee', 'visible', 'sort_order', 'bill_item_type']
+        fields = ['name', 'description', 'annual_fee', 'visible', 'sort_order']
         widgets = {'description': forms.Textarea(attrs={'rows': 4})}
 
     def __init__(self, *args, cancel_url=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = _helper(*self.Meta.fields, cancel_url=cancel_url)
+        for extension in extensions.type_form_extensions():
+            extension.contribute(self)
+        self.helper = _helper(*self.fields, cancel_url=cancel_url)
+
+    def save(self, commit=True):
+        sponsorship_type = super().save(commit)
+        for extension in extensions.type_form_extensions():
+            extension.save(self, sponsorship_type)
+        return sponsorship_type
 
 
 class SponsorshipCreateForm(forms.Form):

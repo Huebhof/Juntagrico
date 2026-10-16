@@ -1,0 +1,14 @@
+{% extends "huebhof_patenschaften/edit.html" %}
+{% load i18n %}
+{# Adds the bills of the sponsorship. #}
+
+{% block status_extra %}
+    {% with links=sponsorship.bill_item_links.all %}
+        {% if links %}
+            &middot; {% trans "Rechnungen" %}:
+            {% for link in links %}
+                <a href="{% url 'admin:juntagrico_billing_bill_change' link.bill_item.bill_id %}">{{ link }}</a>{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+{% endblock %}

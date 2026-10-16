@@ -178,7 +178,7 @@ def types(request):
     return render(request, 'huebhof_patenschaften/types.html', {
         'types': SponsorshipType.objects.annotate(
             open_count=Count('sponsorships', filter=Q(sponsorships__in=Sponsorship.objects.open()))
-        ).select_related('bill_item_type'),
+        ),
     })
 
 
@@ -246,10 +246,7 @@ def edit(request, sponsorship_id):
         form.save()
         messages.success(request, _('Patenschaft gespeichert.'))
         return redirect('sponsorships-manage')
-    return render(request, 'huebhof_patenschaften/edit.html', {
-        'form': form, 'sponsorship': sponsorship,
-        'bill_items': sponsorship.bill_items.select_related('bill__business_year'),
-    })
+    return render(request, 'huebhof_patenschaften/edit.html', {'form': form, 'sponsorship': sponsorship})
 
 
 # ---------------------------------------------------------------- Pending changes (like subscriptions)

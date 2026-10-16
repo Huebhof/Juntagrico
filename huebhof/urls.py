@@ -20,6 +20,7 @@ urlpatterns = [
     re_path(r'^admin/', admin.site.urls),
     re_path(r'^api/hueblikum/', include('huebhof_hueblikum.urls')),
     re_path(r'^', include('huebhof_patenschaften.urls')),
+    re_path(r'^', include('huebhof_patenschaften_billing.urls')),
     re_path(r'^', include('juntagrico.urls')),
     re_path(r'^impersonate/', include('impersonate.urls')),
     re_path(r'^',include('juntagrico_billing.urls')),

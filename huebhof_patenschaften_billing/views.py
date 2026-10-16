@@ -1,6 +1,6 @@
 """Extended views of juntagrico_billing, so that sponsorships are part of the regular billing workflow.
 
-The URLs in urls.py are identical to those of juntagrico_billing ('jb/...'). Because huebhof_patenschaften.urls
+The URLs in urls.py are identical to those of juntagrico_billing ('jb/...'). Because huebhof_patenschaften_billing.urls
 is included before juntagrico_billing.urls in huebhof/urls.py, these views are used; links and
 reverse('jb:...') stay unchanged. The actual work is still done by the functions of juntagrico_billing.
 """
@@ -18,7 +18,9 @@ from juntagrico_billing.models.bill import Bill, BusinessYear
 from juntagrico_billing.util.billing import create_bills_for_items, get_billable_subscription_parts, \
     group_billables_by_member, recalc_bill
 
-from . import billing, services
+from huebhof_patenschaften import services
+
+from . import billing
 
 
 @permission_required('juntagrico.is_book_keeper')
@@ -42,7 +44,7 @@ def pending_bills(request):
                 'existing_bills': jb_views.get_existing_bills(member, selected_year),
             })
 
-    return render(request, 'huebhof_patenschaften/pending_bills.html', {
+    return render(request, 'huebhof_patenschaften_billing/pending_bills.html', {
         'business_years': business_years,
         'selected_year': selected_year,
         'pending_bills': pending,

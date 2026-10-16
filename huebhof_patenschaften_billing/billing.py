@@ -4,7 +4,7 @@ One bill item (BillItem with custom_item_type) is created per sponsorship and bu
 If the member already has an unpublished bill in the business year (e.g. for the subscription),
 the items are added to it, otherwise a new bill is created.
 
-Hooked into the juntagrico_billing workflow via views_billing.py.
+Hooked into the juntagrico_billing workflow via views.py.
 """
 import datetime
 from collections import defaultdict
@@ -15,7 +15,9 @@ from django.db.models import Q
 from juntagrico_billing.models.bill import Bill, BillItem, BillItemType
 from juntagrico_billing.models.settings import Settings
 
-from .models import Sponsorship
+from huebhof_patenschaften.models import Sponsorship
+
+from .models import SponsorshipBillItem, bill_item_type_of
 
 DEFAULT_ITEM_TYPE = 'Patenschaft'
 
@@ -28,9 +30,9 @@ def billable(business_year):
     ).filter(
         Q(end_date__isnull=True) | Q(end_date__gte=business_year.start_date)
     ).exclude(
-        bill_items__bill__business_year=business_year
-    ).select_related('member', 'type', 'type__bill_item_type').order_by('member__last_name', 'member__first_name',
-                                                                        'type__sort_order', 'id')
+        bill_item_links__bill_item__bill__business_year=business_year
+    ).select_related('member', 'type', 'type__billing__bill_item_type').order_by(
+        'member__last_name', 'member__first_name', 'type__sort_order', 'id')
 
 
 def by_member(sponsorships):
@@ -46,8 +48,9 @@ def open_bill(member, business_year):
 
 
 def _item_type(sponsorship_type):
-    if sponsorship_type.bill_item_type_id:
-        return sponsorship_type.bill_item_type
+    item_type = bill_item_type_of(sponsorship_type)
+    if item_type:
+        return item_type
     return BillItemType.objects.get_or_create(name=DEFAULT_ITEM_TYPE, defaults={'booking_account': ''})[0]
 
 
@@ -63,7 +66,7 @@ def add_to_bill(bill, sponsorships):
         item = BillItem.objects.create(
             bill=bill, custom_item_type=item_type, description=_description(s.type, item_type),
             amount=float(s.annual_fee))
-        s.bill_items.add(item)
+        SponsorshipBillItem.objects.create(sponsorship=s, bill_item=item)
     bill.amount = sum(itm.amount for itm in bill.items.all())
     bill.save()
 

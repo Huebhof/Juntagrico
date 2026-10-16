@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.generic import RedirectView
 
-from . import views, views_billing
+from . import views
 
 urlpatterns = [
     # Order process (url name must match the SignupManager)
@@ -20,10 +20,4 @@ urlpatterns = [
     path('manage/sponsorships/types/', views.types, name='sponsorships-types'),
     path('manage/sponsorships/types/new/', views.edit_type, name='sponsorships-type-new'),
     path('manage/sponsorships/types/<int:type_id>/', views.edit_type, name='sponsorships-type'),
-    # juntagrico_billing: same paths as there, so that sponsorships are part of the billing workflow
-    # (see views_billing.py; works because these URLs are included before juntagrico_billing.urls).
-    # Same names as there, so that the page gets the same body id.
-    path('jb/pending_bills', views_billing.pending_bills, name='pending-bills-list'),
-    path('jb/bills_generate', views_billing.bills_generate, name='bills-generate'),
-    path('jb/bill_recalc/<int:bill_id>', views_billing.bill_recalc, name='bill-recalc'),
 ]

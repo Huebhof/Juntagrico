@@ -1,0 +1,11 @@
+{% extends "huebhof_patenschaften/types.html" %}
+{% load i18n %}
+{# Adds the bill item type column to the list of sponsorship types. #}
+
+{% block type_columns_head %}
+    <th>{% trans "Rechnungsposition" %}</th>
+{% endblock %}
+
+{% block type_columns %}
+    <td>{{ type.billing.bill_item_type|default:"" }}</td>
+{% endblock %}
