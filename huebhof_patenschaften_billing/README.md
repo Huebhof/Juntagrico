@@ -38,6 +38,8 @@ Patenschaften erscheinen als eigene Rechnungspositionen (Custom Bill-Item Types)
 
 Verrechnet werden alle aktivierten Patenschaften mit einem Beitrag über 0, die im Geschäftsjahr laufen. Wie bei den Ernteanteilen wird nur die Zeit im Geschäftsjahr verrechnet: Beginnt oder endet eine Patenschaft während des Jahres, wird der Jahresbeitrag tageweise anteilig berechnet und auf 5 Rappen gerundet (gleiche Berechnung wie `scale_subscriptionpart_price` von juntagrico_billing). Auf der Rechnung steht dann der Zeitraum, z.B. "Patenschaft Huhn (16.10.2026–31.12.2026)". Jede Patenschaft wird pro Geschäftsjahr nur einmal verrechnet; wird die Rechnung gelöscht, ist sie wieder verrechenbar. Veröffentlichte Rechnungen werden nur beim expliziten Neu berechnen ergänzt.
 
+Beim Bestellen sehen Mitglieder neben dem Jahresbeitrag auch den anteiligen Betrag für das laufende Geschäftsjahr ("Für 2026 anteilig ab heute: ca. 7.60 CHF"): auf den Karten im Mitgliederbereich und im Anmeldeprozess, in der Zusammenfassung und in der Bestätigungsmail. "Ca.", weil ab der Aktivierung verrechnet wird, die Admins unter "Pendente Änderungen" vornehmen.
+
 Die Rechnungen einer Patenschaft stehen auf ihrer Bearbeiten-Seite und im Django-Admin.
 
 ## Berechtigungen

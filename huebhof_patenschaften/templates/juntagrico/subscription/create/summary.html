@@ -9,6 +9,7 @@
         <p>
             {% for row in selected_sponsorships %}
                 {{ row.quantity }} &times; {{ row.type.name }}: {{ row.total|price }} {% trans "pro Jahr" %}
+                {% block sponsorship_row_extra %}{% endblock %}
                 {% if not forloop.last %}<br>{% endif %}
             {% empty %}
                 {% trans "Keine Patenschaft" %}

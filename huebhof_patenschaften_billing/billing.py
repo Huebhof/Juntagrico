@@ -15,6 +15,8 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import Q
 
+from juntagrico.util import temporal
+
 from juntagrico_billing.models.bill import Bill, BillItem, BillItemType
 from juntagrico_billing.models.settings import Settings
 
@@ -63,16 +65,37 @@ def billed_period(sponsorship, business_year):
     return start, end
 
 
-def amount(sponsorship, business_year):
-    """Annual fee scaled to the days within the business year, rounded to 5 Rappen.
+def scale(annual_fee, start, end, year_start, year_end):
+    """Annual fee scaled to the days from start to end within the business year, rounded to 5 Rappen.
     Same calculation as scale_subscriptionpart_price of juntagrico_billing."""
-    start, end = billed_period(sponsorship, business_year)
     if end < start:
-        return Decimal('0')
-    days_year = (business_year.end_date - business_year.start_date).days + 1
+        return Decimal('0.00')
+    days_year = (year_end - year_start).days + 1
     days = (end - start).days + 1
-    scaled = round(sponsorship.annual_fee * Decimal(2.0 * days / days_year), 1) / Decimal('2.0')
+    scaled = round(annual_fee * Decimal(2.0 * days / days_year), 1) / Decimal('2.0')
     return scaled.quantize(Decimal('0.01'))
+
+
+def amount(sponsorship, business_year):
+    """Amount billed for the sponsorship in the business year."""
+    start, end = billed_period(sponsorship, business_year)
+    return scale(sponsorship.annual_fee, start, end, business_year.start_date, business_year.end_date)
+
+
+def first_year_share(annual_fee, date=None, quantity=1):
+    """Pro rata amount from date until the end of its business year, for display when ordering.
+    None if date is the first day of the business year (then the full annual fee applies)."""
+    date = date or datetime.date.today()
+    year_start = temporal.start_of_specific_business_year(date)
+    year_end = temporal.end_of_specific_business_year(date)
+    if date <= year_start:
+        return None
+    return {
+        'amount': scale(annual_fee, date, year_end, year_start, year_end) * quantity,
+        'start': date,
+        'end': year_end,
+        'year': str(year_start.year) if year_start.year == year_end.year else f'{year_start.year}/{year_end.year}',
+    }
 
 
 def _description(sponsorship, item_type, business_year):

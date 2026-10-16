@@ -1,6 +1,8 @@
 import datetime
 from decimal import Decimal
 
+from django.core import mail
+from django.template.defaultfilters import floatformat
 from django.urls import resolve, reverse
 
 from juntagrico_billing.models.bill import Bill, BillItem, BillItemType, BusinessYear
@@ -8,6 +10,7 @@ from juntagrico_billing.models.settings import Settings
 from juntagrico_billing.util.billing import recalc_bill
 
 from huebhof_patenschaften.models import Sponsorship, SponsorshipType
+from huebhof_patenschaften import tests as core_tests
 from huebhof_patenschaften.tests import SponsorshipTestCase
 
 from . import billing, views
@@ -193,6 +196,59 @@ class ProRataTests(SponsorshipTestCase):
         self.assertEqual(bill.items.count(), 1)
         self.assertEqual(bill.amount, 59.5)
         self.assertIn('(01.01.2026–30.06.2026)', str(bill.items.get()))
+
+
+class FirstYearShareTests(SponsorshipTestCase):
+    """Pro rata amount shown when ordering (card, signup summary, confirmation mail)."""
+
+    def test_calculation(self):
+        share = billing.first_year_share(Decimal('36'), datetime.date(2026, 10, 16))
+        self.assertEqual(share['amount'], Decimal('7.60'))
+        self.assertEqual((share['start'], share['end'], share['year']),
+                         (datetime.date(2026, 10, 16), datetime.date(2026, 12, 31), '2026'))
+        self.assertEqual(billing.first_year_share(Decimal('36'), datetime.date(2026, 10, 16), 2)['amount'],
+                         Decimal('15.20'))
+        # first day of the business year: full annual fee, nothing to show
+        self.assertIsNone(billing.first_year_share(Decimal('36'), datetime.date(2026, 1, 1)))
+
+    def expected(self, annual_fee, quantity=1):
+        share = billing.first_year_share(annual_fee, quantity=quantity)
+        return share and floatformat(share['amount'], '-2u')  # same format as the price filter
+
+    def test_card_in_member_area(self):
+        self.client.force_login(self.member.user)
+        response = self.client.get(reverse('sponsorships-mine'))
+        expected = self.expected(self.tree.annual_fee)
+        if expected:
+            self.assertContains(response, 'sponsorship-first-year')
+            self.assertContains(response, f'ca. {expected} CHF')
+        else:
+            self.assertNotContains(response, 'sponsorship-first-year')
+
+    subscription_selection = staticmethod(core_tests.SignupTests.subscription_selection)
+
+    def test_signup_summary(self):
+        # walk through the order process with the steps of the core tests
+        core_tests.SignupTests._until_sponsorships(self)
+        self.client.post(reverse('cs-sponsorships'), {f'type_{self.tree.id}': 2})
+        core_tests.SignupTests._rest_until_summary(self)
+        response = self.client.get(reverse('cs-summary'))
+        self.assertContains(response, '2 &times; Baumpatenschaft: 240 CHF')
+        expected = self.expected(self.tree.annual_fee, 2)
+        if expected:
+            self.assertContains(response, f'anteilig ab heute: ca. {expected} CHF')
+
+    def test_confirmation_mail(self):
+        self.client.force_login(self.member.user)
+        mail.outbox.clear()
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 2})
+        body = mail.outbox[0].body
+        self.assertIn('Baumpatenschaft: 120 CHF pro Jahr', body)
+        expected = self.expected(self.tree.annual_fee, 2)
+        if expected:
+            self.assertIn(f'(anteilig): ca. {expected} CHF', body)
+        else:
+            self.assertNotIn('anteilig', body)
 
 
 class TypeSettingsTests(SponsorshipTestCase):

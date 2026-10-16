@@ -13,6 +13,7 @@
                     {% endif %}
                     <div class="mt-auto">
                         <p class="mb-2"><strong>{{ type.annual_fee|price }}</strong> {% trans "pro Jahr" %}</p>
+                        {% block type_price_extra %}{% endblock %}
                         <label for="{{ field.id_for_label }}" class="sr-only">{% trans "Anzahl" %} {{ type.name }}</label>
                         <div class="input-group" style="max-width: 11rem;">
                             <div class="input-group-prepend"><span class="input-group-text">{% trans "Anzahl" %}</span></div>
