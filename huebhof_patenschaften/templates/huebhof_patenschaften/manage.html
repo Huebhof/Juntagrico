@@ -15,7 +15,8 @@
                         <th class="text-right">{% trans "Bestellt" %}</th>
                         <th class="text-right">{% trans "Aktiv" %}</th>
                         <th class="text-right">{% trans "Gekündigt" %}</th>
-                        <th class="text-right">{% trans "Jahresbeiträge laufend" %}</th>
+                        <th class="text-right" title="{% trans 'Jahresbeiträge der laufenden Patenschaften (aktive und gekündigte bis zu ihrem Ende)' %}">{% trans "Summe pro Jahr" %}</th>
+                        {% block overview_columns_head %}{% endblock %}
                     </tr>
                 </thead>
                 <tbody>
@@ -26,6 +27,7 @@
                             <td class="text-right">{{ row.active }}</td>
                             <td class="text-right">{{ row.canceled }}</td>
                             <td class="text-right">{{ row.total|price }}</td>
+                            {% block overview_columns %}{% endblock %}
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -36,6 +38,7 @@
                         <th class="text-right">{{ totals.active }}</th>
                         <th class="text-right">{{ totals.canceled }}</th>
                         <th class="text-right">{{ totals.total|price }}</th>
+                        {% block overview_totals %}{% endblock %}
                     </tr>
                 </tfoot>
             </table>
@@ -53,34 +56,58 @@
 {% endblock %}
 
 {% block list %}
+    {# One row per member, equal sponsorships in one line. The export has one row per sponsorship. #}
     <table id="filter-table" class="list table">
         <thead>
             <tr>
                 <th class="filter">{% trans "Pat:in" %}</th>
-                <th class="filter">{% trans "Typ" %}</th>
-                <th>{% trans "Jahresbeitrag" %}</th>
-                <th class="filter">{% trans "Status" %}</th>
-                <th>{% trans "Bestellt am" %}</th>
-                <th>{% trans "Aktiviert am" %}</th>
-                <th>{% trans "Gekündigt am" %}</th>
-                <th>{% trans "Ende" %}</th>
+                <th class="filter">{% trans "Patenschaften" %}</th>
+                <th class="text-right" title="{% trans 'Jahresbeiträge der laufenden Patenschaften' %}">{% trans "Summe pro Jahr" %}</th>
                 <th class="filter">{% trans "Notizen" %}</th>
             </tr>
         </thead>
         <tbody>
-            {% for s in object_list %}
+            {% for entry in members %}
                 <tr>
                     <td>
-                        {% include 'juntagrico/manage/member/snippets/display_linked.html' with member=s.member %}
+                        {% include 'juntagrico/manage/member/snippets/display_linked.html' with member=entry.member %}
                     </td>
-                    <td>{% if perms.huebhof_patenschaften.change_sponsorship %}<a href="{% url 'sponsorships-edit' s.id %}">{{ s.type.name }}</a>{% else %}{{ s.type.name }}{% endif %}</td>
-                    <td data-order="{{ s.annual_fee|unlocalize }}">{{ s.annual_fee|price }}</td>
-                    <td>{{ s.get_status_display }}</td>
-                    <td data-order="{{ s.order_date|date:'Y-m-d' }}">{{ s.order_date|date:"d.m.Y" }}</td>
-                    <td data-order="{{ s.activation_date|date:'Y-m-d' }}">{{ s.activation_date|date:"d.m.Y" }}</td>
-                    <td data-order="{{ s.cancellation_date|date:'Y-m-d' }}">{{ s.cancellation_date|date:"d.m.Y" }}</td>
-                    <td data-order="{{ s.end_date|date:'Y-m-d' }}">{{ s.end_date|date:"d.m.Y" }}</td>
-                    <td>{{ s.notes }}</td>
+                    <td class="sponsorship-lines">
+                        {% for line in entry.lines %}
+                            {% with s=line.first %}
+                                <div class="sponsorship-line{% if s.status == 'ended' or s.status == 'withdrawn' %} text-muted{% endif %}">
+                                    {{ line.count }} ×
+                                    {% if not perms.huebhof_patenschaften.change_sponsorship %}
+                                        {{ s.type.name }}
+                                    {% elif line.count == 1 %}
+                                        <a href="{% url 'sponsorships-edit' s.id %}" title="{% trans 'Patenschaft bearbeiten' %}">{{ s.type.name }}</a>
+                                    {% else %}
+                                        {# equal sponsorships: choose which one to edit #}
+                                        <span class="dropdown">
+                                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ s.type.name }}</a>
+                                            <span class="dropdown-menu">
+                                                <h6 class="dropdown-header">{% trans "Welche bearbeiten?" %}</h6>
+                                                {% for sponsorship in line.sponsorships %}
+                                                    <a class="dropdown-item" href="{% url 'sponsorships-edit' sponsorship.id %}">{% blocktrans with n=forloop.counter total=line.count %}Patenschaft {{ n }} von {{ total }}{% endblocktrans %}</a>
+                                                {% endfor %}
+                                            </span>
+                                        </span>
+                                    {% endif %}
+                                    <span class="text-muted">
+                                        {% if line.count > 1 %}{% blocktrans with fee=s.annual_fee|price %}à {{ fee }}{% endblocktrans %}{% else %}{{ s.annual_fee|price }}{% endif %}
+                                        ·
+                                        {% if s.status == 'ordered' %}{% blocktrans with date=s.order_date|date:"d.m.Y" %}bestellt am {{ date }}{% endblocktrans %}
+                                        {% elif s.status == 'active' %}{% blocktrans with date=s.activation_date|date:"d.m.Y" %}seit {{ date }}{% endblocktrans %}
+                                        {% elif s.status == 'canceled' %}{% blocktrans with date=s.cancellation_date|date:"d.m.Y" end=s.end_date|date:"d.m.Y" %}gekündigt am {{ date }}, läuft bis {{ end }}{% endblocktrans %}
+                                        {% elif s.status == 'ended' %}{% blocktrans with date=s.end_date|date:"d.m.Y" %}beendet am {{ date }}{% endblocktrans %}
+                                        {% else %}{% blocktrans with date=s.cancellation_date|date:"d.m.Y" %}storniert am {{ date }}{% endblocktrans %}{% endif %}
+                                    </span>
+                                </div>
+                            {% endwith %}
+                        {% endfor %}
+                    </td>
+                    <td class="text-right" data-order="{{ entry.annual_total|unlocalize }}">{% if entry.annual_total %}{{ entry.annual_total|price }}{% endif %}</td>
+                    <td>{% for note in entry.notes %}{{ note }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -89,6 +116,8 @@
 
 {% block datatable_constructor %}
     {{ block.super }}
+    // Clicks in the sponsorship column open the links and menus, they do not select the row
+    config.select.selector = 'td:not(.sponsorship-lines)'
     // Export of the list with the current status filter (server side, same columns as in the Django admin).
     // Two simple buttons instead of a dropdown: the dropdown would be hidden in the fixed toolbar.
     {% for file_format, label in export_buttons %}

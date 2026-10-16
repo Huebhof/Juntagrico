@@ -1,0 +1,24 @@
+{% extends "huebhof_patenschaften/manage.html" %}
+{% load i18n juntagrico.common sponsorship_billing %}
+{# Adds the amounts billed in the current business year to the overview. #}
+
+{% block content %}
+    {% billed_per_type as billed %}
+    {{ block.super }}
+{% endblock %}
+
+{% block overview_columns_head %}
+    {% if billed %}
+        <th class="text-right" title="{% trans 'Rechnungspositionen der Patenschaften im laufenden Geschäftsjahr, auch noch nicht versandte Rechnungen. Im ersten Jahr anteilig.' %}">
+            {% blocktrans with year=billed.year %}Verrechnet {{ year }}{% endblocktrans %}
+        </th>
+    {% endif %}
+{% endblock %}
+
+{% block overview_columns %}
+    {% if billed %}<td class="text-right">{{ billed.per_type|get_item:row.type.id|price }}</td>{% endif %}
+{% endblock %}
+
+{% block overview_totals %}
+    {% if billed %}<th class="text-right">{{ billed.total|price }}</th>{% endif %}
+{% endblock %}
