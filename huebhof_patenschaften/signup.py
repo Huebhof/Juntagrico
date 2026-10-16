@@ -1,7 +1,6 @@
 from juntagrico.util.sessions import SignupManager
 
 from . import mailer, services
-from .config import SponsorshipConfig
 from .models import SponsorshipType
 
 # Steps that come before the sponsorship page (selection of subscriptions and extras)
@@ -11,12 +10,12 @@ _PREVIOUS_STEPS = ('signup', 'subscription-landing', 'cs-subscription', 'cs-extr
 class SponsorshipSignupManager(SignupManager):
     """Extends the order process with a "sponsorships" step after the subscription selection.
 
-    Enable in settings.py:
+    Enable in settings.py (without it, sponsorships are not offered in the order process):
         SIGNUP_MANAGER = 'huebhof_patenschaften.signup.SponsorshipSignupManager'
     """
 
     def sponsorships_enabled(self):
-        return SponsorshipConfig.in_signup() and SponsorshipType.objects.visible().exists()
+        return SponsorshipType.objects.visible().exists()
 
     def sponsorships(self):
         """[(SponsorshipType, quantity)] of the selected sponsorships."""

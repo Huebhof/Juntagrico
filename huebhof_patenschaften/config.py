@@ -11,11 +11,6 @@ class SponsorshipConfig:
         return getattr(settings, 'SPONSORSHIPS_AUTO_ACTIVATE', False)
 
     @staticmethod
-    def in_signup():
-        """True: show a sponsorship step in the signup / subscription order process."""
-        return getattr(settings, 'SPONSORSHIPS_IN_SIGNUP', True)
-
-    @staticmethod
     def max_quantity():
         """Maximum quantity per type and order."""
         return getattr(settings, 'SPONSORSHIPS_MAX_QUANTITY', 20)

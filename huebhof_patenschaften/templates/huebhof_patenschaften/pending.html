@@ -1,5 +1,5 @@
 {% extends "juntagrico/manage/base.html" %}
-{% load i18n sponsorships juntagrico.config juntagrico.snippets %}
+{% load i18n juntagrico.snippets juntagrico.common %}
 {# Same structure as juntagrico/manage/subscription/pending.html #}
 
 {% block page_title %}
@@ -15,7 +15,6 @@
 {% endblock %}
 
 {% block list %}
-    {% config "currency" as c_currency %}
     <table id="filter-table" class="list table">
         <thead>
             <tr>
@@ -49,7 +48,7 @@
                         {% endfor %}
                     </td>
                     <td>
-                        {% for s in sponsorships %}{{ c_currency }} {{ s.annual_fee|chf }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                        {% for s in sponsorships %}{{ s.annual_fee|price }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
                     </td>
                     <td>
                         <form method="post" id="pending-form-{{ member.id }}" action="{% url 'sponsorships-pending-apply' %}">

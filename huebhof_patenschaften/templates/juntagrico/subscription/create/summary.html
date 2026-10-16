@@ -1,15 +1,14 @@
 {% extends "juntagrico/subscription/create/summary.html" %}
-{% load i18n sponsorships juntagrico.config %}
+{% load i18n sponsorships juntagrico.common %}
 
 {% block comment %}
     {% url 'cs-sponsorships' as sponsorships_url %}
     {% if sponsorships is not None %}
-        {% config "currency" as c_currency %}
         {% sponsorship_selection sponsorships as selected_sponsorships %}
         <h4>{% trans "Patenschaften" %} <a href="{{ sponsorships_url }}?mod" class="edit"><i class="bi bi-pencil-square"></i></a></h4>
         <p>
             {% for row in selected_sponsorships %}
-                {{ row.quantity }} &times; {{ row.type.name }}: {{ c_currency }} {{ row.total|chf }} {% trans "pro Jahr" %}
+                {{ row.quantity }} &times; {{ row.type.name }}: {{ row.total|price }} {% trans "pro Jahr" %}
                 {% if not forloop.last %}<br>{% endif %}
             {% empty %}
                 {% trans "Keine Patenschaft" %}

@@ -51,6 +51,8 @@ INSTALLED_APPS = [
 SIGNUP_MANAGER = 'huebhof_patenschaften.signup.SponsorshipSignupManager'
 ```
 
+`SIGNUP_MANAGER` fügt den Schritt "Patenschaft übernehmen" in den Bestellprozess ein. Ohne diese Einstellung werden Patenschaften nur im Mitgliederbereich angeboten.
+
 `urls.py` (vor `juntagrico.urls` und `juntagrico_billing.urls`):
 
 ```python
@@ -66,7 +68,6 @@ Beide Reihenfolgen sind wichtig, siehe [Eingriffe in juntagrico und juntagrico_b
 | Setting | Standard | Bedeutung |
 |---|---|---|
 | `SPONSORSHIPS_AUTO_ACTIVATE` | `False` | Wie bei den Ernteanteilen bleiben Bestellungen von Mitgliedern "bestellt", bis ein Admin sie aktiviert. `True`: ab Bestellung aktiv. Gilt nicht für "Patenschaft erfassen", dort wird das Aktivierungsdatum direkt angegeben. |
-| `SPONSORSHIPS_IN_SIGNUP` | `True` | Schritt im Bestellprozess anzeigen. |
 | `SPONSORSHIPS_MAX_QUANTITY` | `20` | Maximale Anzahl pro Typ und Bestellung. |
 | `SPONSORSHIPS_INFO_URL` | `''` | Link "Mehr erfahren" zu einem Infodokument. |
 

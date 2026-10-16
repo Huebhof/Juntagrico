@@ -1,5 +1,4 @@
-{% load i18n sponsorships juntagrico.config %}
-{% config "currency" as c_currency %}
+{% load i18n juntagrico.common %}
 {% if form.non_field_errors %}
     <div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>
 {% endif %}
@@ -13,7 +12,7 @@
                         <div class="card-text mb-3">{{ type.description|linebreaks }}</div>
                     {% endif %}
                     <div class="mt-auto">
-                        <p class="mb-2"><strong>{{ c_currency }} {{ type.annual_fee|chf }}</strong> {% trans "pro Jahr" %}</p>
+                        <p class="mb-2"><strong>{{ type.annual_fee|price }}</strong> {% trans "pro Jahr" %}</p>
                         <label for="{{ field.id_for_label }}" class="sr-only">{% trans "Anzahl" %} {{ type.name }}</label>
                         <div class="input-group" style="max-width: 11rem;">
                             <div class="input-group-prepend"><span class="input-group-text">{% trans "Anzahl" %}</span></div>

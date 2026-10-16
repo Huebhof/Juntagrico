@@ -111,7 +111,7 @@ class SignupTests(SponsorshipTestCase):
         self._rest_until_summary()
         response = self.client.get(reverse('cs-summary'))
         self.assertContains(response, '2 &times; Baumpatenschaft')
-        self.assertContains(response, "240.00")
+        self.assertContains(response, '240 CHF')
         mail.outbox.clear()
         response = self.client.post(reverse('cs-summary'), {'comment': ''})
         self.assertEqual(response.status_code, 302)
@@ -141,8 +141,8 @@ class SignupTests(SponsorshipTestCase):
         self.assertContains(response, '3 &times; Bienenpatenschaft')
         self.assertNotContains(response, 'Baumpatenschaft')
 
-    @override_settings(SPONSORSHIPS_IN_SIGNUP=False)
-    def test_step_can_be_disabled(self):
+    @override_settings(SIGNUP_MANAGER='juntagrico.util.sessions.SignupManager')
+    def test_no_step_without_signup_manager(self):
         self.client.force_login(self.member4.user)
         response = self.client.post(reverse('cs-subscription'), self.subscription_selection())
         self.assertRedirects(response, reverse('cs-depot'), fetch_redirect_response=False)
@@ -165,7 +165,7 @@ class MemberAreaTests(SponsorshipTestCase):
         self.assertRedirects(response, reverse('sponsorships-mine'))
         self.assertEqual(Sponsorship.objects.filter(member=self.member).active().count(), 2)
         response = self.client.get(reverse('sponsorships-mine'))
-        self.assertContains(response, '100.00')
+        self.assertContains(response, '100 CHF')
 
         s = Sponsorship.objects.filter(member=self.member).first()
         response = self.client.post(reverse('sponsorships-cancel', args=[s.id]))
@@ -217,6 +217,7 @@ class AdminTests(SponsorshipTestCase):
         self.assertContains(response, 'href="%s"' % reverse('sponsorships-types'))
         self.assertContains(response, 'href="%s"' % reverse('sponsorships-create'))
         self.assertContains(response, 'collapse show" id="sponsorshipsman"')
+        self.assertContains(response, '<ul class="nav nav-tabs')
 
     def test_no_access_without_permission(self):
         self.client.force_login(self.member.user)
@@ -389,6 +390,9 @@ class ManagementTests(SponsorshipTestCase):
         self.client.force_login(self.admin.user)
         response = self.client.get(reverse('sponsorships-create'), {'member': self.member2.id})
         self.assertContains(response, f'<option value="{self.member2.id}" selected>')
+        # buttons with exactly one style each (no btn-primary mixed in)
+        self.assertContains(response, 'class="btn btn-outline-success"')
+        self.assertNotContains(response, 'btn-primary')
         mail.outbox.clear()
         response = self.client.post(reverse('sponsorships-create'), {
             'member': self.member2.id, 'type': self.tree.id, 'quantity': 3, 'annual_fee': '',

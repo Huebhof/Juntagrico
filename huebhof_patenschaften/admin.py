@@ -3,8 +3,10 @@ from django.urls import reverse
 from django.utils.html import format_html_join
 from django.utils.translation import gettext_lazy as _
 from import_export import fields, resources
+from adminsortable2.admin import SortableAdminMixin
 from import_export.admin import ExportMixin
 
+from juntagrico.admins import BaseAdmin
 from juntagrico.entity.member import Member
 from juntagrico.util import addons
 
@@ -49,9 +51,9 @@ class StatusFilter(admin.SimpleListFilter):
 
 
 @admin.register(SponsorshipType)
-class SponsorshipTypeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'annual_fee', 'bill_item_type', 'visible', 'sort_order', 'running_count']
-    list_editable = ['visible', 'sort_order']
+class SponsorshipTypeAdmin(SortableAdminMixin, BaseAdmin):
+    list_display = ['name', 'annual_fee', 'bill_item_type', 'visible', 'running_count']
+    list_editable = ['visible']
     search_fields = ['name', 'description']
 
     @admin.display(description=_('Laufend'))
@@ -60,7 +62,7 @@ class SponsorshipTypeAdmin(admin.ModelAdmin):
 
 
 @admin.register(Sponsorship)
-class SponsorshipAdmin(ExportMixin, admin.ModelAdmin):
+class SponsorshipAdmin(ExportMixin, BaseAdmin):
     resource_classes = [SponsorshipResource]
     list_display = ['member', 'type', 'annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date',
                     'status_display']

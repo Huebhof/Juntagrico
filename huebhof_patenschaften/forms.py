@@ -63,12 +63,19 @@ class JuntagricoDateWidget(_JuntagricoDateWidget):
         return None if value in (None, '') else super().format_value(value)
 
 
+def _button(name, label, css_class, **kwargs):
+    """Submit button with exactly the given style (crispy forms always adds btn-primary otherwise)."""
+    button = Submit(name, label, **kwargs)
+    button.field_classes = f'btn {css_class}'
+    return button
+
+
 def _helper(*fields, submit=_('Speichern'), extra=None, cancel_url=None):
     helper = FormHelper()
     helper.form_class = 'form-horizontal'
     helper.label_class = 'col-md-3'
     helper.field_class = 'col-md-9'
-    buttons = [Submit('submit', submit, css_class='btn-success')]
+    buttons = [_button('submit', submit, 'btn-success')]
     if extra:
         buttons.append(extra)
     buttons.append(HTML('<a href="%s" class="btn btn-outline-secondary">%s</a>'
@@ -116,7 +123,7 @@ class SponsorshipCreateForm(forms.Form):
         self.fields['quantity'].max_value = SponsorshipConfig.max_quantity()
         self.fields['quantity'].validators.append(MaxValueValidator(SponsorshipConfig.max_quantity()))
         self.helper = _helper(*self.fields, submit=_('Erfassen'), cancel_url=cancel_url,
-                              extra=Submit('another', _('Erfassen und weitere erfassen'), css_class='btn-outline-success'))
+                              extra=_button('another', _('Erfassen und weitere erfassen'), 'btn-outline-success'))
 
 
 class SponsorshipEditForm(forms.ModelForm):
@@ -130,6 +137,6 @@ class SponsorshipEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         extra = None
         if self.instance.can_be_canceled:
-            extra = Submit('cancel', _('Kündigen'), css_class='btn-danger',
-                           onclick="return confirm('%s')" % _('Patenschaft kündigen?'))
+            extra = _button('cancel', _('Kündigen'), 'btn-danger',
+                            onclick="return confirm('%s')" % _('Patenschaft kündigen?'))
         self.helper = _helper(*self.Meta.fields, extra=extra)
