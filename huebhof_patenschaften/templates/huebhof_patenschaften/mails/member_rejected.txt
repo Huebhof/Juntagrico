@@ -1,0 +1,15 @@
+{% extends "mails/email.txt" %}
+{% load i18n %}
+{% block content %}
+{% blocktrans with fn=member.first_name %}Hallo {{ fn }}{% endblocktrans %}
+
+{% trans "Vielen Dank für dein Interesse an einer Patenschaft. Leider können wir folgende Bestellung(en) zurzeit nicht annehmen:" %}
+
+{% for s in sponsorships %}- {{ s.type.name }}
+{% endfor %}{% if reason %}
+{{ reason }}
+{% endif %}
+{% trans "Es wird dir nichts verrechnet. Bei Fragen melde dich gerne bei uns." %}
+
+{% trans "Herzliche Grüsse" %}
+{% endblock %}

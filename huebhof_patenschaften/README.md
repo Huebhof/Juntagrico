@@ -6,17 +6,17 @@ Der Code (Klassen, Felder, Funktionen, Kommentare) ist englisch wie in juntagric
 
 ## Funktionen
 
-* **Patenschaftstypen** mit Name, Beschreibung und Jahresbeitrag (mit `huebhof_patenschaften_billing` optional eigenes Buchungskonto). Nur "bestellbare" Typen werden Mitgliedern angeboten.
+* **Patenschaftstypen** mit Name, Beschreibung und Jahresbeitrag (mit `huebhof_patenschaften_billing` optional eigenes Buchungskonto). Nur "bestellbare" Typen werden Mitgliedern angeboten. Optional eine maximale Anzahl pro Typ: laufende und bestellte Patenschaften zählen, ist sie erreicht, ist der Typ "zurzeit ausgebucht"; vorher sehen Mitglieder "noch N verfügbar".
 * **Bestellprozess**: Nach der Auswahl der Ernteanteile (und Zusatz-Abos) folgt der Schritt "Patenschaft übernehmen". Alle Felder auf 0 = ohne Patenschaft weiter. Die Zusammenfassung zeigt die Auswahl mit Bearbeiten-Link.
 * **Kumulierbar**: Pro übernommener Patenschaft ein eigener Datensatz (3 × Baum = 3 Einträge), jede einzeln kündbar.
 * **Unabhängig vom Ernteanteil**: Patenschaften hängen am Mitglied, nicht am Abo.
 * **Mitgliederbereich** "Patenschaften" (im Menü direkt nach dem Ernteanteil): eigene Patenschaften mit Jahrestotal, weitere bestellen, kündigen.
-* **Aktivierung** wie bei den Ernteanteilen manuell durch Admins: Bestellungen sind zuerst "bestellt" und werden unter Patenschaften → Pendente Änderungen aktiviert. Erst aktivierte Patenschaften werden verrechnet.
+* **Prüfung und Aktivierung** wie bei den Ernteanteilen manuell durch Admins: Bestellungen sind zuerst "bestellt" und werden unter Patenschaften → Pendente Änderungen geprüft und aktiviert oder abgelehnt. Erst aktivierte Patenschaften werden verrechnet.
 * **Kündigung** per Ende Geschäftsjahr, gleiche Regel wie bei den Ernteanteilen: bis Ende `BUSINESS_YEAR_CANCELATION_MONTH` aufs Ende des laufenden Jahres, danach aufs Ende des Folgejahres. Noch nicht aktivierte Bestellungen werden sofort storniert.
 * **Verwaltung im Frontend** (Admin-Menü → Patenschaften, siehe unten): Übersicht, Typen verwalten, Patenschaften erfassen, bearbeiten und kündigen. Der Django-Admin wird dafür nicht gebraucht.
 * **Verrechnung** im normalen Rechnungsablauf von `juntagrico_billing`, mit der App `huebhof_patenschaften_billing`.
 * **Austritt**: Wird ein Mitglied deaktiviert, enden seine Patenschaften am selben Tag.
-* **E-Mails**: Bestätigung an die Pat:in bei Bestellung und Kündigung. Admins mit den Rechten "Wird bei neuer / gekündigter Patenschaft per E-Mail informiert" erhalten eine Benachrichtigung.
+* **E-Mails**: an die Pat:in bei Bestellung ("wir prüfen"), Aktivierung ("bestätigt"), Ablehnung (mit optionaler Begründung) und Kündigung. Admins mit den Rechten "Wird bei neuer / gekündigter Patenschaft per E-Mail informiert" erhalten eine Benachrichtigung.
 
 ## Bedienung
 
@@ -25,8 +25,8 @@ Im Admin-Menü gibt es nach den Ernteanteilen das Aufklappmenü **Patenschaften*
 | Menüpunkt | Inhalt |
 |---|---|
 | **Aktive** | Kennzahlen pro Typ (bestellt, aktiv, gekündigt, Summe Jahresbeiträge) und Liste der Patenschaften. Filter: aktiv (Standard), gekündigt (laufen noch), alle inkl. beendete. Bestellte, noch nicht aktive Patenschaften stehen unter "Pendente Änderungen". Werkzeugleiste: E-Mail an die ausgewählten Pat:innen, E-Mails kopieren, Knöpfe "Excel" und "CSV" (Export mit dem gewählten Statusfilter; Suche und Spaltenfilter werden nicht berücksichtigt). Klick auf den Typ öffnet die einzelne Patenschaft. |
-| **Pendente Änderungen** | Wie bei den Ernteanteilen: pro Mitglied die bestellten, noch nicht aktivierten Patenschaften (nach Bestelldatum gruppiert). Auswählen und "Ausgewählte anwenden" aktiviert sie auf das Änderungsdatum (Standard heute, einstellbar wie bei den Ernteanteilen). Kündigungen müssen nicht angewendet werden. |
-| **Patenschaftstypen** | Typen anlegen und bearbeiten (Name, Beschreibung, Jahresbeitrag, Bestellbar, Sortierung; mit `huebhof_patenschaften_billing` zusätzlich Rechnungspositionstyp). Löschen nur ohne Patenschaften, sonst "Bestellbar" ausschalten. |
+| **Pendente Änderungen** | Prüfung der Bestellungen, aufgebaut wie bei den Ernteanteilen: pro Mitglied die bestellten, noch nicht aktivierten Patenschaften (nach Bestelldatum gruppiert), mit der Belegung des Typs ("3 laufend, 1 bestellt, max. 10"). "Ausgewählte anwenden" aktiviert sie auf das Änderungsdatum (Standard heute, einstellbar wie bei den Ernteanteilen) und schickt dem Mitglied eine Bestätigung. "Ausgewählte ablehnen" storniert die Bestellung und informiert das Mitglied, optional mit Begründung. Kündigungen müssen nicht angewendet werden. |
+| **Patenschaftstypen** | Typen anlegen und bearbeiten (Name, Beschreibung, Jahresbeitrag, Bestellbar, maximale Anzahl, Sortierung; mit `huebhof_patenschaften_billing` zusätzlich Rechnungspositionstyp). Löschen nur ohne Patenschaften, sonst "Bestellbar" ausschalten. |
 | **Patenschaft erfassen** | Für Bestellungen, die nicht über den Mitgliederbereich kommen: Mitglied, Typ, Anzahl, Jahresbeitrag (leer = Preis des Typs), Bestell- und Aktivierungsdatum (leer = bleibt "bestellt"), Notizen, optional Bestätigungsmail. "Erfassen und weitere erfassen" für mehrere nacheinander. |
 
 Die einzelne Patenschaft zeigt den Status (mit `huebhof_patenschaften_billing` auch die Rechnungen); Beitrag, Daten und Notizen lassen sich ändern, "Kündigen" wendet die Kündigungsregel an.

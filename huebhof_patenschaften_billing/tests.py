@@ -251,6 +251,28 @@ class FirstYearShareTests(SponsorshipTestCase):
             self.assertNotIn('anteilig', body)
 
 
+class PendingAndActivationTests(SponsorshipTestCase):
+    """Pro rata amount on the check page (from the change date) and in the confirmation mail."""
+
+    def setUp(self):
+        self.chicken = SponsorshipType.objects.create(name='Huhn', annual_fee=Decimal('36'))
+        self.s = Sponsorship.objects.create(member=self.member, type=self.chicken)
+        self.client.force_login(self.admin.user)
+        session = self.client.session
+        session['changedate'] = '2026-10-16'
+        session.save()
+
+    def test_pending_shows_amount_from_change_date(self):
+        self.assertContains(self.client.get(reverse('sponsorships-pending')), '2026: 7.60 CHF ab 16.10.')
+
+    def test_confirmation_mail_with_amount(self):
+        mail.outbox.clear()
+        self.client.post(reverse('sponsorships-pending-apply'), {'sponsorships[]': [self.s.id]})
+        body = mail.outbox[0].body
+        self.assertIn('gültig ab 16.10.2026', body)
+        self.assertIn('für 2026 anteilig: 7.60 CHF (16.10.–31.12.2026)', body)
+
+
 class TypeSettingsTests(SponsorshipTestCase):
     """The bill item type is set on the management pages of huebhof_patenschaften (form extension)."""
 

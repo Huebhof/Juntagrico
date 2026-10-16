@@ -19,6 +19,27 @@ def confirm_order(member, sponsorships):
     ).send_to(member.email)
 
 
+def confirm_activation(member, sponsorships):
+    if not sponsorships or not member.email:
+        return
+    EmailSender.get_sender(
+        organisation_subject(_('Deine Patenschaft ist bestätigt')),
+        _render('huebhof_patenschaften/mails/member_activated.txt',
+                {'member': member, 'sponsorships': sponsorships,
+                 'total': sum(s.annual_fee for s in sponsorships)}),
+    ).send_to(member.email)
+
+
+def confirm_rejection(member, sponsorships, reason=''):
+    if not sponsorships or not member.email:
+        return
+    EmailSender.get_sender(
+        organisation_subject(_('Deine Bestellung einer Patenschaft')),
+        _render('huebhof_patenschaften/mails/member_rejected.txt',
+                {'member': member, 'sponsorships': sponsorships, 'reason': reason}),
+    ).send_to(member.email)
+
+
 def confirm_cancellation(member, sponsorship):
     if not member.email:
         return

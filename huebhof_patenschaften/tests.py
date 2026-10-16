@@ -472,6 +472,107 @@ class PendingTests(SponsorshipTestCase):
         self.assertEqual(self.a.status, 'ordered')
 
 
+class CheckAndActivationTests(SponsorshipTestCase):
+    """Orders are checked by admins: activate (confirmation mail) or reject (mail with reason)."""
+
+    def setUp(self):
+        self.a = Sponsorship.objects.create(member=self.member, type=self.tree)
+        self.b = Sponsorship.objects.create(member=self.member, type=self.bee)
+        self.client.force_login(self.admin.user)
+
+    def test_order_mail_says_it_is_checked(self):
+        self.client.force_login(self.member2.user)
+        mail.outbox.clear()
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1})
+        self.assertIn('Wir prüfen, ob die Patenschaft möglich ist', mail.outbox[0].body)
+
+    def test_pending_shows_occupancy(self):
+        Sponsorship.objects.create(member=self.member2, type=self.tree, activation_date=datetime.date(2025, 1, 1))
+        self.tree.max_count = 10
+        self.tree.save()
+        response = self.client.get(reverse('sponsorships-pending'))
+        self.assertContains(response, '1 laufend, 1 bestellt, max. 10')
+        self.assertContains(response, reverse('sponsorships-pending-reject'))
+        # reject asks for the reason in a dialog, the form carries it as hidden field
+        self.assertContains(response, 'id="reject-modal"')
+        self.assertContains(response, f'data-form="pending-form-{self.member.id}"')
+        self.assertContains(response, '<input type="hidden" name="reason" value="">')
+
+    def test_activate_sends_confirmation(self):
+        mail.outbox.clear()
+        self.client.post(reverse('sponsorships-pending-apply'), {'sponsorships[]': [self.a.id, self.b.id]})
+        self.a.refresh_from_db()
+        self.assertEqual(self.a.status, 'active')
+        self.assertEqual(len(mail.outbox), 1)  # one mail per member
+        self.assertEqual(mail.outbox[0].to, [self.member.email])
+        self.assertIn('bestätigt', mail.outbox[0].subject)
+        self.assertIn('Baumpatenschaft', mail.outbox[0].body)
+        self.assertIn('Bienenpatenschaft', mail.outbox[0].body)
+
+    def test_reject_with_reason(self):
+        mail.outbox.clear()
+        self.client.post(reverse('sponsorships-pending-reject'),
+                         {'sponsorships[]': [self.a.id], 'reason': 'Alle Bäume sind vergeben.'})
+        self.a.refresh_from_db()
+        self.b.refresh_from_db()
+        self.assertEqual((self.a.status, self.b.status), ('withdrawn', 'ordered'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('nicht annehmen', mail.outbox[0].body)
+        self.assertIn('Alle Bäume sind vergeben.', mail.outbox[0].body)
+        self.assertNotIn('Bienenpatenschaft', mail.outbox[0].body)
+
+    def test_reject_needs_change_permission(self):
+        user = self.member2.user
+        user.user_permissions.set(Permission.objects.filter(codename='view_sponsorship'))
+        self.client.force_login(user)
+        response = self.client.post(reverse('sponsorships-pending-reject'), {'sponsorships[]': [self.a.id]})
+        self.assertEqual(response.status_code, 403)
+        self.a.refresh_from_db()
+        self.assertEqual(self.a.status, 'ordered')
+
+
+class MaxCountTests(SponsorshipTestCase):
+    """Optional maximum per type: running and ordered sponsorships count."""
+
+    def setUp(self):
+        self.tree.max_count = 2
+        self.tree.save()
+        Sponsorship.objects.create(member=self.member2, type=self.tree)
+        self.client.force_login(self.member.user)
+
+    def test_available_shown_and_enforced(self):
+        self.assertEqual(self.tree.available_count(), 1)
+        self.assertIsNone(self.bee.available_count())
+        self.assertContains(self.client.get(reverse('sponsorships-mine')), 'Noch 1 verfügbar')
+        response = self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 2})
+        self.assertContains(response, 'Höchstens 1 möglich.')
+        self.assertEqual(Sponsorship.objects.filter(member=self.member).count(), 0)
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1})
+        self.assertEqual(Sponsorship.objects.filter(member=self.member).count(), 1)
+
+    def test_fully_booked(self):
+        Sponsorship.objects.create(member=self.member3, type=self.tree)
+        response = self.client.get(reverse('sponsorships-mine'))
+        self.assertContains(response, 'Zurzeit ausgebucht')
+        self.assertContains(response, f'name="type_{self.tree.id}"')
+        self.assertRegex(response.content.decode(), rf'name="type_{self.tree.id}"[^>]*disabled')
+        # a disabled field is ignored, other types can still be ordered
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1, f'type_{self.bee.id}': 1})
+        self.assertEqual(list(Sponsorship.objects.filter(member=self.member).values_list('type', flat=True)),
+                         [self.bee.id])
+
+    def test_withdrawn_and_ended_do_not_count(self):
+        Sponsorship.objects.filter(member=self.member2).get().cancel()
+        Sponsorship.objects.create(member=self.member3, type=self.tree, activation_date=datetime.date(2020, 1, 1),
+                                   end_date=datetime.date(2021, 12, 31))
+        self.assertEqual(self.tree.available_count(), 2)
+
+    def test_types_list_and_form(self):
+        self.client.force_login(self.admin.user)
+        self.assertContains(self.client.get(reverse('sponsorships-types')), '1 / 2')
+        self.assertContains(self.client.get(reverse('sponsorships-type', args=[self.tree.id])), 'name="max_count"')
+
+
 class ExportTests(SponsorshipTestCase):
     def setUp(self):
         Sponsorship.objects.create(member=self.member, type=self.tree, activation_date=datetime.date.today(),

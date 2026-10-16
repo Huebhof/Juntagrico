@@ -3,7 +3,7 @@
 {% block content %}
 {% blocktrans with fn=member.first_name %}Hallo {{ fn }}{% endblocktrans %}
 
-{% trans "Vielen Dank für deine Unterstützung! Wir haben folgende Patenschaft(en) für dich erfasst:" %}
+{% if sponsorships.0.activation_date %}{% trans "Vielen Dank für deine Unterstützung! Wir haben folgende Patenschaft(en) für dich erfasst:" %}{% else %}{% trans "Vielen Dank für deine Bestellung! Wir prüfen, ob die Patenschaft möglich ist, und melden uns bei dir. Du hast bestellt:" %}{% endif %}
 
 {% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }} {% trans "pro Jahr" %}{% block sponsorship_line_extra %}{% endblock %}
 {% endfor %}

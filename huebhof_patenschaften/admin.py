@@ -8,6 +8,7 @@ from juntagrico.admins import BaseAdmin
 from juntagrico.entity.member import Member
 from juntagrico.util import addons
 
+from . import services
 from .models import Sponsorship, SponsorshipType
 
 
@@ -50,7 +51,7 @@ class StatusFilter(admin.SimpleListFilter):
 
 @admin.register(SponsorshipType)
 class SponsorshipTypeAdmin(SortableAdminMixin, BaseAdmin):
-    list_display = ['name', 'annual_fee', 'visible', 'running_count']
+    list_display = ['name', 'annual_fee', 'visible', 'max_count', 'running_count']
     list_editable = ['visible']
     search_fields = ['name', 'description']
 
@@ -74,12 +75,9 @@ class SponsorshipAdmin(ExportMixin, BaseAdmin):
     def status_display(self, obj):
         return obj.get_status_display()
 
-    @admin.action(description=_('Ausgewählte Patenschaften aktivieren'))
+    @admin.action(description=_('Ausgewählte Patenschaften aktivieren (mit Bestätigungsmail)'))
     def activate(self, request, queryset):
-        count = 0
-        for s in queryset.ordered():
-            s.activate()
-            count += 1
+        count = len(services.activate(queryset.ordered()))
         self.message_user(request, _('{} Patenschaft(en) aktiviert.').format(count), messages.SUCCESS)
 
     @admin.action(description=_('Ausgewählte Patenschaften kündigen (per Ende Geschäftsjahr)'))

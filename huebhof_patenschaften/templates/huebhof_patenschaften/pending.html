@@ -2,6 +2,14 @@
 {% load i18n juntagrico.snippets juntagrico.common %}
 {# Same structure as juntagrico/manage/subscription/pending.html #}
 
+{% block styles %}
+    {{ block.super }}
+    <style>
+        /* Keep the scrollbar while the reject dialog is open, otherwise the table redistributes its column widths */
+        body.modal-open { overflow-y: scroll; padding-right: 0 !important; }
+    </style>
+{% endblock %}
+
 {% block page_title %}
     <h3>{% trans "Pendente Änderungen der Patenschaften" %}</h3>
 {% endblock %}
@@ -9,7 +17,7 @@
 {% block content %}
     {% action_date request %}
     <p>
-        {% trans "Bestellte Patenschaften, die noch nicht aktiviert sind. Ausgewählte anwenden aktiviert sie auf das Änderungsdatum. Kündigungen müssen nicht angewendet werden, gekündigte Patenschaften enden automatisch." %}
+        {% trans "Bestellte Patenschaften, die noch geprüft werden müssen. Ausgewählte anwenden aktiviert sie auf das Änderungsdatum, ablehnen storniert die Bestellung. Das Mitglied wird jeweils per E-Mail informiert. Kündigungen müssen nicht angewendet werden, gekündigte Patenschaften enden automatisch." %}
     </p>
     {{ block.super }}
 {% endblock %}
@@ -40,7 +48,8 @@
                                                name="sponsorships[]" id="pending-sponsorship-{{ s.id }}" class="form-check-input"
                                                value="{{ s.id }}">
                                         <label for="pending-sponsorship-{{ s.id }}" class="form-check-label">
-                                            <span class="pre">{{ s.type.name }}{% if not forloop.last %},{% endif %}</span>
+                                            <span class="pre">{{ s.type.name }}</span>
+                                            <small class="text-muted sponsorship-occupancy">({% blocktrans with running=s.occupancy.running ordered=s.occupancy.ordered %}{{ running }} laufend, {{ ordered }} bestellt{% endblocktrans %}{% if s.occupancy.max is not None %}, {% blocktrans with max=s.occupancy.max %}max. {{ max }}{% endblocktrans %}{% endif %})</small>{% if not forloop.last %},{% endif %}
                                         </label>
                                     </div>
                                 {% endfor %}
@@ -48,13 +57,19 @@
                         {% endfor %}
                     </td>
                     <td>
-                        {% for s in sponsorships %}{{ s.annual_fee|price }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                        {% for s in sponsorships %}{{ s.annual_fee|price }}{% block pending_fee_extra %}{% endblock %}{% if not forloop.last %}<br>{% endif %}{% endfor %}
                     </td>
                     <td>
-                        <form method="post" id="pending-form-{{ member.id }}" action="{% url 'sponsorships-pending-apply' %}">
+                        <form method="post" id="pending-form-{{ member.id }}" action="{% url 'sponsorships-pending-apply' %}"
+                              class="d-flex flex-column pending-actions" style="max-width: 15rem;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-primary mb-1">
+                            <input type="hidden" name="reason" value="">
+                            <button type="submit" class="btn btn-primary mb-1 text-nowrap">
                                 {% trans "Ausgewählte anwenden" %}
+                            </button>
+                            <button type="button" class="btn btn-outline-danger mb-1 text-nowrap pending-reject"
+                                    data-form="pending-form-{{ member.id }}" data-member="{{ member }}">
+                                {% trans "Ausgewählte ablehnen" %}
                             </button>
                         </form>
                     </td>
@@ -65,14 +80,62 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {# One dialog for all members: asks for the reason before rejecting #}
+    <div class="modal fade" id="reject-modal" tabindex="-1" role="dialog" aria-labelledby="reject-modal-title" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reject-modal-title">{% trans "Bestellung ablehnen" %}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Schliessen' %}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong class="reject-member"></strong>: <span class="reject-items"></span></p>
+                    <p class="text-danger reject-none d-none">{% trans "Keine Patenschaft ausgewählt." %}</p>
+                    <label for="reject-reason">{% trans "Begründung (optional, steht in der E-Mail)" %}</label>
+                    <textarea id="reject-reason" class="form-control" rows="3"
+                              placeholder="{% trans 'z.B. Alle Plätze sind bereits vergeben.' %}"></textarea>
+                    <p class="small text-muted mt-2 mb-0">
+                        {% trans "Die Bestellung wird storniert und das Mitglied per E-Mail informiert. Es wird nichts verrechnet." %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">{% trans "Abbrechen" %}</button>
+                    <button type="button" class="btn btn-danger reject-confirm">{% trans "Ablehnen und informieren" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
     {{ block.super }}
     <script type="text/javascript">
         $(function () {
-            // Clicking a checkbox should not select the row
-            $("#filter-table input, #filter-table label").click(function (e) { e.stopPropagation() })
+            // Clicking a checkbox or button should not select the row
+            $("#filter-table input, #filter-table label, #filter-table button").click(function (e) { e.stopPropagation() })
+
+            // Reject: show the dialog with the selected sponsorships, then submit the member's form with the reason
+            let rejectForm = null
+            $("#filter-table .pending-reject").click(function () {
+                rejectForm = document.getElementById(this.dataset.form)
+                const items = $('input[name="sponsorships[]"][form="' + rejectForm.id + '"]:checked').map(function () {
+                    return $('label[for="' + this.id + '"] .pre').text()
+                }).get()
+                $("#reject-modal .reject-member").text(this.dataset.member)
+                $("#reject-modal .reject-items").text(items.join(", "))
+                $("#reject-modal .reject-none").toggleClass("d-none", items.length > 0)
+                $("#reject-modal .reject-confirm").prop("disabled", items.length === 0)
+                $("#reject-reason").val("")
+                $("#reject-modal").modal("show")
+            })
+            $("#reject-modal .reject-confirm").click(function () {
+                rejectForm.elements.reason.value = $("#reject-reason").val()
+                rejectForm.action = "{% url 'sponsorships-pending-reject' %}"
+                rejectForm.submit()
+            })
         })
     </script>
 {% endblock %}
