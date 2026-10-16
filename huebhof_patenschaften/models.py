@@ -78,6 +78,10 @@ class SponsorshipQuerySet(models.QuerySet):
         return self.filter(Q(end_date__isnull=True) | Q(end_date__gte=date)).exclude(
             activation_date__isnull=True, cancellation_date__isnull=False)
 
+    def custom_fee(self):
+        """Not ended and with a custom annual fee, to check them before price changes and billing."""
+        return self.open().filter(custom_annual_fee__isnull=False)
+
     def with_fee(self):
         """Annotates `fee`: the custom annual fee, otherwise the one of the type."""
         return self.annotate(fee=Coalesce('custom_annual_fee', 'type__annual_fee'))

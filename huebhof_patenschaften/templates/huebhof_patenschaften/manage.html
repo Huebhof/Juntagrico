@@ -48,7 +48,7 @@
     <ul class="nav nav-tabs mb-3">
         {% for key, label in status_filter %}
             <li class="nav-item">
-                <a class="nav-link{% if key == status %} active{% endif %}" href="?status={{ key }}">{{ label }}</a>
+                <a class="nav-link{% if key == status %} active{% endif %}" href="?status={{ key }}">{{ label }}{% if key == 'custom_fee' %} <span class="badge badge-secondary">{{ custom_fee_count }}</span>{% endif %}</a>
             </li>
         {% endfor %}
     </ul>
@@ -95,6 +95,7 @@
                                     {% endif %}
                                     <span class="text-muted">
                                         {% if line.count > 1 %}{% blocktrans with fee=s.annual_fee|price %}à {{ fee }}{% endblocktrans %}{% else %}{{ s.annual_fee|price }}{% endif %}
+                                        {% if s.custom_annual_fee is not None %}<span class="badge badge-warning sponsorship-custom-fee" title="{% trans 'Abweichender Jahresbeitrag, Preisänderungen am Typ wirken nicht' %}">{% blocktrans with fee=s.type.annual_fee|price %}Sonderpreis, Typ: {{ fee }}{% endblocktrans %}</span>{% endif %}
                                         ·
                                         {% if s.status == 'ordered' %}{% blocktrans with date=s.order_date|date:"d.m.Y" %}bestellt am {{ date }}{% endblocktrans %}
                                         {% elif s.status == 'active' %}{% blocktrans with date=s.activation_date|date:"d.m.Y" %}seit {{ date }}{% endblocktrans %}

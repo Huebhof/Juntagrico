@@ -605,9 +605,21 @@ class ExportTests(SponsorshipTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('patenschaften_active_', response['Content-Disposition'])
         content = response.content.decode()
-        self.assertIn('Vorname,Nachname,E-Mail,Typ,Jahresbeitrag,Bestellt am', content)  # readable headers
+        self.assertIn('Vorname,Nachname,E-Mail,Typ,Jahresbeitrag,Sonderpreis,Bestellt am', content)  # readable headers
         self.assertIn('Baumpatenschaft', content)
         self.assertNotIn('nur bestellt', content)
+
+    def test_custom_fee_filter_and_export(self):
+        Sponsorship.objects.create(member=self.member2, type=self.tree, activation_date=datetime.date.today(),
+                                   custom_annual_fee=Decimal('80'), notes='Sonderpreis')
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('sponsorships-manage'), {'status': 'custom_fee'})
+        self.assertContains(response, 'Sonderpreis, Typ: 120 CHF')
+        self.assertContains(response, 'Mit Sonderpreis <span class="badge badge-secondary">1</span>')
+        self.assertNotContains(response, 'nur bestellt')
+        content = self.client.get(reverse('sponsorships-export'), {'status': 'custom_fee', 'format': 'csv'}).content
+        self.assertIn('Baumpatenschaft,80.00,80.00', content.decode())
+        self.assertNotIn('nur bestellt', content.decode())
 
     def test_excel(self):
         self.client.force_login(self.admin.user)

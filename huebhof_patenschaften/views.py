@@ -104,6 +104,7 @@ STATUS_FILTER = {
     'active': (_('Aktiv'), lambda qs: qs.active()),
     'canceled': (_('Gekündigt, laufen noch'), lambda qs: qs.canceled()),
     'all': (_('Alle inkl. beendete'), lambda qs: qs),
+    'custom_fee': (_('Mit Sonderpreis'), lambda qs: qs.custom_fee()),
 }
 
 
@@ -126,6 +127,7 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
             status=self.get_status(),
             status_filter=[(k, v[0]) for k, v in STATUS_FILTER.items()],
             export_buttons=[('xlsx', _('Excel')), ('csv', _('CSV'))],
+            custom_fee_count=Sponsorship.objects.custom_fee().count(),
         )
         # Figures per type (deliberately in Python, small amounts of data)
         rows = []
