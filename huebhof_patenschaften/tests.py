@@ -314,7 +314,9 @@ class ManagementTests(SponsorshipTestCase):
         s = Sponsorship.objects.create(member=self.member, type=self.tree, activation_date=datetime.date.today())
         self.client.force_login(self.admin.user)
         url = reverse('sponsorships-edit', args=[s.id])
-        self.assertContains(self.client.get(url), 'Kündigen')
+        response = self.client.get(url)
+        self.assertContains(response, 'Kündigen')
+        self.assertContains(response, 'Leer: Jahresbeitrag des Typs, zurzeit 120 CHF.')
         response = self.client.post(url, {'type': self.tree.id, 'custom_annual_fee': '100',
                                            'order_date': s.order_date.isoformat(),
                                            'activation_date': s.activation_date.isoformat(), 'notes': 'Rabatt'})

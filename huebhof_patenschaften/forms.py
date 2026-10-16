@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 
 from juntagrico.entity.member import Member
 from juntagrico.forms import JuntagricoDateWidget as _JuntagricoDateWidget
+from juntagrico.templatetags.juntagrico.common import price
 
 from . import extensions
 from .config import SponsorshipConfig
@@ -155,7 +156,10 @@ class SponsorshipEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['custom_annual_fee'].widget.attrs['placeholder'] = f'{self.instance.type.annual_fee:.2f}'
+        self.fields['custom_annual_fee'].help_text = _(
+            'Leer: Jahresbeitrag des Typs, zurzeit {}. Preisänderungen am Typ gelten auch für diese Patenschaft. '
+            'Nur für Ausnahmen ausfüllen, z.B. einen Sonderpreis; dieser bleibt fix.').format(
+            price(self.instance.type.annual_fee))
         extra = None
         if self.instance.can_be_canceled:
             extra = _button('cancel', _('Kündigen'), 'btn-danger',
