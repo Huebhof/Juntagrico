@@ -12,58 +12,58 @@ from django.utils.translation import gettext_lazy as _
 from juntagrico.entity.member import Member
 from juntagrico.forms import JuntagricoDateWidget as _JuntagricoDateWidget
 
-from .config import PatenschaftConfig
-from .models import Patenschaft, PatenschaftTyp
+from .config import SponsorshipConfig
+from .models import Sponsorship, SponsorshipType
 
 
-class PatenschaftAuswahlForm(forms.Form):
-    """Pro bestellbarem Typ ein Zahlenfeld. Alles 0 = ohne Patenschaft weiter."""
+class SponsorshipSelectionForm(forms.Form):
+    """One number field per orderable type. All 0 = continue without sponsorship."""
 
-    def __init__(self, *args, auswahl=None, **kwargs):
+    def __init__(self, *args, selection=None, **kwargs):
         super().__init__(*args, **kwargs)
-        auswahl = {str(k): v for k, v in (auswahl or {}).items()}
-        self.typen = list(PatenschaftTyp.objects.sichtbar())
-        for typ in self.typen:
-            self.fields[self.feldname(typ)] = forms.IntegerField(
-                label=typ.name, min_value=0, max_value=PatenschaftConfig.max_anzahl(),
-                required=False, initial=auswahl.get(str(typ.id), 0),
-                widget=forms.NumberInput(attrs={'class': 'form-control patenschaft-anzahl'}),
+        selection = {str(k): v for k, v in (selection or {}).items()}
+        self.types = list(SponsorshipType.objects.visible())
+        for sponsorship_type in self.types:
+            self.fields[self.field_name(sponsorship_type)] = forms.IntegerField(
+                label=sponsorship_type.name, min_value=0, max_value=SponsorshipConfig.max_quantity(),
+                required=False, initial=selection.get(str(sponsorship_type.id), 0),
+                widget=forms.NumberInput(attrs={'class': 'form-control sponsorship-quantity'}),
             )
 
     @staticmethod
-    def feldname(typ):
-        return f'typ_{typ.id}'
+    def field_name(sponsorship_type):
+        return f'type_{sponsorship_type.id}'
 
-    def zeilen(self):
-        """Für das Template: [(typ, boundfield)]."""
-        return [(typ, self[self.feldname(typ)]) for typ in self.typen]
+    def rows(self):
+        """For the template: [(type, boundfield)]."""
+        return [(t, self[self.field_name(t)]) for t in self.types]
 
-    def auswahl(self):
-        """{'typ_id': anzahl} nur mit anzahl > 0, JSON-serialisierbar für die Session."""
-        return {str(typ.id): self.cleaned_data.get(self.feldname(typ)) or 0
-                for typ in self.typen if self.cleaned_data.get(self.feldname(typ))}
+    def selection(self):
+        """{'type_id': quantity} with quantity > 0 only, JSON serializable for the session."""
+        return {str(t.id): self.cleaned_data.get(self.field_name(t)) or 0
+                for t in self.types if self.cleaned_data.get(self.field_name(t))}
 
 
-class PatenschaftBestellenForm(PatenschaftAuswahlForm):
-    """Nachbestellen im Mitgliederbereich: mindestens eine Patenschaft nötig."""
+class SponsorshipOrderForm(SponsorshipSelectionForm):
+    """Ordering in the member area: at least one sponsorship required."""
 
     def clean(self):
         cleaned = super().clean()
-        if not any(cleaned.get(self.feldname(t)) for t in self.typen):
+        if not any(cleaned.get(self.field_name(t)) for t in self.types):
             raise forms.ValidationError(_('Bitte wähle mindestens eine Patenschaft aus.'))
         return cleaned
 
 
-# ---------------------------------------------------------------- Verwaltung
+# ---------------------------------------------------------------- Management
 
 class JuntagricoDateWidget(_JuntagricoDateWidget):
-    """Datumsauswahl des Browsers, wie in juntagrico, aber auch für leere Felder."""
+    """Browser date picker like in juntagrico, but also for empty fields."""
 
     def format_value(self, value):
         return None if value in (None, '') else super().format_value(value)
 
 
-def _helper(*felder, submit=_('Speichern'), extra=None, abbrechen=None):
+def _helper(*fields, submit=_('Speichern'), extra=None, cancel_url=None):
     helper = FormHelper()
     helper.form_class = 'form-horizontal'
     helper.label_class = 'col-md-3'
@@ -72,8 +72,8 @@ def _helper(*felder, submit=_('Speichern'), extra=None, abbrechen=None):
     if extra:
         buttons.append(extra)
     buttons.append(HTML('<a href="%s" class="btn btn-outline-secondary">%s</a>'
-                        % (reverse(abbrechen or 'patenschaften-manage'), _('Abbrechen'))))
-    helper.layout = Layout(*felder, FormActions(*buttons))
+                        % (reverse(cancel_url or 'sponsorships-manage'), _('Abbrechen'))))
+    helper.layout = Layout(*fields, FormActions(*buttons))
     return helper
 
 
@@ -82,54 +82,54 @@ class MemberChoiceField(forms.ModelChoiceField):
         return f'{member.last_name} {member.first_name} ({member.email})'
 
 
-class PatenschaftTypForm(forms.ModelForm):
+class SponsorshipTypeForm(forms.ModelForm):
     class Meta:
-        model = PatenschaftTyp
-        fields = ['name', 'beschreibung', 'jahresbeitrag', 'sichtbar', 'sortierung', 'rechnungsposition']
-        widgets = {'beschreibung': forms.Textarea(attrs={'rows': 4})}
+        model = SponsorshipType
+        fields = ['name', 'description', 'annual_fee', 'visible', 'sort_order', 'bill_item_type']
+        widgets = {'description': forms.Textarea(attrs={'rows': 4})}
 
-    def __init__(self, *args, abbrechen=None, **kwargs):
+    def __init__(self, *args, cancel_url=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = _helper(*self.Meta.fields, abbrechen=abbrechen)
+        self.helper = _helper(*self.Meta.fields, cancel_url=cancel_url)
 
 
-class PatenschaftErfassenForm(forms.Form):
-    """Admins erfassen Patenschaften für ein Mitglied (z.B. telefonische Bestellung)."""
+class SponsorshipCreateForm(forms.Form):
+    """Admins create sponsorships for a member (e.g. ordered by phone)."""
     member = MemberChoiceField(queryset=Member.objects.none(), label=_('Pat:in'))
-    typ = forms.ModelChoiceField(queryset=PatenschaftTyp.objects.all(), label=_('Typ'))
-    anzahl = forms.IntegerField(label=_('Anzahl'), min_value=1, initial=1)
-    jahresbeitrag = forms.DecimalField(
+    type = forms.ModelChoiceField(queryset=SponsorshipType.objects.all(), label=_('Typ'))
+    quantity = forms.IntegerField(label=_('Anzahl'), min_value=1, initial=1)
+    annual_fee = forms.DecimalField(
         label=_('Jahresbeitrag'), required=False, min_value=0, max_digits=8, decimal_places=2,
         help_text=_('Pro Patenschaft. Leer: Jahresbeitrag des Typs.'))
-    bestellt_am = forms.DateField(label=_('Bestellt am'), initial=datetime.date.today, widget=JuntagricoDateWidget)
-    aktiviert_am = forms.DateField(
+    order_date = forms.DateField(label=_('Bestellt am'), initial=datetime.date.today, widget=JuntagricoDateWidget)
+    activation_date = forms.DateField(
         label=_('Aktiviert am'), required=False, initial=datetime.date.today, widget=JuntagricoDateWidget,
         help_text=_('Leer: Patenschaft bleibt "bestellt", bis sie aktiviert wird.'))
-    notizen = forms.CharField(label=_('Notizen'), required=False, widget=forms.Textarea(attrs={'rows': 3}))
-    bestaetigung = forms.BooleanField(label=_('Bestätigung per E-Mail an die Pat:in senden'), required=False)
+    notes = forms.CharField(label=_('Notizen'), required=False, widget=forms.Textarea(attrs={'rows': 3}))
+    send_confirmation = forms.BooleanField(label=_('Bestätigung per E-Mail an die Pat:in senden'), required=False)
 
-    def __init__(self, *args, abbrechen=None, **kwargs):
+    def __init__(self, *args, cancel_url=None, **kwargs):
         super().__init__(*args, **kwargs)
         today = datetime.date.today()
         self.fields['member'].queryset = Member.objects.filter(
             Q(deactivation_date__isnull=True) | Q(deactivation_date__gt=today)).order_by('last_name', 'first_name')
-        self.fields['anzahl'].max_value = PatenschaftConfig.max_anzahl()
-        self.fields['anzahl'].validators.append(MaxValueValidator(PatenschaftConfig.max_anzahl()))
-        self.helper = _helper(*self.fields, submit=_('Erfassen'), abbrechen=abbrechen,
-                              extra=Submit('weitere', _('Erfassen und weitere erfassen'), css_class='btn-outline-success'))
+        self.fields['quantity'].max_value = SponsorshipConfig.max_quantity()
+        self.fields['quantity'].validators.append(MaxValueValidator(SponsorshipConfig.max_quantity()))
+        self.helper = _helper(*self.fields, submit=_('Erfassen'), cancel_url=cancel_url,
+                              extra=Submit('another', _('Erfassen und weitere erfassen'), css_class='btn-outline-success'))
 
 
-class PatenschaftBearbeitenForm(forms.ModelForm):
+class SponsorshipEditForm(forms.ModelForm):
     class Meta:
-        model = Patenschaft
-        fields = ['typ', 'jahresbeitrag', 'bestellt_am', 'aktiviert_am', 'gekuendigt_am', 'ende', 'notizen']
-        widgets = {f: JuntagricoDateWidget for f in ['bestellt_am', 'aktiviert_am', 'gekuendigt_am', 'ende']}
-        widgets['notizen'] = forms.Textarea(attrs={'rows': 3})
+        model = Sponsorship
+        fields = ['type', 'annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date', 'notes']
+        widgets = {f: JuntagricoDateWidget for f in ['order_date', 'activation_date', 'cancellation_date', 'end_date']}
+        widgets['notes'] = forms.Textarea(attrs={'rows': 3})
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         extra = None
-        if self.instance.kann_gekuendigt_werden:
-            extra = Submit('kuendigen', _('Kündigen'), css_class='btn-danger',
+        if self.instance.can_be_canceled:
+            extra = Submit('cancel', _('Kündigen'), css_class='btn-danger',
                            onclick="return confirm('%s')" % _('Patenschaft kündigen?'))
         self.helper = _helper(*self.Meta.fields, extra=extra)

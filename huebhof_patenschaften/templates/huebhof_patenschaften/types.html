@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n sponsorships juntagrico.config %}
+
+{% block page_title %}
+    <h3>{% trans "Patenschaftstypen" %}</h3>
+{% endblock %}
+
+{% block content %}
+    {% config "currency" as c_currency %}
+    <p>
+        {% trans "Hier legst du fest, welche Patenschaften angeboten werden. Nur bestellbare Typen erscheinen bei der Anmeldung und im Mitgliederbereich." %}
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <th class="text-right">{% trans "Jahresbeitrag" %}</th>
+                <th>{% trans "Bestellbar" %}</th>
+                <th class="text-right">{% trans "Offene Patenschaften" %}</th>
+                <th>{% trans "Rechnungsposition" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for type in types %}
+                <tr>
+                    <td>{% if perms.huebhof_patenschaften.change_sponsorshiptype %}<a href="{% url 'sponsorships-type' type.id %}">{{ type.name }}</a>{% else %}{{ type.name }}{% endif %}</td>
+                    <td class="text-right">{{ c_currency }} {{ type.annual_fee|chf }}</td>
+                    <td>{% if type.visible %}{% trans "Ja" %}{% else %}<span class="text-muted">{% trans "Nein" %}</span>{% endif %}</td>
+                    <td class="text-right">{{ type.open_count }}</td>
+                    <td>{{ type.bill_item_type|default:"" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">{% trans "Noch keine Patenschaftstypen erfasst." %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if perms.huebhof_patenschaften.add_sponsorshiptype %}
+        <a href="{% url 'sponsorships-type-new' %}" class="btn btn-success">{% trans "Neuer Patenschaftstyp" %}</a>
+    {% endif %}
+    {% if perms.huebhof_patenschaften.view_sponsorship or perms.huebhof_patenschaften.change_sponsorship %}
+        <a href="{% url 'sponsorships-manage' %}" class="btn btn-outline-secondary">{% trans "Zurück zu den Patenschaften" %}</a>
+    {% endif %}
+{% endblock %}

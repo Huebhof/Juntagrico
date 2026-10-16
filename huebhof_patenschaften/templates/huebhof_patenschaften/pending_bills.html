@@ -1,6 +1,6 @@
 {% extends "jb/pending_bills.html" %}
 {% load i18n l10n %}
-{# Wie jb/pending_bills.html, zusätzlich mit den unverrechneten Patenschaften pro Mitglied. #}
+{# Like jb/pending_bills.html, additionally with the unbilled sponsorships per member. #}
 
 {% block list %}
 <table id="filter-table" class="table">
@@ -21,27 +21,27 @@
         </tr>
     </thead>
     <tbody>
-        {% for z in pending_bills %}
+        {% for row in pending_bills %}
             <tr>
                 <td>
-                    {% include 'juntagrico/manage/member/snippets/display_linked.html' with member=z.member %}
+                    {% include 'juntagrico/manage/member/snippets/display_linked.html' with member=row.member %}
                 </td>
                 <td>
-                    {% if z.subscription %}
-                        <a href="{% url 'admin:juntagrico_subscription_change' z.subscription.id %}">
-                            {{ z.short_parts }}
+                    {% if row.subscription %}
+                        <a href="{% url 'admin:juntagrico_subscription_change' row.subscription.id %}">
+                            {{ row.short_parts }}
                         </a>
-                        {% if z.patenschaften %}<br>{% endif %}
+                        {% if row.sponsorships %}<br>{% endif %}
                     {% endif %}
-                    {% for g in z.patenschaften %}
-                        <a href="{% url 'admin:juntagrico_member_change' z.member.id %}">{{ g.anzahl }} &times; {{ g.typ.name }}</a>{% if not forloop.last %}<br>{% endif %}
+                    {% for g in row.sponsorships %}
+                        <a href="{% url 'admin:juntagrico_member_change' row.member.id %}">{{ g.quantity }} &times; {{ g.type.name }}</a>{% if not forloop.last %}<br>{% endif %}
                     {% endfor %}
                 </td>
-                <td data-order="{{ z.price|unlocalize }}">
-                    {{ z.price | floatformat:2 }}
+                <td data-order="{{ row.price|unlocalize }}">
+                    {{ row.price | floatformat:2 }}
                 </td>
                 <td>
-                    {% for bill in z.existing_bills %}
+                    {% for bill in row.existing_bills %}
                         <a href="{% url 'admin:juntagrico_billing_bill_change' bill.id %}">
                         {{bill.id}}
                         </a>

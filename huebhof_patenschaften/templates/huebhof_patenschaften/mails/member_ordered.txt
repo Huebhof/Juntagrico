@@ -1,15 +1,15 @@
 {% extends "mails/email.txt" %}
-{% load i18n juntagrico.config patenschaften %}
+{% load i18n juntagrico.config sponsorships %}
 {% block content %}
 {% config "currency" as c_currency %}
 {% blocktrans with fn=member.first_name %}Hallo {{ fn }}{% endblocktrans %}
 
 {% trans "Vielen Dank für deine Unterstützung! Wir haben folgende Patenschaft(en) für dich erfasst:" %}
 
-{% for p in patenschaften %}- {{ p.typ.name }}: {{ c_currency }} {{ p.jahresbeitrag|chf }} {% trans "pro Jahr" %}
+{% for s in sponsorships %}- {{ s.type.name }}: {{ c_currency }} {{ s.annual_fee|chf }} {% trans "pro Jahr" %}
 {% endfor %}
-{% trans "Total pro Jahr" %}: {{ c_currency }} {{ summe|chf }}
+{% trans "Total pro Jahr" %}: {{ c_currency }} {{ total|chf }}
 
 {% trans "Deine Patenschaften findest du jederzeit im Mitgliederbereich" %}:
-{{ serverurl }}{% url 'patenschaften-mine' %}
+{{ serverurl }}{% url 'sponsorships-mine' %}
 {% endblock %}

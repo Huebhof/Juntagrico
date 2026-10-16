@@ -17,261 +17,262 @@ from juntagrico.view_decorators import highlighted_menu, using_change_date
 from juntagrico.views_subscription import SignupView
 
 from . import mailer, services
-from .admin import PatenschaftResource
-from .config import PatenschaftConfig
-from .forms import PatenschaftAuswahlForm, PatenschaftBearbeitenForm, PatenschaftBestellenForm, \
-    PatenschaftErfassenForm, PatenschaftTypForm
-from .models import Patenschaft, PatenschaftTyp
+from .admin import SponsorshipResource
+from .config import SponsorshipConfig
+from .forms import SponsorshipCreateForm, SponsorshipEditForm, SponsorshipOrderForm, SponsorshipSelectionForm, \
+    SponsorshipTypeForm
+from .models import Sponsorship, SponsorshipType
 
 
 def any_permission_required(*perms):
-    """Wie permission_required, aber eine der Berechtigungen genügt."""
+    """Like permission_required, but one of the permissions is enough."""
     return user_passes_test(lambda u: any(u.has_perm(p) for p in perms))
 
 
-# ---------------------------------------------------------------- Bestellprozess
+# ---------------------------------------------------------------- Order process
 
-class SelectPatenschaftenView(SignupView, FormView):
-    """Schritt im Bestellprozess: Patenschaften wählen (optional)."""
+class SelectSponsorshipsView(SignupView, FormView):
+    """Step in the order process: select sponsorships (optional)."""
     template_name = 'huebhof_patenschaften/signup_select.html'
-    form_class = PatenschaftAuswahlForm
+    form_class = SponsorshipSelectionForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['auswahl'] = self.signup_manager.get('patenschaften', {})
+        kwargs['selection'] = self.signup_manager.get('sponsorships', {})
         return kwargs
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(info_url=PatenschaftConfig.info_url(), **kwargs)
+        return super().get_context_data(info_url=SponsorshipConfig.info_url(), **kwargs)
 
     def form_valid(self, form):
-        # leeres Dict = bewusst ohne Patenschaft weiter
-        self.signup_manager.set('patenschaften', form.auswahl())
+        # empty dict = deliberately continue without sponsorship
+        self.signup_manager.set('sponsorships', form.selection())
         return redirect(self.signup_manager.get_next_page())
 
 
-# ---------------------------------------------------------------- Mitgliederbereich
+# ---------------------------------------------------------------- Member area
 
 @login_required
-@highlighted_menu('patenschaften')
-def meine_patenschaften(request):
+@highlighted_menu('sponsorships')
+def my_sponsorships(request):
     member = request.user.member
     if request.method == 'POST':
-        form = PatenschaftBestellenForm(request.POST)
+        form = SponsorshipOrderForm(request.POST)
         if form.is_valid():
-            neue = services.bestellen(member, form.auswahl())
-            mailer.bestaetigung_an_pate(member, neue)
-            mailer.admin_bestellt(member, neue)
+            created = services.order(member, form.selection())
+            mailer.confirm_order(member, created)
+            mailer.notify_admins_ordered(member, created)
             messages.success(request, _('Vielen Dank! Deine Bestellung ist eingegangen.'))
-            return redirect('patenschaften-mine')
+            return redirect('sponsorships-mine')
     else:
-        form = PatenschaftBestellenForm()
+        form = SponsorshipOrderForm()
 
-    alle = member.patenschaften.select_related('typ').order_by('typ__sortierung', 'typ__name', 'bestellt_am')
-    laufend = [p for p in alle if p.status in ('bestellt', 'aktiv', 'gekuendigt')]
-    vergangen = [p for p in alle if p.status in ('beendet', 'storniert')]
-    return render(request, 'huebhof_patenschaften/meine.html', {
-        'laufend': laufend,
-        'vergangen': vergangen,
-        'jahressumme': sum(p.jahresbeitrag for p in laufend if p.status != 'gekuendigt'),
-        'naechstes_ende': Patenschaft.naechstes_ende(),
+    sponsorships = member.sponsorships.select_related('type').order_by('type__sort_order', 'type__name', 'order_date')
+    current = [s for s in sponsorships if s.status in (Sponsorship.ORDERED, Sponsorship.ACTIVE, Sponsorship.CANCELED)]
+    past = [s for s in sponsorships if s.status in (Sponsorship.ENDED, Sponsorship.WITHDRAWN)]
+    return render(request, 'huebhof_patenschaften/mine.html', {
+        'current': current,
+        'past': past,
+        'annual_total': sum(s.annual_fee for s in current if s.status != Sponsorship.CANCELED),
+        'next_end_date': Sponsorship.next_end_date(),
         'form': form,
-        'hat_typen': bool(form.typen),
-        'info_url': PatenschaftConfig.info_url(),
+        'has_types': bool(form.types),
+        'info_url': SponsorshipConfig.info_url(),
     })
 
 
 @login_required
 @require_POST
-def patenschaft_kuendigen(request, patenschaft_id):
-    patenschaft = get_object_or_404(Patenschaft, id=patenschaft_id, member=request.user.member)
-    if patenschaft.kann_gekuendigt_werden:
-        war_bestellt = patenschaft.status == 'bestellt'
-        patenschaft.kuendigen()
-        mailer.kuendigung_an_pate(patenschaft.member, patenschaft)
-        mailer.admin_gekuendigt(patenschaft.member, patenschaft)
-        if war_bestellt:
+def cancel_sponsorship(request, sponsorship_id):
+    sponsorship = get_object_or_404(Sponsorship, id=sponsorship_id, member=request.user.member)
+    if sponsorship.can_be_canceled:
+        was_ordered = sponsorship.status == Sponsorship.ORDERED
+        sponsorship.cancel()
+        mailer.confirm_cancellation(sponsorship.member, sponsorship)
+        mailer.notify_admins_canceled(sponsorship.member, sponsorship)
+        if was_ordered:
             messages.success(request, _('Die Bestellung wurde storniert.'))
         else:
             messages.success(request, _('Die Patenschaft ist gekündigt und läuft bis am {}.').format(
-                patenschaft.ende.strftime('%d.%m.%Y')))
-    return redirect('patenschaften-mine')
+                sponsorship.end_date.strftime('%d.%m.%Y')))
+    return redirect('sponsorships-mine')
 
 
-# ---------------------------------------------------------------- Administration
+# ---------------------------------------------------------------- Management
 
 STATUS_FILTER = {
-    # bestellte, noch nicht aktive Patenschaften: siehe "Pendente Änderungen"
-    'aktiv': (_('Aktiv'), lambda qs: qs.aktiv()),
-    'gekuendigt': (_('Gekündigt, laufen noch'), lambda qs: qs.gekuendigt()),
-    'alle': (_('Alle inkl. beendete'), lambda qs: qs),
+    # ordered, not yet active sponsorships: see "pending changes"
+    'active': (_('Aktiv'), lambda qs: qs.active()),
+    'canceled': (_('Gekündigt, laufen noch'), lambda qs: qs.canceled()),
+    'all': (_('Alle inkl. beendete'), lambda qs: qs),
 }
 
 
-class PatenschaftenManageView(MultiplePermissionsRequiredMixin, ListView):
-    permission_required = [['huebhof_patenschaften.view_patenschaft', 'huebhof_patenschaften.change_patenschaft']]
+class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
+    permission_required = [['huebhof_patenschaften.view_sponsorship', 'huebhof_patenschaften.change_sponsorship']]
     template_name = 'huebhof_patenschaften/manage.html'
 
     def get_status(self):
-        status = self.request.GET.get('status', 'aktiv')
-        return status if status in STATUS_FILTER else 'aktiv'
+        status = self.request.GET.get('status', 'active')
+        return status if status in STATUS_FILTER else 'active'
 
     def get_queryset(self):
-        qs = Patenschaft.objects.select_related('typ', 'member')
+        qs = Sponsorship.objects.select_related('type', 'member')
         return STATUS_FILTER[self.get_status()][1](qs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        laufend = Patenschaft.objects.laufend()
+        running = Sponsorship.objects.running()
         context.update(
             status=self.get_status(),
             status_filter=[(k, v[0]) for k, v in STATUS_FILTER.items()],
-            export_knoepfe=[('xlsx', _('Excel')), ('csv', _('CSV'))],
+            export_buttons=[('xlsx', _('Excel')), ('csv', _('CSV'))],
         )
-        # Kennzahlen pro Typ (bewusst in Python, kleine Datenmengen)
-        zeilen = []
-        for typ in PatenschaftTyp.objects.order_by('sortierung', 'name'):
-            qs = Patenschaft.objects.filter(typ=typ)
-            zeilen.append({
-                'typ': typ,
-                'bestellt': qs.bestellt().count(),
-                'aktiv': qs.aktiv().count(),
-                'gekuendigt': qs.gekuendigt().count(),
-                'summe': qs.laufend().aggregate(s=Sum('jahresbeitrag'))['s'] or 0,
+        # Figures per type (deliberately in Python, small amounts of data)
+        rows = []
+        for sponsorship_type in SponsorshipType.objects.order_by('sort_order', 'name'):
+            qs = Sponsorship.objects.filter(type=sponsorship_type)
+            rows.append({
+                'type': sponsorship_type,
+                'ordered': qs.ordered().count(),
+                'active': qs.active().count(),
+                'canceled': qs.canceled().count(),
+                'total': qs.running().aggregate(s=Sum('annual_fee'))['s'] or 0,
             })
-        context['uebersicht'] = zeilen
-        context['total'] = {
-            'bestellt': Patenschaft.objects.bestellt().count(),
-            'aktiv': Patenschaft.objects.aktiv().count(),
-            'gekuendigt': Patenschaft.objects.gekuendigt().count(),
-            'summe': laufend.aggregate(s=Sum('jahresbeitrag'))['s'] or 0,
+        context['overview'] = rows
+        context['totals'] = {
+            'ordered': Sponsorship.objects.ordered().count(),
+            'active': Sponsorship.objects.active().count(),
+            'canceled': Sponsorship.objects.canceled().count(),
+            'total': running.aggregate(s=Sum('annual_fee'))['s'] or 0,
         }
         return context
 
 
-EXPORT_FORMATE = {
+EXPORT_FORMATS = {
     'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'csv': 'text/csv; charset=utf-8',
 }
 
 
-@any_permission_required('huebhof_patenschaften.view_patenschaft', 'huebhof_patenschaften.change_patenschaft')
+@any_permission_required('huebhof_patenschaften.view_sponsorship', 'huebhof_patenschaften.change_sponsorship')
 def export(request):
-    """Export der Liste mit dem gewählten Statusfilter als Excel oder CSV (gleiche Spalten wie im Django-Admin)."""
+    """Export of the list with the selected status filter as Excel or CSV (same columns as in the Django admin)."""
     status = request.GET.get('status')
-    status = status if status in STATUS_FILTER else 'aktiv'
-    dateiformat = request.GET.get('format') if request.GET.get('format') in EXPORT_FORMATE else 'xlsx'
-    qs = STATUS_FILTER[status][1](Patenschaft.objects.select_related('typ', 'member'))
-    daten = PatenschaftResource().export(queryset=qs).export(dateiformat)
-    if dateiformat == 'csv':
-        daten = '﻿' + daten  # BOM, damit Excel Umlaute richtig liest
-    response = HttpResponse(daten, content_type=EXPORT_FORMATE[dateiformat])
-    response['Content-Disposition'] = f'attachment; filename="patenschaften_{status}_{datetime.date.today()}.{dateiformat}"'
+    status = status if status in STATUS_FILTER else 'active'
+    file_format = request.GET.get('format') if request.GET.get('format') in EXPORT_FORMATS else 'xlsx'
+    qs = STATUS_FILTER[status][1](Sponsorship.objects.select_related('type', 'member'))
+    data = SponsorshipResource().export(queryset=qs).export(file_format)
+    if file_format == 'csv':
+        data = '﻿' + data  # BOM, so that Excel reads umlauts correctly
+    response = HttpResponse(data, content_type=EXPORT_FORMATS[file_format])
+    response['Content-Disposition'] = f'attachment; filename="patenschaften_{status}_{datetime.date.today()}.{file_format}"'
     return response
 
 
-# ---------------------------------------------------------------- Verwaltung: Typen und Patenschaften erfassen
+# ---------------------------------------------------------------- Management: types and creating sponsorships
 
-@any_permission_required('huebhof_patenschaften.view_patenschafttyp', 'huebhof_patenschaften.change_patenschafttyp',
-                         'huebhof_patenschaften.add_patenschafttyp')
-def typen(request):
-    return render(request, 'huebhof_patenschaften/typen.html', {
-        'typen': PatenschaftTyp.objects.annotate(
-            anzahl=Count('patenschaften', filter=Q(patenschaften__in=Patenschaft.objects.offen()))
-        ).select_related('rechnungsposition'),
+@any_permission_required('huebhof_patenschaften.view_sponsorshiptype', 'huebhof_patenschaften.change_sponsorshiptype',
+                         'huebhof_patenschaften.add_sponsorshiptype')
+def types(request):
+    return render(request, 'huebhof_patenschaften/types.html', {
+        'types': SponsorshipType.objects.annotate(
+            open_count=Count('sponsorships', filter=Q(sponsorships__in=Sponsorship.objects.open()))
+        ).select_related('bill_item_type'),
     })
 
 
-@any_permission_required('huebhof_patenschaften.add_patenschafttyp', 'huebhof_patenschaften.change_patenschafttyp')
-def typ_bearbeiten(request, typ_id=None):
-    typ = get_object_or_404(PatenschaftTyp, pk=typ_id) if typ_id else None
-    if not request.user.has_perm('huebhof_patenschaften.change_patenschafttyp' if typ
-                                 else 'huebhof_patenschaften.add_patenschafttyp'):
+@any_permission_required('huebhof_patenschaften.add_sponsorshiptype', 'huebhof_patenschaften.change_sponsorshiptype')
+def edit_type(request, type_id=None):
+    sponsorship_type = get_object_or_404(SponsorshipType, pk=type_id) if type_id else None
+    if not request.user.has_perm('huebhof_patenschaften.change_sponsorshiptype' if sponsorship_type
+                                 else 'huebhof_patenschaften.add_sponsorshiptype'):
         raise PermissionDenied
-    if request.method == 'POST' and 'loeschen' in request.POST and typ:
-        if not request.user.has_perm('huebhof_patenschaften.delete_patenschafttyp'):
+    if request.method == 'POST' and 'delete' in request.POST and sponsorship_type:
+        if not request.user.has_perm('huebhof_patenschaften.delete_sponsorshiptype'):
             raise PermissionDenied
-        if typ.patenschaften.exists():
+        if sponsorship_type.sponsorships.exists():
             messages.error(request, _('Typen mit Patenschaften können nicht gelöscht werden. '
                                       'Entferne stattdessen das Häkchen bei "Bestellbar".'))
-            return redirect('patenschaften-typ', typ_id=typ.id)
-        typ.delete()
+            return redirect('sponsorships-type', type_id=sponsorship_type.id)
+        sponsorship_type.delete()
         messages.success(request, _('Patenschaftstyp gelöscht.'))
-        return redirect('patenschaften-typen')
-    form = PatenschaftTypForm(request.POST or None, instance=typ, abbrechen='patenschaften-typen')
+        return redirect('sponsorships-types')
+    form = SponsorshipTypeForm(request.POST or None, instance=sponsorship_type, cancel_url='sponsorships-types')
     if form.is_valid():
         form.save()
         messages.success(request, _('Patenschaftstyp gespeichert.'))
-        return redirect('patenschaften-typen')
-    return render(request, 'huebhof_patenschaften/typ_form.html', {'form': form, 'typ': typ})
+        return redirect('sponsorships-types')
+    return render(request, 'huebhof_patenschaften/type_form.html', {'form': form, 'type': sponsorship_type})
 
 
-def _darf_uebersicht(user):
-    return user.has_perm('huebhof_patenschaften.view_patenschaft') or         user.has_perm('huebhof_patenschaften.change_patenschaft')
+def _can_view_overview(user):
+    return user.has_perm('huebhof_patenschaften.view_sponsorship') or \
+        user.has_perm('huebhof_patenschaften.change_sponsorship')
 
 
-@permission_required('huebhof_patenschaften.add_patenschaft')
-def erfassen(request):
+@permission_required('huebhof_patenschaften.add_sponsorship')
+def create(request):
     initial = {}
     if request.GET.get('member', '').isdigit():
         initial['member'] = request.GET['member']
-    form = PatenschaftErfassenForm(request.POST or None, initial=initial,
-                                   abbrechen=None if _darf_uebersicht(request.user) else 'home')
+    form = SponsorshipCreateForm(request.POST or None, initial=initial,
+                                 cancel_url=None if _can_view_overview(request.user) else 'home')
     if form.is_valid():
         d = form.cleaned_data
-        neue = services.erfassen(d['member'], d['typ'], d['anzahl'], d['jahresbeitrag'],
-                                 d['bestellt_am'], d['aktiviert_am'], d['notizen'])
-        if d['bestaetigung']:
-            mailer.bestaetigung_an_pate(d['member'], neue)
-        messages.success(request, _('{} Patenschaft(en) für {} erfasst.').format(len(neue), d['member']))
-        if 'weitere' in request.POST or not _darf_uebersicht(request.user):
-            return redirect('patenschaften-erfassen')
-        return redirect('patenschaften-manage')
-    return render(request, 'huebhof_patenschaften/erfassen.html', {
+        created = services.create(d['member'], d['type'], d['quantity'], d['annual_fee'],
+                                  d['order_date'], d['activation_date'], d['notes'])
+        if d['send_confirmation']:
+            mailer.confirm_order(d['member'], created)
+        messages.success(request, _('{} Patenschaft(en) für {} erfasst.').format(len(created), d['member']))
+        if 'another' in request.POST or not _can_view_overview(request.user):
+            return redirect('sponsorships-create')
+        return redirect('sponsorships-manage')
+    return render(request, 'huebhof_patenschaften/create.html', {
         'form': form,
-        'beitraege': {str(t.id): f'{t.jahresbeitrag:.2f}' for t in PatenschaftTyp.objects.all()},
+        'annual_fees': {str(t.id): f'{t.annual_fee:.2f}' for t in SponsorshipType.objects.all()},
     })
 
 
-@permission_required('huebhof_patenschaften.change_patenschaft')
-def bearbeiten(request, patenschaft_id):
-    patenschaft = get_object_or_404(Patenschaft.objects.select_related('member', 'typ'), pk=patenschaft_id)
-    if request.method == 'POST' and 'kuendigen' in request.POST:
-        patenschaft.kuendigen()
+@permission_required('huebhof_patenschaften.change_sponsorship')
+def edit(request, sponsorship_id):
+    sponsorship = get_object_or_404(Sponsorship.objects.select_related('member', 'type'), pk=sponsorship_id)
+    if request.method == 'POST' and 'cancel' in request.POST:
+        sponsorship.cancel()
         messages.success(request, _('Patenschaft gekündigt.'))
-        return redirect('patenschaften-bearbeiten', patenschaft_id=patenschaft.id)
-    form = PatenschaftBearbeitenForm(request.POST or None, instance=patenschaft)
+        return redirect('sponsorships-edit', sponsorship_id=sponsorship.id)
+    form = SponsorshipEditForm(request.POST or None, instance=sponsorship)
     if form.is_valid():
         form.save()
         messages.success(request, _('Patenschaft gespeichert.'))
-        return redirect('patenschaften-manage')
-    return render(request, 'huebhof_patenschaften/bearbeiten.html', {
-        'form': form, 'patenschaft': patenschaft,
-        'rechnungen': patenschaft.rechnungspositionen.select_related('bill__business_year'),
+        return redirect('sponsorships-manage')
+    return render(request, 'huebhof_patenschaften/edit.html', {
+        'form': form, 'sponsorship': sponsorship,
+        'bill_items': sponsorship.bill_items.select_related('bill__business_year'),
     })
 
 
-# ---------------------------------------------------------------- Pendente Änderungen (wie bei den Ernteanteilen)
+# ---------------------------------------------------------------- Pending changes (like subscriptions)
 
-@permission_required('huebhof_patenschaften.change_patenschaft')
-def pendent(request):
-    """Noch nicht aktivierte Bestellungen, pro Mitglied, nach Bestelldatum gruppiert."""
-    pro_member = {}
-    for p in Patenschaft.objects.bestellt().select_related('member', 'typ').order_by('bestellt_am', 'typ__sortierung', 'id'):
-        pro_member.setdefault(p.member, []).append(p)
-    return render(request, 'huebhof_patenschaften/pendent.html', {'pendent': list(pro_member.items())})
+@permission_required('huebhof_patenschaften.change_sponsorship')
+def pending(request):
+    """Not yet activated orders, per member, grouped by order date."""
+    per_member = {}
+    for s in Sponsorship.objects.ordered().select_related('member', 'type').order_by('order_date', 'type__sort_order', 'id'):
+        per_member.setdefault(s.member, []).append(s)
+    return render(request, 'huebhof_patenschaften/pending.html', {'pending': list(per_member.items())})
 
 
 @require_POST
-@permission_required('huebhof_patenschaften.change_patenschaft', raise_exception=True)
+@permission_required('huebhof_patenschaften.change_sponsorship', raise_exception=True)
 @using_change_date
-def pendent_anwenden(request, change_date):
-    """Aktiviert die ausgewählten Patenschaften auf das Änderungsdatum (Standard: heute)."""
-    ids = request.POST.getlist('patenschaften[]')
-    anzahl = 0
+def pending_apply(request, change_date):
+    """Activates the selected sponsorships on the change date (default: today)."""
+    ids = request.POST.getlist('sponsorships[]')
+    count = 0
     with transaction.atomic():
-        for p in Patenschaft.objects.bestellt().filter(id__in=ids):
-            p.aktivieren(change_date)
-            anzahl += 1
-    messages.success(request, _('{} Patenschaft(en) aktiviert.').format(anzahl))
+        for s in Sponsorship.objects.ordered().filter(id__in=ids):
+            s.activate(change_date)
+            count += 1
+    messages.success(request, _('{} Patenschaft(en) aktiviert.').format(count))
     return return_to_previous_location(request)

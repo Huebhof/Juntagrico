@@ -8,20 +8,26 @@ from import_export.admin import ExportMixin
 from juntagrico.entity.member import Member
 from juntagrico.util import addons
 
-from .models import Patenschaft, PatenschaftTyp
+from .models import Sponsorship, SponsorshipType
 
 
-class PatenschaftResource(resources.ModelResource):
-    vorname = fields.Field(attribute='member__first_name', column_name='Vorname')
-    nachname = fields.Field(attribute='member__last_name', column_name='Nachname')
+class SponsorshipResource(resources.ModelResource):
+    first_name = fields.Field(attribute='member__first_name', column_name='Vorname')
+    last_name = fields.Field(attribute='member__last_name', column_name='Nachname')
     email = fields.Field(attribute='member__email', column_name='E-Mail')
-    typ_name = fields.Field(attribute='typ__name', column_name='Typ')
+    type_name = fields.Field(attribute='type__name', column_name='Typ')
+    annual_fee = fields.Field(attribute='annual_fee', column_name='Jahresbeitrag')
+    order_date = fields.Field(attribute='order_date', column_name='Bestellt am')
+    activation_date = fields.Field(attribute='activation_date', column_name='Aktiviert am')
+    cancellation_date = fields.Field(attribute='cancellation_date', column_name='Gekündigt am')
+    end_date = fields.Field(attribute='end_date', column_name='Ende')
     status = fields.Field(column_name='Status')
+    notes = fields.Field(attribute='notes', column_name='Notizen')
 
     class Meta:
-        model = Patenschaft
-        fields = ('id', 'vorname', 'nachname', 'email', 'typ_name', 'jahresbeitrag',
-                  'bestellt_am', 'aktiviert_am', 'gekuendigt_am', 'ende', 'status', 'notizen')
+        model = Sponsorship
+        fields = ('id', 'first_name', 'last_name', 'email', 'type_name', 'annual_fee',
+                  'order_date', 'activation_date', 'cancellation_date', 'end_date', 'status', 'notes')
         export_order = fields
 
     def dehydrate_status(self, obj):
@@ -33,78 +39,78 @@ class StatusFilter(admin.SimpleListFilter):
     parameter_name = 'status'
 
     def lookups(self, request, model_admin):
-        return [('bestellt', _('Bestellt')), ('aktiv', _('Aktiv')),
-                ('gekuendigt', _('Gekündigt')), ('offen', _('Alle offenen'))]
+        return [('ordered', _('Bestellt')), ('active', _('Aktiv')),
+                ('canceled', _('Gekündigt')), ('open', _('Alle offenen'))]
 
     def queryset(self, request, queryset):
-        if self.value() in ('bestellt', 'aktiv', 'gekuendigt', 'offen'):
+        if self.value() in ('ordered', 'active', 'canceled', 'open'):
             return getattr(queryset, self.value())()
         return queryset
 
 
-@admin.register(PatenschaftTyp)
-class PatenschaftTypAdmin(admin.ModelAdmin):
-    list_display = ['name', 'jahresbeitrag', 'rechnungsposition', 'sichtbar', 'sortierung', 'anzahl_laufend']
-    list_editable = ['sichtbar', 'sortierung']
-    search_fields = ['name', 'beschreibung']
+@admin.register(SponsorshipType)
+class SponsorshipTypeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'annual_fee', 'bill_item_type', 'visible', 'sort_order', 'running_count']
+    list_editable = ['visible', 'sort_order']
+    search_fields = ['name', 'description']
 
     @admin.display(description=_('Laufend'))
-    def anzahl_laufend(self, obj):
-        return obj.patenschaften.laufend().count()
+    def running_count(self, obj):
+        return obj.sponsorships.running().count()
 
 
-@admin.register(Patenschaft)
-class PatenschaftAdmin(ExportMixin, admin.ModelAdmin):
-    resource_classes = [PatenschaftResource]
-    list_display = ['member', 'typ', 'jahresbeitrag', 'bestellt_am', 'aktiviert_am', 'gekuendigt_am', 'ende',
+@admin.register(Sponsorship)
+class SponsorshipAdmin(ExportMixin, admin.ModelAdmin):
+    resource_classes = [SponsorshipResource]
+    list_display = ['member', 'type', 'annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date',
                     'status_display']
-    list_filter = [StatusFilter, 'typ', 'bestellt_am']
-    search_fields = ['member__first_name', 'member__last_name', 'member__email', 'typ__name']
+    list_filter = [StatusFilter, 'type', 'order_date']
+    search_fields = ['member__first_name', 'member__last_name', 'member__email', 'type__name']
     autocomplete_fields = ['member']
-    date_hierarchy = 'bestellt_am'
-    exclude = ['rechnungspositionen']
-    readonly_fields = ['rechnungen']
-    actions = ['aktivieren', 'kuendigen']
+    date_hierarchy = 'order_date'
+    exclude = ['bill_items']
+    readonly_fields = ['bills']
+    actions = ['activate', 'cancel']
 
     @admin.display(description=_('Status'))
     def status_display(self, obj):
         return obj.get_status_display()
 
     @admin.display(description=_('Rechnungen'))
-    def rechnungen(self, obj):
-        items = obj.rechnungspositionen.select_related('bill__business_year').order_by('bill__business_year__start_date')
+    def bills(self, obj):
+        items = obj.bill_items.select_related('bill__business_year').order_by('bill__business_year__start_date')
         return format_html_join(
             ', ', '<a href="{}">{} ({})</a>',
             ((reverse('admin:juntagrico_billing_bill_change', args=[i.bill_id]), i.bill_id, i.bill.business_year)
              for i in items)) or '-'
 
     @admin.action(description=_('Ausgewählte Patenschaften aktivieren'))
-    def aktivieren(self, request, queryset):
-        anzahl = 0
-        for p in queryset.bestellt():
-            p.aktivieren()
-            anzahl += 1
-        self.message_user(request, _('{} Patenschaft(en) aktiviert.').format(anzahl), messages.SUCCESS)
+    def activate(self, request, queryset):
+        count = 0
+        for s in queryset.ordered():
+            s.activate()
+            count += 1
+        self.message_user(request, _('{} Patenschaft(en) aktiviert.').format(count), messages.SUCCESS)
 
     @admin.action(description=_('Ausgewählte Patenschaften kündigen (per Ende Geschäftsjahr)'))
-    def kuendigen(self, request, queryset):
-        anzahl = 0
-        for p in queryset:
-            if p.kann_gekuendigt_werden:
-                p.kuendigen()
-                anzahl += 1
-        self.message_user(request, _('{} Patenschaft(en) gekündigt.').format(anzahl), messages.SUCCESS)
+    def cancel(self, request, queryset):
+        count = 0
+        for s in queryset:
+            if s.can_be_canceled:
+                s.cancel()
+                count += 1
+        self.message_user(request, _('{} Patenschaft(en) gekündigt.').format(count), messages.SUCCESS)
 
 
-class PatenschaftInline(admin.TabularInline):
-    model = Patenschaft
+class SponsorshipInline(admin.TabularInline):
+    model = Sponsorship
     fk_name = 'member'
     extra = 0
-    fields = ['typ', 'jahresbeitrag', 'bestellt_am', 'aktiviert_am', 'gekuendigt_am', 'ende']
+    fields = ['type', 'annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date']
     show_change_link = True
     verbose_name_plural = _('Patenschaften')
 
 
-# Patenschaften direkt beim Mitglied im Admin anzeigen.
-# Funktioniert, weil diese App in INSTALLED_APPS vor juntagrico steht.
-addons.config.register_model_inline(Member, PatenschaftInline)
+# Show sponsorships directly on the member in the admin.
+# Works because this app comes before juntagrico in INSTALLED_APPS.
+addons.config.register_model_inline(Member, SponsorshipInline)

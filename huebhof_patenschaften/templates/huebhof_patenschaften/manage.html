@@ -1,5 +1,5 @@
 {% extends "juntagrico/manage/base.html" %}
-{% load i18n l10n patenschaften juntagrico.config %}
+{% load i18n l10n sponsorships juntagrico.config %}
 
 {% block page_title %}
     <h3>{% trans "Patenschaften" %}</h3>
@@ -9,7 +9,7 @@
     {% config "currency" as c_currency %}
     <div class="row mt-3">
         <div class="col-md-12">
-            <table class="table table-sm patenschaften-uebersicht">
+            <table class="table table-sm sponsorships-overview">
                 <thead>
                     <tr>
                         <th>{% trans "Typ" %}</th>
@@ -20,23 +20,23 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for z in uebersicht %}
+                    {% for row in overview %}
                         <tr>
-                            <td>{% if perms.huebhof_patenschaften.change_patenschafttyp %}<a href="{% url 'patenschaften-typ' z.typ.id %}">{{ z.typ.name }}</a>{% else %}{{ z.typ.name }}{% endif %}{% if not z.typ.sichtbar %} <span class="text-muted">({% trans "nicht bestellbar" %})</span>{% endif %}</td>
-                            <td class="text-right">{{ z.bestellt }}</td>
-                            <td class="text-right">{{ z.aktiv }}</td>
-                            <td class="text-right">{{ z.gekuendigt }}</td>
-                            <td class="text-right">{{ c_currency }} {{ z.summe|chf }}</td>
+                            <td>{% if perms.huebhof_patenschaften.change_sponsorshiptype %}<a href="{% url 'sponsorships-type' row.type.id %}">{{ row.type.name }}</a>{% else %}{{ row.type.name }}{% endif %}{% if not row.type.visible %} <span class="text-muted">({% trans "nicht bestellbar" %})</span>{% endif %}</td>
+                            <td class="text-right">{{ row.ordered }}</td>
+                            <td class="text-right">{{ row.active }}</td>
+                            <td class="text-right">{{ row.canceled }}</td>
+                            <td class="text-right">{{ c_currency }} {{ row.total|chf }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr>
                         <th>{% trans "Total" %}</th>
-                        <th class="text-right">{{ total.bestellt }}</th>
-                        <th class="text-right">{{ total.aktiv }}</th>
-                        <th class="text-right">{{ total.gekuendigt }}</th>
-                        <th class="text-right">{{ c_currency }} {{ total.summe|chf }}</th>
+                        <th class="text-right">{{ totals.ordered }}</th>
+                        <th class="text-right">{{ totals.active }}</th>
+                        <th class="text-right">{{ totals.canceled }}</th>
+                        <th class="text-right">{{ c_currency }} {{ totals.total|chf }}</th>
                     </tr>
                 </tfoot>
             </table>
@@ -70,19 +70,19 @@
             </tr>
         </thead>
         <tbody>
-            {% for p in object_list %}
+            {% for s in object_list %}
                 <tr>
                     <td>
-                        {% include 'juntagrico/manage/member/snippets/display_linked.html' with member=p.member %}
+                        {% include 'juntagrico/manage/member/snippets/display_linked.html' with member=s.member %}
                     </td>
-                    <td>{% if perms.huebhof_patenschaften.change_patenschaft %}<a href="{% url 'patenschaften-bearbeiten' p.id %}">{{ p.typ.name }}</a>{% else %}{{ p.typ.name }}{% endif %}</td>
-                    <td data-order="{{ p.jahresbeitrag|unlocalize }}">{{ c_currency }} {{ p.jahresbeitrag|chf }}</td>
-                    <td>{{ p.get_status_display }}</td>
-                    <td data-order="{{ p.bestellt_am|date:'Y-m-d' }}">{{ p.bestellt_am|date:"d.m.Y" }}</td>
-                    <td data-order="{{ p.aktiviert_am|date:'Y-m-d' }}">{{ p.aktiviert_am|date:"d.m.Y" }}</td>
-                    <td data-order="{{ p.gekuendigt_am|date:'Y-m-d' }}">{{ p.gekuendigt_am|date:"d.m.Y" }}</td>
-                    <td data-order="{{ p.ende|date:'Y-m-d' }}">{{ p.ende|date:"d.m.Y" }}</td>
-                    <td>{{ p.notizen }}</td>
+                    <td>{% if perms.huebhof_patenschaften.change_sponsorship %}<a href="{% url 'sponsorships-edit' s.id %}">{{ s.type.name }}</a>{% else %}{{ s.type.name }}{% endif %}</td>
+                    <td data-order="{{ s.annual_fee|unlocalize }}">{{ c_currency }} {{ s.annual_fee|chf }}</td>
+                    <td>{{ s.get_status_display }}</td>
+                    <td data-order="{{ s.order_date|date:'Y-m-d' }}">{{ s.order_date|date:"d.m.Y" }}</td>
+                    <td data-order="{{ s.activation_date|date:'Y-m-d' }}">{{ s.activation_date|date:"d.m.Y" }}</td>
+                    <td data-order="{{ s.cancellation_date|date:'Y-m-d' }}">{{ s.cancellation_date|date:"d.m.Y" }}</td>
+                    <td data-order="{{ s.end_date|date:'Y-m-d' }}">{{ s.end_date|date:"d.m.Y" }}</td>
+                    <td>{{ s.notes }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -91,12 +91,12 @@
 
 {% block datatable_constructor %}
     {{ block.super }}
-    // Export der Liste mit dem aktuellen Statusfilter (serverseitig, gleiche Spalten wie im Django-Admin).
-    // Zwei einfache Knöpfe statt Aufklappmenü: das Menü würde in der fixierten Werkzeugleiste verdeckt.
-    {% for dateiformat, label in export_knoepfe %}
+    // Export of the list with the current status filter (server side, same columns as in the Django admin).
+    // Two simple buttons instead of a dropdown: the dropdown would be hidden in the fixed toolbar.
+    {% for file_format, label in export_buttons %}
         config.layout.topStart.features.buttons.push({
             text: '<i class="bi bi-download"></i> {{ label }}',
-            action: function () { window.location = '{% url "patenschaften-export" %}?status={{ status }}&format={{ dateiformat }}' }
+            action: function () { window.location = '{% url "sponsorships-export" %}?status={{ status }}&format={{ file_format }}' }
         })
     {% endfor %}
 {% endblock %}

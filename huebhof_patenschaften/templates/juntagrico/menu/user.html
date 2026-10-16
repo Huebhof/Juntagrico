@@ -1,7 +1,7 @@
 {% comment %}
-Ersetzt das Benutzermenü von juntagrico, damit "Patenschaften" direkt nach dem Ernteanteil steht.
-Kopie von juntagrico/menu/user.html (juntagrico 2.0) - bei Juntagrico-Updates abgleichen.
-Das Addon muss in INSTALLED_APPS nach juntagrico_billing stehen, damit dessen Menü hierauf aufbaut.
+Replaces the user menu of juntagrico, so that "Patenschaften" comes right after the subscription.
+Copy of juntagrico/menu/user.html (juntagrico 2.0) - compare on juntagrico updates.
+The addon must come after juntagrico_billing in INSTALLED_APPS, so that its menu builds on this one.
 {% endcomment %}
 {% load i18n %}
 {% load juntagrico.common %}
@@ -22,7 +22,7 @@ Das Addon muss in INSTALLED_APPS nach juntagrico_billing stehen, damit dessen Me
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {{ request|activemenu:"patenschaften" }}" href="{% url 'patenschaften-mine' %}">
+        <a class="nav-link {{ request|activemenu:"sponsorships" }}" href="{% url 'sponsorships-mine' %}">
             {% trans "Patenschaften" %}
         </a>
     </li>

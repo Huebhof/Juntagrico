@@ -3,40 +3,40 @@
 {% block subscriptions %}
     {{ block.super }}
     {% with p=perms.huebhof_patenschaften %}
-    {% if p.view_patenschaft or p.change_patenschaft or p.add_patenschaft or p.view_patenschafttyp or p.change_patenschafttyp or p.add_patenschafttyp %}
-        {# Aufklappmenü wie bei den Ernteanteilen; offen, solange man auf einer Patenschaften-Seite ist #}
-        {% with offen=request.path|slice:":21" %}
+    {% if p.view_sponsorship or p.change_sponsorship or p.add_sponsorship or p.view_sponsorshiptype or p.change_sponsorshiptype or p.add_sponsorshiptype %}
+        {# Dropdown like for subscriptions; open while on a sponsorship page #}
+        {% with is_open=request.path|slice:":20" %}
         <li class="nav-item">
-            <a class="nav-link{% if offen != '/manage/patenschaften' %} collapsed{% endif %}" data-toggle="collapse" href="#patenschaftenman">
+            <a class="nav-link{% if is_open != '/manage/sponsorships' %} collapsed{% endif %}" data-toggle="collapse" href="#sponsorshipsman">
                 <i class="bi bi-caret-down turn"></i>
                 {% trans "Patenschaften" %}
             </a>
-            <div class="collapse{% if offen == '/manage/patenschaften' %} show{% endif %}" id="patenschaftenman">
+            <div class="collapse{% if is_open == '/manage/sponsorships' %} show{% endif %}" id="sponsorshipsman">
                 <ul class="nav flex-column subadmin-menu">
-                    {% if p.view_patenschaft or p.change_patenschaft %}
+                    {% if p.view_sponsorship or p.change_sponsorship %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patenschaften-manage' %}?status=aktiv">
+                            <a class="nav-link" href="{% url 'sponsorships-manage' %}?status=active">
                                 {% trans "Aktive" %}
                             </a>
                         </li>
                     {% endif %}
-                    {% if p.change_patenschaft %}
+                    {% if p.change_sponsorship %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patenschaften-pendent' %}">
+                            <a class="nav-link" href="{% url 'sponsorships-pending' %}">
                                 {% trans "Pendente Änderungen" %}
                             </a>
                         </li>
                     {% endif %}
-                    {% if p.view_patenschafttyp or p.change_patenschafttyp or p.add_patenschafttyp %}
+                    {% if p.view_sponsorshiptype or p.change_sponsorshiptype or p.add_sponsorshiptype %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patenschaften-typen' %}">
+                            <a class="nav-link" href="{% url 'sponsorships-types' %}">
                                 {% trans "Patenschaftstypen" %}
                             </a>
                         </li>
                     {% endif %}
-                    {% if p.add_patenschaft %}
+                    {% if p.add_sponsorship %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patenschaften-erfassen' %}">
+                            <a class="nav-link" href="{% url 'sponsorships-create' %}">
                                 {% trans "Patenschaft erfassen" %}
                             </a>
                         </li>

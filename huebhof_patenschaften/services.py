@@ -2,51 +2,52 @@ import datetime
 
 from django.db import transaction
 
-from .config import PatenschaftConfig
-from .models import Patenschaft, PatenschaftTyp
+from .config import SponsorshipConfig
+from .models import Sponsorship, SponsorshipType
 
 
-def auswahl_aufloesen(auswahl):
-    """{'typ_id': anzahl} (aus Session/Formular) -> [(PatenschaftTyp, anzahl)] mit anzahl > 0."""
-    auswahl = {str(k): int(v or 0) for k, v in (auswahl or {}).items()}
-    typen = PatenschaftTyp.objects.filter(id__in=[k for k, v in auswahl.items() if v > 0])
-    return [(typ, auswahl[str(typ.id)]) for typ in typen]
+def resolve_selection(selection):
+    """{'type_id': quantity} (from session/form) -> [(SponsorshipType, quantity)] with quantity > 0."""
+    selection = {str(k): int(v or 0) for k, v in (selection or {}).items()}
+    types = SponsorshipType.objects.filter(id__in=[k for k, v in selection.items() if v > 0])
+    return [(sponsorship_type, selection[str(sponsorship_type.id)]) for sponsorship_type in types]
 
 
 @transaction.atomic
-def bestellen(member, auswahl, date=None):
-    """Legt pro bestellter Einheit eine Patenschaft an und gibt die neuen Objekte zurück."""
+def order(member, selection, date=None):
+    """Creates one sponsorship per ordered unit and returns the new objects."""
     date = date or datetime.date.today()
-    aktiv_ab = date if PatenschaftConfig.auto_aktivieren() else None
-    neue = []
-    for typ, anzahl in auswahl_aufloesen(auswahl):
-        for _ in range(anzahl):
-            neue.append(Patenschaft.objects.create(
-                member=member, typ=typ, jahresbeitrag=typ.jahresbeitrag,
-                bestellt_am=date, aktiviert_am=aktiv_ab,
+    activation_date = date if SponsorshipConfig.auto_activate() else None
+    created = []
+    for sponsorship_type, quantity in resolve_selection(selection):
+        for _ in range(quantity):
+            created.append(Sponsorship.objects.create(
+                member=member, type=sponsorship_type, annual_fee=sponsorship_type.annual_fee,
+                order_date=date, activation_date=activation_date,
             ))
-    return neue
+    return created
 
 
 @transaction.atomic
-def erfassen(member, typ, anzahl, jahresbeitrag=None, bestellt_am=None, aktiviert_am=None, notizen=''):
-    """Erfassung durch Admins: Daten werden explizit angegeben, PATENSCHAFTEN_AUTO_AKTIVIEREN gilt nicht."""
-    return [Patenschaft.objects.create(
-        member=member, typ=typ, jahresbeitrag=typ.jahresbeitrag if jahresbeitrag is None else jahresbeitrag,
-        bestellt_am=bestellt_am or datetime.date.today(), aktiviert_am=aktiviert_am, notizen=notizen,
-    ) for _ in range(anzahl)]
+def create(member, sponsorship_type, quantity, annual_fee=None, order_date=None, activation_date=None, notes=''):
+    """Created by admins: dates are given explicitly, SPONSORSHIPS_AUTO_ACTIVATE does not apply."""
+    return [Sponsorship.objects.create(
+        member=member, type=sponsorship_type,
+        annual_fee=sponsorship_type.annual_fee if annual_fee is None else annual_fee,
+        order_date=order_date or datetime.date.today(), activation_date=activation_date, notes=notes,
+    ) for _ in range(quantity)]
 
 
-def gruppieren(patenschaften):
-    """Gruppiert Patenschaften nach Typ und Status für die Anzeige ("3 × Baumpatenschaft")."""
-    gruppen = {}
-    for p in patenschaften:
-        key = (p.typ_id, p.status, p.ende)
-        if key not in gruppen:
-            gruppen[key] = {'typ': p.typ, 'status': p.status, 'status_display': p.get_status_display(),
-                            'ende': p.ende, 'objekte': [], 'summe': 0}
-        gruppen[key]['objekte'].append(p)
-        gruppen[key]['summe'] += p.jahresbeitrag
-    for g in gruppen.values():
-        g['anzahl'] = len(g['objekte'])
-    return list(gruppen.values())
+def group(sponsorships):
+    """Groups sponsorships by type and status for display ("3 × tree sponsorship")."""
+    groups = {}
+    for s in sponsorships:
+        key = (s.type_id, s.status, s.end_date)
+        if key not in groups:
+            groups[key] = {'type': s.type, 'status': s.status, 'status_display': s.get_status_display(),
+                           'end_date': s.end_date, 'objects': [], 'total': 0}
+        groups[key]['objects'].append(s)
+        groups[key]['total'] += s.annual_fee
+    for g in groups.values():
+        g['quantity'] = len(g['objects'])
+    return list(groups.values())

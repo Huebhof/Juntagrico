@@ -1,26 +1,26 @@
 from django.conf import settings
 
 
-class PatenschaftConfig:
-    """Einstellungen des Addons. Alle Werte können in settings.py überschrieben werden."""
+class SponsorshipConfig:
+    """Settings of the addon. All values can be overridden in settings.py."""
 
     @staticmethod
-    def auto_aktivieren():
-        """False (Standard, wie bei den Ernteanteilen): Admins aktivieren Bestellungen manuell.
-        True: Patenschaften sind ab Bestellung aktiv."""
-        return getattr(settings, 'PATENSCHAFTEN_AUTO_AKTIVIEREN', False)
+    def auto_activate():
+        """False (default, like subscriptions): admins activate orders manually.
+        True: sponsorships are active from the order date."""
+        return getattr(settings, 'SPONSORSHIPS_AUTO_ACTIVATE', False)
 
     @staticmethod
-    def im_signup():
-        """True: Bei der Anmeldung / Ernteanteil-Bestellung wird ein Schritt Patenschaften angezeigt."""
-        return getattr(settings, 'PATENSCHAFTEN_IM_SIGNUP', True)
+    def in_signup():
+        """True: show a sponsorship step in the signup / subscription order process."""
+        return getattr(settings, 'SPONSORSHIPS_IN_SIGNUP', True)
 
     @staticmethod
-    def max_anzahl():
-        """Maximale Anzahl pro Typ und Bestellung."""
-        return getattr(settings, 'PATENSCHAFTEN_MAX_ANZAHL', 20)
+    def max_quantity():
+        """Maximum quantity per type and order."""
+        return getattr(settings, 'SPONSORSHIPS_MAX_QUANTITY', 20)
 
     @staticmethod
     def info_url():
-        """Optionaler Link auf ein Dokument mit Infos zu den Patenschaften."""
-        return getattr(settings, 'PATENSCHAFTEN_INFO_URL', '')
+        """Optional link to a document with information about the sponsorships."""
+        return getattr(settings, 'SPONSORSHIPS_INFO_URL', '')

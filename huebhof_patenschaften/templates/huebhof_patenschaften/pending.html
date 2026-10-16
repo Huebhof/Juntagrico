@@ -1,6 +1,6 @@
 {% extends "juntagrico/manage/base.html" %}
-{% load i18n patenschaften juntagrico.config juntagrico.snippets %}
-{# Aufbau wie juntagrico/manage/subscription/pending.html #}
+{% load i18n sponsorships juntagrico.config juntagrico.snippets %}
+{# Same structure as juntagrico/manage/subscription/pending.html #}
 
 {% block page_title %}
     <h3>{% trans "Pendente Änderungen der Patenschaften" %}</h3>
@@ -27,21 +27,21 @@
             </tr>
         </thead>
         <tbody>
-            {% for member, patenschaften in pendent %}
+            {% for member, sponsorships in pending %}
                 <tr>
                     <td>{% include 'juntagrico/manage/member/snippets/display_linked.html' %}</td>
                     <td class="pl-5">
-                        {% regroup patenschaften by bestellt_am as nach_datum %}
-                        {% for gruppe in nach_datum %}
+                        {% regroup sponsorships by order_date as by_date %}
+                        {% for group in by_date %}
                             <div class="parts-for-date">
-                                <span class="pre date" title="{% trans "Bestelldatum" %}">{{ gruppe.grouper|date:"Y-m-d" }}:</span>
-                                {% for p in gruppe.list %}
+                                <span class="pre date" title="{% trans "Bestelldatum" %}">{{ group.grouper|date:"Y-m-d" }}:</span>
+                                {% for s in group.list %}
                                     <div>
-                                        <input type="checkbox" form="pendent-form-{{ member.id }}" checked="checked"
-                                               name="patenschaften[]" id="pendent-patenschaft-{{ p.id }}" class="form-check-input"
-                                               value="{{ p.id }}">
-                                        <label for="pendent-patenschaft-{{ p.id }}" class="form-check-label">
-                                            <span class="pre">{{ p.typ.name }}{% if not forloop.last %},{% endif %}</span>
+                                        <input type="checkbox" form="pending-form-{{ member.id }}" checked="checked"
+                                               name="sponsorships[]" id="pending-sponsorship-{{ s.id }}" class="form-check-input"
+                                               value="{{ s.id }}">
+                                        <label for="pending-sponsorship-{{ s.id }}" class="form-check-label">
+                                            <span class="pre">{{ s.type.name }}{% if not forloop.last %},{% endif %}</span>
                                         </label>
                                     </div>
                                 {% endfor %}
@@ -49,10 +49,10 @@
                         {% endfor %}
                     </td>
                     <td>
-                        {% for p in patenschaften %}{{ c_currency }} {{ p.jahresbeitrag|chf }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                        {% for s in sponsorships %}{{ c_currency }} {{ s.annual_fee|chf }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
                     </td>
                     <td>
-                        <form method="post" id="pendent-form-{{ member.id }}" action="{% url 'patenschaften-pendent-anwenden' %}">
+                        <form method="post" id="pending-form-{{ member.id }}" action="{% url 'sponsorships-pending-apply' %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-primary mb-1">
                                 {% trans "Ausgewählte anwenden" %}
@@ -60,7 +60,7 @@
                         </form>
                     </td>
                     <td>
-                        {% for p in patenschaften %}{% if p.notizen %}{{ p.notizen }}<br>{% endif %}{% endfor %}
+                        {% for s in sponsorships %}{% if s.notes %}{{ s.notes }}<br>{% endif %}{% endfor %}
                     </td>
                 </tr>
             {% endfor %}
@@ -72,7 +72,7 @@
     {{ block.super }}
     <script type="text/javascript">
         $(function () {
-            // Klick auf Checkbox soll die Zeile nicht auswählen
+            // Clicking a checkbox should not select the row
             $("#filter-table input, #filter-table label").click(function (e) { e.stopPropagation() })
         })
     </script>
