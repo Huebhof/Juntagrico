@@ -7,7 +7,7 @@ Der Code (Klassen, Felder, Funktionen, Kommentare) ist englisch wie in juntagric
 ## Funktionen
 
 * **Patenschaftstypen** mit Name, Beschreibung und Jahresbeitrag (mit `huebhof_patenschaften_billing` optional eigenes Buchungskonto). Nur "bestellbare" Typen werden Mitgliedern angeboten. Optional eine maximale Anzahl pro Typ: laufende und bestellte Patenschaften zählen, ist sie erreicht, ist der Typ "zurzeit ausgebucht"; vorher sehen Mitglieder "noch N verfügbar".
-* **Jahresbeitrag** wie bei den Abotypen in juntagrico: Es gilt der aktuelle Preis des Typs, eine Preisänderung wirkt auch auf bestehende Patenschaften. Für Ausnahmen (z.B. Sonderpreis) lässt sich pro Patenschaft ein abweichender Jahresbeitrag eintragen, der fix bleibt. Preiserhöhung aufs nächste Geschäftsjahr: Mitteilung an die Pat:innen bis 31.8. (wie beim Ernteanteil), den Preis am Typ erst ändern, wenn die Rechnungen fürs laufende Jahr erstellt sind. Vor jeder Preisänderung und Rechnungsrunde den Reiter "Mit Sonderpreis" prüfen: Ausnahme noch gültig, Betrag anpassen oder Feld leeren. Den Grund für einen Sonderpreis in die Notizen schreiben.
+* **Jahresbeitrag** wie bei den Abotypen in juntagrico: Es gilt der aktuelle Preis des Typs, eine Preisänderung wirkt auch auf bestehende Patenschaften. Für Ausnahmen lässt sich pro Patenschaft ein abweichender Jahresbeitrag (Sonderpreis) eintragen, der fix bleibt. Siehe [Preisänderung und Sonderpreise](#preisänderung-und-sonderpreise).
 * **Bestellprozess**: Nach der Auswahl der Ernteanteile (und Zusatz-Abos) folgt der Schritt "Patenschaft übernehmen". Alle Felder auf 0 = ohne Patenschaft weiter. Die Zusammenfassung zeigt die Auswahl mit Bearbeiten-Link.
 * **Kumulierbar**: Pro übernommener Patenschaft ein eigener Datensatz (3 × Baum = 3 Einträge), jede einzeln kündbar.
 * **Unabhängig vom Ernteanteil**: Patenschaften hängen am Mitglied, nicht am Abo.
@@ -29,6 +29,17 @@ Im Admin-Menü gibt es nach den Ernteanteilen das Aufklappmenü **Patenschaften*
 | **Pendente Änderungen** | Prüfung der Bestellungen: pro Mitglied die bestellten, noch nicht aktivierten Patenschaften (nach Bestelldatum gruppiert), je mit Jahresbeitrag. Bei Typen mit Maximum steht die Gesamtbelegung darunter ("Mutterkuh insgesamt: 1 von max. 2 Plätzen belegt, 1 Bestellung offen", rot bei Überbuchung). "Aktivieren per <Datum>" aktiviert die ausgewählten auf das Änderungsdatum (Standard heute, einstellbar wie bei den Ernteanteilen) und schickt dem Mitglied eine Bestätigung. "Ablehnen" storniert die Bestellung und informiert das Mitglied, optional mit Begründung. Kündigungen erscheinen hier nicht. |
 | **Patenschaftstypen** | Typen anlegen und bearbeiten (Name, Beschreibung, Jahresbeitrag, Bestellbar, maximale Anzahl, Sortierung; mit `huebhof_patenschaften_billing` zusätzlich Rechnungspositionstyp). Löschen nur ohne Patenschaften, sonst "Bestellbar" ausschalten. |
 | **Patenschaft erfassen** | Für Bestellungen, die nicht über den Mitgliederbereich kommen: Mitglied, Typ, Anzahl, abweichender Jahresbeitrag (leer = Preis des Typs), Bestell- und Aktivierungsdatum (leer = bleibt "bestellt"), Notizen, optional Bestätigungsmail. "Erfassen und weitere erfassen" für mehrere nacheinander. |
+
+### Preisänderung und Sonderpreise
+
+Ablauf bei einer Preiserhöhung aufs nächste Geschäftsjahr:
+
+1. Mitteilung an die Pat:innen bis 31.8. (wie beim Ernteanteil).
+2. Rechnungen fürs laufende Jahr erstellen. Verrechnet wird der Preis, der beim Erstellen oder Neu berechnen der Rechnung am Typ steht. Eine frühere Preisänderung würde also schon fürs laufende Jahr gelten, ebenso ein späteres Neu berechnen einer Rechnung des laufenden Jahres.
+3. Unter "Aktive" den Reiter "Mit Sonderpreis" prüfen: Ausnahme noch gültig, Betrag anpassen oder Feld leeren.
+4. Erst dann unter "Patenschaftstypen" den Preis ändern.
+
+Den Grund für einen Sonderpreis in die Notizen der Patenschaft schreiben, damit er auch später nachvollziehbar ist.
 
 Die einzelne Patenschaft zeigt den Status (mit `huebhof_patenschaften_billing` auch die Rechnungen); abweichender Jahresbeitrag, Daten und Notizen lassen sich ändern, "Kündigen" wendet die Kündigungsregel an.
 
@@ -72,7 +83,7 @@ Beide Reihenfolgen sind wichtig, siehe [Eingriffe in juntagrico und juntagrico_b
 |---|---|---|
 | `SPONSORSHIPS_AUTO_ACTIVATE` | `False` | Wie bei den Ernteanteilen bleiben Bestellungen von Mitgliedern "bestellt", bis ein Admin sie aktiviert. `True`: ab Bestellung aktiv. Gilt nicht für "Patenschaft erfassen", dort wird das Aktivierungsdatum direkt angegeben. |
 | `SPONSORSHIPS_MAX_QUANTITY` | `20` | Maximale Anzahl pro Typ und Bestellung. |
-| `SPONSORSHIPS_INFO_URL` | `''` | Link "Mehr erfahren" zu einem Infodokument. |
+| `SPONSORSHIPS_INFO_URL` | `''` | Link "Mehr erfahren" zu einem Infodokument. Ab juntagrico 2.1 durch `DOCUMENTS` ersetzen. |
 
 ## Berechtigungen
 
@@ -86,7 +97,7 @@ Wie in juntagrico werden die Rechte in der **Datenverwaltung** vergeben, am best
 | `huebhof_patenschaften.delete_sponsorship` | Patenschaften im Django-Admin löschen (normalerweise kündigen statt löschen). |
 | `huebhof_patenschaften.view_sponsorshiptype` | Menü "Patenschaftstypen": Liste ansehen. |
 | `huebhof_patenschaften.add_sponsorshiptype` | Neue Patenschaftstypen anlegen. |
-| `huebhof_patenschaften.change_sponsorshiptype` | Patenschaftstypen bearbeiten (Preis, Bestellbar, Buchungskonto ...). |
+| `huebhof_patenschaften.change_sponsorshiptype` | Patenschaftstypen bearbeiten (Preis, Bestellbar, Buchungskonto ...). Ein neuer Preis gilt für alle Patenschaften des Typs ohne Sonderpreis. |
 | `huebhof_patenschaften.delete_sponsorshiptype` | Patenschaftstypen löschen, nur solange sie keine Patenschaften haben. |
 | `huebhof_patenschaften.notified_on_sponsorship_creation` | E-Mail bei jeder neuen Patenschaft. Muss auch Superusern explizit gegeben werden. |
 | `huebhof_patenschaften.notified_on_sponsorship_cancellation` | E-Mail bei jeder Kündigung. Muss auch Superusern explizit gegeben werden. |
