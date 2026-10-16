@@ -2,6 +2,8 @@
 
 Juntagrico-Addon (ab Juntagrico 2.0) für Patenschaften der Solawi Huebhof. Setzt `juntagrico_billing` voraus.
 
+Der Code (Klassen, Felder, Funktionen, Kommentare) ist englisch wie in juntagrico; die Texte für die Benutzer:innen sind wie im juntagrico-Core deutsch und können über `locale` übersetzt werden.
+
 ## Funktionen
 
 * **Patenschaftstypen** mit Name, Beschreibung, Jahresbeitrag und optional eigenem Buchungskonto. Nur "bestellbare" Typen werden Mitgliedern angeboten.
@@ -18,7 +20,7 @@ Juntagrico-Addon (ab Juntagrico 2.0) für Patenschaften der Solawi Huebhof. Setz
 
 ## Bedienung
 
-Im Admin-Menü gibt es nach den Ernteanteilen das Aufklappmenü **Patenschaften** (offen auf allen Seiten unter `/manage/patenschaften/`):
+Im Admin-Menü gibt es nach den Ernteanteilen das Aufklappmenü **Patenschaften** (offen auf allen Seiten unter `/manage/sponsorships/`):
 
 | Menüpunkt | Inhalt |
 |---|---|
@@ -46,8 +48,10 @@ INSTALLED_APPS = [
     ...
 ]
 
-SIGNUP_MANAGER = 'huebhof_patenschaften.signup.PatenschaftSignupManager'
+SIGNUP_MANAGER = 'huebhof_patenschaften.signup.SponsorshipSignupManager'
 ```
+
+`SIGNUP_MANAGER` fügt den Schritt "Patenschaft übernehmen" in den Bestellprozess ein. Ohne diese Einstellung werden Patenschaften nur im Mitgliederbereich angeboten.
 
 `urls.py` (vor `juntagrico.urls` und `juntagrico_billing.urls`):
 
@@ -63,10 +67,9 @@ Beide Reihenfolgen sind wichtig, siehe [Eingriffe in juntagrico und juntagrico_b
 
 | Setting | Standard | Bedeutung |
 |---|---|---|
-| `PATENSCHAFTEN_AUTO_AKTIVIEREN` | `False` | Wie bei den Ernteanteilen bleiben Bestellungen von Mitgliedern "bestellt", bis ein Admin sie aktiviert. `True`: ab Bestellung aktiv. Gilt nicht für "Patenschaft erfassen", dort wird das Aktivierungsdatum direkt angegeben. |
-| `PATENSCHAFTEN_IM_SIGNUP` | `True` | Schritt im Bestellprozess anzeigen. |
-| `PATENSCHAFTEN_MAX_ANZAHL` | `20` | Maximale Anzahl pro Typ und Bestellung. |
-| `PATENSCHAFTEN_INFO_URL` | `''` | Link "Mehr erfahren" zu einem Infodokument. |
+| `SPONSORSHIPS_AUTO_ACTIVATE` | `False` | Wie bei den Ernteanteilen bleiben Bestellungen von Mitgliedern "bestellt", bis ein Admin sie aktiviert. `True`: ab Bestellung aktiv. Gilt nicht für "Patenschaft erfassen", dort wird das Aktivierungsdatum direkt angegeben. |
+| `SPONSORSHIPS_MAX_QUANTITY` | `20` | Maximale Anzahl pro Typ und Bestellung. |
+| `SPONSORSHIPS_INFO_URL` | `''` | Link "Mehr erfahren" zu einem Infodokument. |
 
 ## Berechtigungen
 
@@ -74,29 +77,29 @@ Wie in juntagrico werden die Rechte in der **Datenverwaltung** vergeben, am best
 
 | Berechtigung | Erlaubt |
 |---|---|
-| `huebhof_patenschaften.view_patenschaft` | Menü "Patenschaften → Aktive": Kennzahlen und Liste ansehen, exportieren, E-Mail an Pat:innen (zusätzlich `juntagrico.can_send_mails` nötig). |
-| `huebhof_patenschaften.change_patenschaft` | Zusätzlich "Pendente Änderungen" (aktivieren), einzelne Patenschaften bearbeiten und kündigen. |
-| `huebhof_patenschaften.add_patenschaft` | Menü "Patenschaft erfassen". Ohne `view_`/`change_patenschaft` bleibt man nach dem Erfassen im Formular. |
-| `huebhof_patenschaften.delete_patenschaft` | Patenschaften im Django-Admin löschen (normalerweise kündigen statt löschen). |
-| `huebhof_patenschaften.view_patenschafttyp` | Menü "Patenschaftstypen": Liste ansehen. |
-| `huebhof_patenschaften.add_patenschafttyp` | Neue Patenschaftstypen anlegen. |
-| `huebhof_patenschaften.change_patenschafttyp` | Patenschaftstypen bearbeiten (Preis, Bestellbar, Buchungskonto ...). |
-| `huebhof_patenschaften.delete_patenschafttyp` | Patenschaftstypen löschen, nur solange sie keine Patenschaften haben. |
-| `huebhof_patenschaften.notified_on_patenschaft_bestellung` | E-Mail bei jeder neuen Patenschaft. Muss auch Superusern explizit gegeben werden. |
-| `huebhof_patenschaften.notified_on_patenschaft_kuendigung` | E-Mail bei jeder Kündigung. Muss auch Superusern explizit gegeben werden. |
+| `huebhof_patenschaften.view_sponsorship` | Menü "Patenschaften → Aktive": Kennzahlen und Liste ansehen, exportieren, E-Mail an Pat:innen (zusätzlich `juntagrico.can_send_mails` nötig). |
+| `huebhof_patenschaften.change_sponsorship` | Zusätzlich "Pendente Änderungen" (aktivieren), einzelne Patenschaften bearbeiten und kündigen. |
+| `huebhof_patenschaften.add_sponsorship` | Menü "Patenschaft erfassen". Ohne `view_`/`change_sponsorship` bleibt man nach dem Erfassen im Formular. |
+| `huebhof_patenschaften.delete_sponsorship` | Patenschaften im Django-Admin löschen (normalerweise kündigen statt löschen). |
+| `huebhof_patenschaften.view_sponsorshiptype` | Menü "Patenschaftstypen": Liste ansehen. |
+| `huebhof_patenschaften.add_sponsorshiptype` | Neue Patenschaftstypen anlegen. |
+| `huebhof_patenschaften.change_sponsorshiptype` | Patenschaftstypen bearbeiten (Preis, Bestellbar, Buchungskonto ...). |
+| `huebhof_patenschaften.delete_sponsorshiptype` | Patenschaftstypen löschen, nur solange sie keine Patenschaften haben. |
+| `huebhof_patenschaften.notified_on_sponsorship_creation` | E-Mail bei jeder neuen Patenschaft. Muss auch Superusern explizit gegeben werden. |
+| `huebhof_patenschaften.notified_on_sponsorship_cancellation` | E-Mail bei jeder Kündigung. Muss auch Superusern explizit gegeben werden. |
 | `juntagrico.is_book_keeper` | Verrechnung: Patenschaften erscheinen in "Anstehende Rechnungen" usw. (Recht von juntagrico_billing). |
 
 Das Menü "Patenschaften" erscheint, sobald jemand eines der Rechte zum Ansehen, Erfassen oder Verwalten hat; es zeigt nur die erlaubten Unterpunkte. Links in den Listen (z.B. auf eine einzelne Patenschaft) erscheinen nur, wenn die Zielseite erlaubt ist.
 
-Der **Export** in der Liste braucht nur `view_patenschaft`. Das Inline beim Mitglied läuft über den Django-Admin und braucht deshalb zusätzlich den **Status "Mitarbeiter" (Staff)**.
+Der **Export** in der Liste braucht nur `view_sponsorship`. Das Inline beim Mitglied läuft über den Django-Admin und braucht deshalb zusätzlich den **Status "Mitarbeiter" (Staff)**.
 
 ### Vorschlag für Gruppen
 
 | Gruppe | Berechtigungen |
 |---|---|
-| Patenschaften ansehen | `view_patenschaft`, `view_patenschafttyp` |
-| Patenschaften betreuen | wie "ansehen", plus `add_patenschaft`, `change_patenschaft`, `notified_on_patenschaft_bestellung`, `notified_on_patenschaft_kuendigung` |
-| Patenschaften verwalten | wie "betreuen", plus `add_patenschafttyp`, `change_patenschafttyp`, `delete_patenschafttyp` |
+| Patenschaften ansehen | `view_sponsorship`, `view_sponsorshiptype` |
+| Patenschaften betreuen | wie "ansehen", plus `add_sponsorship`, `change_sponsorship`, `notified_on_sponsorship_creation`, `notified_on_sponsorship_cancellation` |
+| Patenschaften verwalten | wie "betreuen", plus `add_sponsorshiptype`, `change_sponsorshiptype`, `delete_sponsorshiptype` |
 
 Für die Verrechnung die Buchhaltung wie bisher mit `juntagrico.is_book_keeper` ausstatten. Wie in der juntagrico-Dokumentation empfohlen: jede Rolle mit einem Test-Benutzer durchklicken.
 
@@ -121,6 +124,7 @@ Bei Updates von juntagrico oder juntagrico_billing diese Stellen prüfen:
 | `templates/juntagrico/menu/admin.html` | Erweitert den Block `subscriptions` des Admin-Menüs um das Aufklappmenü. Keine Kopie. | – |
 | `views_billing.py`, `urls.py` | Eigene Views unter den Pfaden von juntagrico_billing (`jb/pending_bills`, `jb/bills_generate`, `jb/bill_recalc/<id>`). Sie rufen die Funktionen von juntagrico_billing auf und ergänzen die Patenschaften. Bei Updates prüfen, ob sich die Original-Views geändert haben. | `huebhof_patenschaften.urls` steht in `urls.py` vor `juntagrico_billing.urls` (ein Test prüft das). |
 | `migrations/0002_verrechnung.py` | Abhängigkeit auf `juntagrico_billing 0006_alter_payment_paid_date`. | – |
+| `migrations/0003_english_names.py` | Benennt Modelle, Felder, ContentTypes und Berechtigungen von Deutsch auf Englisch um (Daten und Zuweisungen bleiben erhalten). Die `RenameModel` sind bewusst in `SeparateDatabaseAndState` verpackt: juntagrico hängt an jedes `RenameModel` eine Umbenennung der Berechtigungen an, die auf einer frischen Datenbank fehlschlägt. | – |
 
 Neue Migrationen nur mit `python -m manage makemigrations huebhof_patenschaften` erzeugen. Ohne App-Namen legt Django auch Migrationen in den installierten Paketen (juntagrico, juntagrico_billing) an, die später zu Konflikten führen.
 
@@ -129,6 +133,8 @@ Neue Migrationen nur mit `python -m manage makemigrations huebhof_patenschaften`
 ```
 python -m manage test huebhof_patenschaften
 ```
+
+Lokal muss `JUNTAGRICO_SECRET_KEY` gesetzt sein (beliebiger Wert), sonst schlagen die Tests mit Sessions fehl.
 
 ## Noch offen
 

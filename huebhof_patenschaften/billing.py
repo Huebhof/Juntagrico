@@ -1,10 +1,10 @@
-"""Verrechnung der Patenschaften über juntagrico_billing.
+"""Billing of sponsorships via juntagrico_billing.
 
-Pro Patenschaft und Geschäftsjahr wird eine Rechnungsposition (BillItem mit custom_item_type) erstellt.
-Hat das Mitglied im Geschäftsjahr bereits eine unveröffentlichte Rechnung (z.B. für den Ernteanteil),
-kommen die Positionen dort dazu, sonst wird eine neue Rechnung erstellt.
+One bill item (BillItem with custom_item_type) is created per sponsorship and business year.
+If the member already has an unpublished bill in the business year (e.g. for the subscription),
+the items are added to it, otherwise a new bill is created.
 
-Eingebunden wird das in die Abläufe von juntagrico_billing über views_billing.py.
+Hooked into the juntagrico_billing workflow via views_billing.py.
 """
 import datetime
 from collections import defaultdict
@@ -15,74 +15,74 @@ from django.db.models import Q
 from juntagrico_billing.models.bill import Bill, BillItem, BillItemType
 from juntagrico_billing.models.settings import Settings
 
-from .models import Patenschaft
+from .models import Sponsorship
 
-STANDARD_POSITION = 'Patenschaft'
+DEFAULT_ITEM_TYPE = 'Patenschaft'
 
 
-def verrechenbar(business_year):
-    """Patenschaften, die im Geschäftsjahr laufen und dafür noch nicht verrechnet sind.
-    Es wird immer der volle Jahresbeitrag verrechnet."""
-    return Patenschaft.objects.filter(
-        aktiviert_am__isnull=False, aktiviert_am__lte=business_year.end_date, jahresbeitrag__gt=0,
+def billable(business_year):
+    """Sponsorships running in the business year that are not billed for it yet.
+    The full annual fee is always billed."""
+    return Sponsorship.objects.filter(
+        activation_date__isnull=False, activation_date__lte=business_year.end_date, annual_fee__gt=0,
     ).filter(
-        Q(ende__isnull=True) | Q(ende__gte=business_year.start_date)
+        Q(end_date__isnull=True) | Q(end_date__gte=business_year.start_date)
     ).exclude(
-        rechnungspositionen__bill__business_year=business_year
-    ).select_related('member', 'typ', 'typ__rechnungsposition').order_by('member__last_name', 'member__first_name',
-                                                                          'typ__sortierung', 'id')
+        bill_items__bill__business_year=business_year
+    ).select_related('member', 'type', 'type__bill_item_type').order_by('member__last_name', 'member__first_name',
+                                                                        'type__sort_order', 'id')
 
 
-def nach_member(patenschaften):
-    gruppen = defaultdict(list)
-    for p in patenschaften:
-        gruppen[p.member].append(p)
-    return gruppen
+def by_member(sponsorships):
+    groups = defaultdict(list)
+    for s in sponsorships:
+        groups[s.member].append(s)
+    return groups
 
 
-def offene_rechnung(member, business_year):
-    """Unveröffentlichte Rechnung des Mitglieds im Geschäftsjahr, an die angehängt werden kann."""
+def open_bill(member, business_year):
+    """Unpublished bill of the member in the business year that items can be added to."""
     return member.bills.filter(business_year=business_year, published=False).order_by('id').first()
 
 
-def _positionstyp(typ):
-    if typ.rechnungsposition_id:
-        return typ.rechnungsposition
-    return BillItemType.objects.get_or_create(name=STANDARD_POSITION, defaults={'booking_account': ''})[0]
+def _item_type(sponsorship_type):
+    if sponsorship_type.bill_item_type_id:
+        return sponsorship_type.bill_item_type
+    return BillItemType.objects.get_or_create(name=DEFAULT_ITEM_TYPE, defaults={'booking_account': ''})[0]
 
 
-def _beschreibung(typ, positionstyp):
-    # Auf der Rechnung steht "<Positionstyp> <Beschreibung>", Doppelungen vermeiden.
-    return '' if positionstyp.name == typ.name else typ.name[:100]
+def _description(sponsorship_type, item_type):
+    # The bill shows "<item type> <description>", avoid duplicates.
+    return '' if item_type.name == sponsorship_type.name else sponsorship_type.name[:100]
 
 
-def anfuegen(bill, patenschaften):
-    """Fügt die Patenschaften als Positionen an die Rechnung an und aktualisiert den Betrag."""
-    for p in patenschaften:
-        positionstyp = _positionstyp(p.typ)
+def add_to_bill(bill, sponsorships):
+    """Adds the sponsorships as items to the bill and updates the amount."""
+    for s in sponsorships:
+        item_type = _item_type(s.type)
         item = BillItem.objects.create(
-            bill=bill, custom_item_type=positionstyp, description=_beschreibung(p.typ, positionstyp),
-            amount=float(p.jahresbeitrag))
-        p.rechnungspositionen.add(item)
+            bill=bill, custom_item_type=item_type, description=_description(s.type, item_type),
+            amount=float(s.annual_fee))
+        s.bill_items.add(item)
     bill.amount = sum(itm.amount for itm in bill.items.all())
     bill.save()
 
 
 @transaction.atomic
-def verrechnen(business_year, patenschaften, bill_date=None):
-    """Erstellt bzw. ergänzt die Rechnungen. Gibt (neue Rechnungen, ergänzte Rechnungen) zurück."""
+def create_bills(business_year, sponsorships, bill_date=None):
+    """Creates or extends the bills. Returns (new bills, extended bills)."""
     bill_date = bill_date or datetime.date.today()
     settings = Settings.objects.first()
     vat_rate = round(settings.vat_percent / 100, 4) if settings else 0.0
-    neu, ergaenzt = [], []
-    for member, liste in nach_member(patenschaften).items():
-        bill = offene_rechnung(member, business_year)
+    created, extended = [], []
+    for member, member_sponsorships in by_member(sponsorships).items():
+        bill = open_bill(member, business_year)
         if bill:
-            ergaenzt.append(bill)
+            extended.append(bill)
         else:
             bill = Bill.objects.create(
                 business_year=business_year, member=member, amount=0.0, vat_rate=vat_rate,
                 bill_date=bill_date, booking_date=max(business_year.start_date, bill_date))
-            neu.append(bill)
-        anfuegen(bill, liste)
-    return neu, ergaenzt
+            created.append(bill)
+        add_to_bill(bill, member_sponsorships)
+    return created, extended

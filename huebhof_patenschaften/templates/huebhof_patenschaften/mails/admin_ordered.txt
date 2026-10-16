@@ -1,0 +1,12 @@
+{% extends "mails/email.txt" %}
+{% load i18n juntagrico.common %}
+{% block content %}
+{% trans "Hallo" %}
+
+{% blocktrans with m=member %}{{ m }} hat soeben folgende Patenschaft(en) bestellt{% endblocktrans %}:
+{% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }}{% if not s.activation_date %} ({% trans "noch nicht aktiviert" %}){% endif %}
+{% endfor %}
+{% trans "Total pro Jahr" %}: {{ total|price }}
+
+{{ serverurl }}{% url 'sponsorships-pending' %}
+{% endblock %}

@@ -8,45 +8,45 @@ def _render(template, context):
     return get_template(template).render(base_dict(context))
 
 
-def bestaetigung_an_pate(member, patenschaften):
-    if not patenschaften or not member.email:
+def confirm_order(member, sponsorships):
+    if not sponsorships or not member.email:
         return
     EmailSender.get_sender(
         organisation_subject(_('Deine Patenschaft')),
-        _render('huebhof_patenschaften/mails/bestellt_member.txt',
-                {'member': member, 'patenschaften': patenschaften,
-                 'summe': sum(p.jahresbeitrag for p in patenschaften)}),
+        _render('huebhof_patenschaften/mails/member_ordered.txt',
+                {'member': member, 'sponsorships': sponsorships,
+                 'total': sum(s.annual_fee for s in sponsorships)}),
     ).send_to(member.email)
 
 
-def kuendigung_an_pate(member, patenschaft):
+def confirm_cancellation(member, sponsorship):
     if not member.email:
         return
     EmailSender.get_sender(
         organisation_subject(_('Patenschaft gekündigt')),
-        _render('huebhof_patenschaften/mails/gekuendigt_member.txt',
-                {'member': member, 'patenschaft': patenschaft}),
+        _render('huebhof_patenschaften/mails/member_canceled.txt',
+                {'member': member, 'sponsorship': sponsorship}),
     ).send_to(member.email)
 
 
-@requires_someone_with_perm('notified_on_patenschaft_bestellung')
-def admin_bestellt(member, patenschaften, **kwargs):
-    if not patenschaften:
+@requires_someone_with_perm('notified_on_sponsorship_creation')
+def notify_admins_ordered(member, sponsorships, **kwargs):
+    if not sponsorships:
         return
     EmailSender.get_sender(
         organisation_subject(_('Neue Patenschaft')),
-        _render('huebhof_patenschaften/mails/bestellt_admin.txt',
-                {'member': member, 'patenschaften': patenschaften,
-                 'summe': sum(p.jahresbeitrag for p in patenschaften)}),
+        _render('huebhof_patenschaften/mails/admin_ordered.txt',
+                {'member': member, 'sponsorships': sponsorships,
+                 'total': sum(s.annual_fee for s in sponsorships)}),
         bcc=kwargs['emails'],
     ).send()
 
 
-@requires_someone_with_perm('notified_on_patenschaft_kuendigung')
-def admin_gekuendigt(member, patenschaft, **kwargs):
+@requires_someone_with_perm('notified_on_sponsorship_cancellation')
+def notify_admins_canceled(member, sponsorship, **kwargs):
     EmailSender.get_sender(
         organisation_subject(_('Patenschaft gekündigt')),
-        _render('huebhof_patenschaften/mails/gekuendigt_admin.txt',
-                {'member': member, 'patenschaft': patenschaft}),
+        _render('huebhof_patenschaften/mails/admin_canceled.txt',
+                {'member': member, 'sponsorship': sponsorship}),
         bcc=kwargs['emails'],
     ).send()

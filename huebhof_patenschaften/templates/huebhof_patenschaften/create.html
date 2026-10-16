@@ -14,13 +14,13 @@
 
 {% block scripts %}
     {{ block.super }}
-    {{ beitraege|json_script:"patenschaft-beitraege" }}
+    {{ annual_fees|json_script:"sponsorship-annual-fees" }}
     <script type="text/javascript">
-        // Jahresbeitrag des gewählten Typs als Platzhalter anzeigen
+        // Show the annual fee of the selected type as placeholder
         $(function () {
-            const beitraege = JSON.parse(document.getElementById('patenschaft-beitraege').textContent);
-            $('#id_typ').on('change', function () {
-                $('#id_jahresbeitrag').attr('placeholder', beitraege[this.value] || '');
+            const annualFees = JSON.parse(document.getElementById('sponsorship-annual-fees').textContent);
+            $('#id_type').on('change', function () {
+                $('#id_annual_fee').attr('placeholder', annualFees[this.value] || '');
             }).trigger('change');
         });
     </script>

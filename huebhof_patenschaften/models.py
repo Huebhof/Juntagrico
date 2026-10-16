@@ -10,153 +10,159 @@ from juntagrico.entity.member import Member
 from juntagrico.util import temporal
 
 
-class PatenschaftTypQuerySet(models.QuerySet):
-    def sichtbar(self):
-        return self.filter(sichtbar=True)
+class SponsorshipTypeQuerySet(models.QuerySet):
+    def visible(self):
+        return self.filter(visible=True)
 
 
-class PatenschaftTyp(models.Model):
-    """Eine Art von Patenschaft, z.B. "Baumpatenschaft" oder "Bienenpatenschaft"."""
+class SponsorshipType(models.Model):
+    """A kind of sponsorship, e.g. "tree sponsorship" or "bee sponsorship"."""
     name = models.CharField(_('Name'), max_length=100)
-    beschreibung = models.TextField(_('Beschreibung'), blank=True)
-    jahresbeitrag = models.DecimalField(
+    description = models.TextField(_('Beschreibung'), blank=True)
+    annual_fee = models.DecimalField(
         _('Jahresbeitrag'), max_digits=8, decimal_places=2,
         validators=[MinValueValidator(Decimal('0'))])
-    sichtbar = models.BooleanField(
+    visible = models.BooleanField(
         _('Bestellbar'), default=True,
         help_text=_('Nur bestellbare Patenschaften werden bei der Anmeldung und im Mitgliederbereich angeboten.'))
-    sortierung = models.PositiveIntegerField(_('Sortierung'), default=0)
-    rechnungsposition = models.ForeignKey(
+    sort_order = models.PositiveIntegerField(_('Sortierung'), default=0)
+    bill_item_type = models.ForeignKey(
         'juntagrico_billing.BillItemType', verbose_name=_('Rechnungspositionstyp'),
-        null=True, blank=True, on_delete=models.PROTECT, related_name='patenschaft_typen',
+        null=True, blank=True, on_delete=models.PROTECT, related_name='sponsorship_types',
         help_text=_('Bestimmt das Buchungskonto auf der Rechnung. Leer: Rechnungspositionstyp "Patenschaft".'))
 
-    objects = PatenschaftTypQuerySet.as_manager()
+    objects = SponsorshipTypeQuerySet.as_manager()
 
     class Meta:
         verbose_name = _('Patenschaftstyp')
         verbose_name_plural = _('Patenschaftstypen')
-        ordering = ['sortierung', 'name']
+        ordering = ['sort_order', 'name']
 
     def __str__(self):
         return self.name
 
 
-class PatenschaftQuerySet(models.QuerySet):
-    def bestellt(self):
-        """Bestellt, aber noch nicht aktiviert und nicht storniert."""
-        return self.filter(aktiviert_am__isnull=True, gekuendigt_am__isnull=True)
+class SponsorshipQuerySet(models.QuerySet):
+    def ordered(self):
+        """Ordered, but neither activated nor withdrawn."""
+        return self.filter(activation_date__isnull=True, cancellation_date__isnull=True)
 
-    def laufend(self, date=None):
-        """Aktiviert und noch nicht beendet (gekündigte bis zum Ende eingeschlossen)."""
+    def running(self, date=None):
+        """Activated and not yet ended (canceled ones included until their end date)."""
         date = date or datetime.date.today()
-        return self.filter(aktiviert_am__isnull=False, aktiviert_am__lte=date).filter(
-            Q(ende__isnull=True) | Q(ende__gte=date))
+        return self.filter(activation_date__isnull=False, activation_date__lte=date).filter(
+            Q(end_date__isnull=True) | Q(end_date__gte=date))
 
-    def aktiv(self, date=None):
-        """Laufend und nicht gekündigt."""
-        return self.laufend(date).filter(gekuendigt_am__isnull=True)
+    def active(self, date=None):
+        """Running and not canceled."""
+        return self.running(date).filter(cancellation_date__isnull=True)
 
-    def gekuendigt(self, date=None):
-        """Gekündigt, läuft aber noch bis zum Ende."""
-        return self.laufend(date).filter(gekuendigt_am__isnull=False)
+    def canceled(self, date=None):
+        """Canceled, but still running until the end date."""
+        return self.running(date).filter(cancellation_date__isnull=False)
 
-    def offen(self, date=None):
-        """Alles, was nicht beendet oder storniert ist."""
+    def open(self, date=None):
+        """Everything that is neither ended nor withdrawn."""
         date = date or datetime.date.today()
-        return self.filter(Q(ende__isnull=True) | Q(ende__gte=date)).exclude(
-            aktiviert_am__isnull=True, gekuendigt_am__isnull=False)
+        return self.filter(Q(end_date__isnull=True) | Q(end_date__gte=date)).exclude(
+            activation_date__isnull=True, cancellation_date__isnull=False)
 
 
-class Patenschaft(models.Model):
-    """Eine von einem Mitglied übernommene Patenschaft. Mehrere gleiche = mehrere Datensätze."""
+class Sponsorship(models.Model):
+    """A sponsorship taken over by a member. Several of the same type = several records."""
+    ORDERED = 'ordered'
+    ACTIVE = 'active'
+    CANCELED = 'canceled'
+    ENDED = 'ended'
+    WITHDRAWN = 'withdrawn'
+
     member = models.ForeignKey(
-        Member, verbose_name=_('Pat:in'), on_delete=models.PROTECT, related_name='patenschaften')
-    typ = models.ForeignKey(
-        PatenschaftTyp, verbose_name=_('Typ'), on_delete=models.PROTECT, related_name='patenschaften')
-    jahresbeitrag = models.DecimalField(
+        Member, verbose_name=_('Pat:in'), on_delete=models.PROTECT, related_name='sponsorships')
+    type = models.ForeignKey(
+        SponsorshipType, verbose_name=_('Typ'), on_delete=models.PROTECT, related_name='sponsorships')
+    annual_fee = models.DecimalField(
         _('Jahresbeitrag'), max_digits=8, decimal_places=2,
         help_text=_('Beitrag zum Zeitpunkt der Bestellung. Spätere Preisänderungen am Typ wirken sich nicht aus.'))
-    bestellt_am = models.DateField(_('Bestellt am'), default=datetime.date.today)
-    aktiviert_am = models.DateField(_('Aktiviert am'), null=True, blank=True)
-    gekuendigt_am = models.DateField(_('Gekündigt am'), null=True, blank=True)
-    ende = models.DateField(_('Ende'), null=True, blank=True)
-    notizen = models.TextField(_('Notizen'), blank=True)
-    rechnungspositionen = models.ManyToManyField(
+    order_date = models.DateField(_('Bestellt am'), default=datetime.date.today)
+    activation_date = models.DateField(_('Aktiviert am'), null=True, blank=True)
+    cancellation_date = models.DateField(_('Gekündigt am'), null=True, blank=True)
+    end_date = models.DateField(_('Ende'), null=True, blank=True)
+    notes = models.TextField(_('Notizen'), blank=True)
+    bill_items = models.ManyToManyField(
         'juntagrico_billing.BillItem', verbose_name=_('Rechnungspositionen'), blank=True,
-        related_name='patenschaften')
+        related_name='sponsorships')
 
-    objects = PatenschaftQuerySet.as_manager()
+    objects = SponsorshipQuerySet.as_manager()
 
     class Meta:
         verbose_name = _('Patenschaft')
         verbose_name_plural = _('Patenschaften')
-        ordering = ['member__last_name', 'member__first_name', 'typ', 'bestellt_am']
+        ordering = ['member__last_name', 'member__first_name', 'type', 'order_date']
         permissions = [
-            ('notified_on_patenschaft_bestellung', _('Wird bei neuer Patenschaft per E-Mail informiert')),
-            ('notified_on_patenschaft_kuendigung', _('Wird bei gekündigter Patenschaft per E-Mail informiert')),
+            ('notified_on_sponsorship_creation', _('Wird bei neuer Patenschaft per E-Mail informiert')),
+            ('notified_on_sponsorship_cancellation', _('Wird bei gekündigter Patenschaft per E-Mail informiert')),
         ]
 
     def __str__(self):
-        return f'{self.typ} ({self.member})'
+        return f'{self.type} ({self.member})'
 
     def save(self, *args, **kwargs):
-        if self.jahresbeitrag is None and self.typ_id:
-            self.jahresbeitrag = self.typ.jahresbeitrag
+        if self.annual_fee is None and self.type_id:
+            self.annual_fee = self.type.annual_fee
         super().save(*args, **kwargs)
 
     @property
     def status(self):
         today = datetime.date.today()
-        if self.aktiviert_am is None:
-            return 'storniert' if self.gekuendigt_am else 'bestellt'
-        if self.ende and self.ende < today:
-            return 'beendet'
-        if self.aktiviert_am > today:
-            return 'bestellt'
-        if self.gekuendigt_am:
-            return 'gekuendigt'
-        return 'aktiv'
+        if self.activation_date is None:
+            return self.WITHDRAWN if self.cancellation_date else self.ORDERED
+        if self.end_date and self.end_date < today:
+            return self.ENDED
+        if self.activation_date > today:
+            return self.ORDERED
+        if self.cancellation_date:
+            return self.CANCELED
+        return self.ACTIVE
 
     def get_status_display(self):
         return {
-            'bestellt': _('Bestellt'),
-            'aktiv': _('Aktiv'),
-            'gekuendigt': _('Gekündigt'),
-            'beendet': _('Beendet'),
-            'storniert': _('Storniert'),
+            self.ORDERED: _('Bestellt'),
+            self.ACTIVE: _('Aktiv'),
+            self.CANCELED: _('Gekündigt'),
+            self.ENDED: _('Beendet'),
+            self.WITHDRAWN: _('Storniert'),
         }[self.status]
 
     @property
-    def kann_gekuendigt_werden(self):
-        return self.status in ('bestellt', 'aktiv')
+    def can_be_canceled(self):
+        return self.status in (self.ORDERED, self.ACTIVE)
 
-    def aktivieren(self, date=None):
-        if self.aktiviert_am is None:
-            self.aktiviert_am = date or datetime.date.today()
+    def activate(self, date=None):
+        if self.activation_date is None:
+            self.activation_date = date or datetime.date.today()
             self.save()
 
     @staticmethod
-    def naechstes_ende(date=None):
-        """Ende bei Kündigung am angegebenen Datum: Ende des Geschäftsjahres, wenn die
-        Kündigungsfrist (BUSINESS_YEAR_CANCELATION_MONTH) noch nicht vorbei ist,
-        sonst Ende des folgenden Geschäftsjahres. Gleiche Regel wie bei den Ernteanteilen."""
+    def next_end_date(date=None):
+        """End date when canceling on the given date: end of the business year if the cancellation
+        period (BUSINESS_YEAR_CANCELATION_MONTH) has not passed yet, otherwise end of the following
+        business year. Same rule as for subscriptions."""
         date = date or datetime.date.today()
         if date <= temporal.next_cancelation_date_from(temporal.start_of_specific_business_year(date)):
             return temporal.end_of_specific_business_year(date)
         return temporal.end_of_specific_business_year(temporal.end_of_specific_business_year(date)
                                                        + datetime.timedelta(days=1))
 
-    def kuendigen(self, date=None):
-        """Bestellte (noch nicht aktive) Patenschaften werden storniert,
-        aktive laufen bis zum Ende des Geschäftsjahres."""
+    def cancel(self, date=None):
+        """Ordered (not yet active) sponsorships are withdrawn,
+        active ones run until the end of the business year."""
         date = date or datetime.date.today()
-        if not self.kann_gekuendigt_werden:
+        if not self.can_be_canceled:
             return
-        self.gekuendigt_am = date
-        if self.status == 'bestellt' or self.aktiviert_am is None:
-            self.aktiviert_am = None
-            self.ende = date
+        self.cancellation_date = date
+        if self.status == self.ORDERED or self.activation_date is None:
+            self.activation_date = None
+            self.end_date = date
         else:
-            self.ende = self.naechstes_ende(date)
+            self.end_date = self.next_end_date(date)
         self.save()

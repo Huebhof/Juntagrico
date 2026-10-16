@@ -2,15 +2,15 @@
 {% load i18n crispy_forms_tags %}
 
 {% block page_title %}
-    <h3>{{ patenschaft.typ.name }}: {{ patenschaft.member }}</h3>
+    <h3>{{ sponsorship.type.name }}: {{ sponsorship.member }}</h3>
 {% endblock %}
 
 {% block content %}
     <p>
-        {% trans "Status" %}: <strong>{{ patenschaft.get_status_display }}</strong>
-        {% if rechnungen %}
+        {% trans "Status" %}: <strong>{{ sponsorship.get_status_display }}</strong>
+        {% if bill_items %}
             &middot; {% trans "Rechnungen" %}:
-            {% for item in rechnungen %}
+            {% for item in bill_items %}
                 <a href="{% url 'admin:juntagrico_billing_bill_change' item.bill_id %}">{{ item.bill_id }} ({{ item.bill.business_year }})</a>{% if not forloop.last %}, {% endif %}
             {% endfor %}
         {% endif %}
