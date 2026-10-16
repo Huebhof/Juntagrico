@@ -1,5 +1,5 @@
 {% extends "juntagrico/signup/base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block title %}
     {% trans "Patenschaft übernehmen" %}
@@ -20,12 +20,18 @@
     <form method="post" action="">
         {% csrf_token %}
         {% include "huebhof_patenschaften/snippets/selection.html" %}
-        <p class="text-muted small">
-            {% trans "Wenn du keine Patenschaft möchtest, lass alle Felder auf 0 und fahre fort." %}
-        </p>
-        <div class="d-flex justify-content-between mt-3">
-            <a href="{% url 'cs-cancel' %}" class="btn btn-secondary">{% trans "Abbrechen" %}</a>
-            <button type="submit" class="btn btn-success">{% trans "Weiter" %}</button>
+        <div class="form-group">
+            {# The label follows the selection (selection.js): nothing selected = continue without sponsorship #}
+            <button type="submit" class="btn btn-success btn-lg sponsorship-submit"
+                    data-label-none="{% trans "Ohne Patenschaft weiter" %}"
+                    data-label-one="{% trans "Weiter mit 1 Patenschaft" %}"
+                    data-label-many="{% trans "Weiter mit __count__ Patenschaften" %}">{% trans "Weiter" %}</button>
+            <a href="{% url 'cs-cancel' %}" class="btn">{% trans "Abbrechen" %}</a>
         </div>
     </form>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{% static 'juntagrico/external/bootstrap-input-spinner.js' %}"></script>
+    <script type="text/javascript" src="{% static 'huebhof_patenschaften/js/selection.js' %}"></script>
 {% endblock %}
