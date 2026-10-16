@@ -137,3 +137,11 @@ Lokal muss `JUNTAGRICO_SECRET_KEY` gesetzt sein (beliebiger Wert), sonst schlage
 ## Noch offen
 
 * Mitgliederauswahl bei "Patenschaft erfassen" ist eine einfache Auswahlliste (keine Suche).
+* Der Jahresbeitrag wird bei der Bestellung fest übernommen; Preisänderungen am Typ wirken nicht auf bestehende Patenschaften (anders als bei den Abotypen in juntagrico). Geplant: Preisänderung auf ein folgendes Geschäftsjahr, mit Mitteilung an die Pat:innen bis 31.8. (analog Vereinbarung Ernteanteil).
+* Darstellung der Patenschafts-Auswahl im Anmeldeprozess wie die Abo-Auswahl (Review #32).
+* Link zur Vereinbarung zur Patenschaft als `SPONSORSHIPS_INFO_URL` eintragen, sobald die Vereinbarung fertig ist.
+
+### Beim Update auf juntagrico 2.1
+
+* `templates/juntagrico/menu/user.html`: Kopie des Benutzermenüs durch die neuen Template-Blöcke ersetzen ([juntagrico#948](https://github.com/juntagrico/juntagrico/pull/948)).
+* `SPONSORSHIPS_INFO_URL` durch das Setting `DOCUMENTS` ersetzen.
