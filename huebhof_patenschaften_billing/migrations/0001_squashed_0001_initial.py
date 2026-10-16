@@ -1,45 +1,22 @@
-# Takes over the billing fields that were part of huebhof_patenschaften until migration 0003.
-# Runs before huebhof_patenschaften 0004, which removes them there.
+# Replaces 0001_initial (squashed by hand) without the data copy from the former billing fields
+# of huebhof_patenschaften, which no longer exist in its squashed migration.
+# Databases with 0001_initial applied skip it.
 
 import django.db.models.deletion
 from django.db import migrations, models
 
 
-def copy_from_sponsorships(apps, schema_editor):
-    SponsorshipType = apps.get_model('huebhof_patenschaften', 'SponsorshipType')
-    Sponsorship = apps.get_model('huebhof_patenschaften', 'Sponsorship')
-    SponsorshipTypeBilling = apps.get_model('huebhof_patenschaften_billing', 'SponsorshipTypeBilling')
-    SponsorshipBillItem = apps.get_model('huebhof_patenschaften_billing', 'SponsorshipBillItem')
-    for sponsorship_type in SponsorshipType.objects.exclude(bill_item_type=None):
-        SponsorshipTypeBilling.objects.create(type_id=sponsorship_type.id,
-                                              bill_item_type_id=sponsorship_type.bill_item_type_id)
-    for link in Sponsorship.bill_items.through.objects.all():
-        SponsorshipBillItem.objects.create(sponsorship_id=link.sponsorship_id, bill_item_id=link.billitem_id)
-
-
-def copy_to_sponsorships(apps, schema_editor):
-    SponsorshipType = apps.get_model('huebhof_patenschaften', 'SponsorshipType')
-    Sponsorship = apps.get_model('huebhof_patenschaften', 'Sponsorship')
-    SponsorshipTypeBilling = apps.get_model('huebhof_patenschaften_billing', 'SponsorshipTypeBilling')
-    SponsorshipBillItem = apps.get_model('huebhof_patenschaften_billing', 'SponsorshipBillItem')
-    for billing in SponsorshipTypeBilling.objects.exclude(bill_item_type=None):
-        SponsorshipType.objects.filter(id=billing.type_id).update(bill_item_type_id=billing.bill_item_type_id)
-    Through = Sponsorship.bill_items.through
-    for link in SponsorshipBillItem.objects.all():
-        Through.objects.create(sponsorship_id=link.sponsorship_id, billitem_id=link.bill_item_id)
-
-
 class Migration(migrations.Migration):
+
+    replaces = [
+        ('huebhof_patenschaften_billing', '0001_initial'),
+    ]
 
     initial = True
 
     dependencies = [
-        ('huebhof_patenschaften', '0003_english_names'),
+        ('huebhof_patenschaften', '0001_squashed_0005_max_count'),
         ('juntagrico_billing', '0006_alter_payment_paid_date'),
-    ]
-
-    run_before = [
-        ('huebhof_patenschaften', '0004_remove_billing_fields'),
     ]
 
     operations = [
@@ -71,5 +48,4 @@ class Migration(migrations.Migration):
             options={'verbose_name': 'Rechnung', 'verbose_name_plural': 'Rechnungen',
                      'ordering': ['bill_item__bill__business_year__start_date']},
         ),
-        migrations.RunPython(copy_from_sponsorships, copy_to_sponsorships),
     ]

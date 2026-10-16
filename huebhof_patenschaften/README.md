@@ -120,9 +120,7 @@ Bei Updates von juntagrico oder juntagrico_billing diese Stellen prüfen:
 |---|---|---|
 | `templates/juntagrico/menu/user.html` | **Kopie** des Benutzermenüs von juntagrico 2.0 mit "Patenschaften" nach dem Ernteanteil (juntagrico bietet dort keinen Block). Bei Updates mit dem Original abgleichen. | `huebhof_patenschaften` steht in `INSTALLED_APPS` nach `juntagrico_billing`, damit dessen Menüpunkt "Rechnungen" darauf aufbaut. |
 | `templates/juntagrico/menu/admin.html` | Erweitert den Block `subscriptions` des Admin-Menüs um das Aufklappmenü. Keine Kopie. | – |
-| `migrations/0002_verrechnung.py` | Abhängigkeit auf `juntagrico_billing 0006_alter_payment_paid_date`. Deshalb braucht eine Neuinstallation `juntagrico_billing` noch, bis die Migrationen zusammengefasst werden (Squash). | – |
-| `migrations/0004_remove_billing_fields.py` | Entfernt die Billing-Felder; `huebhof_patenschaften_billing` übernimmt deren Daten vorher (`run_before`). | – |
-| `migrations/0003_english_names.py` | Benennt Modelle, Felder, ContentTypes und Berechtigungen von Deutsch auf Englisch um (Daten und Zuweisungen bleiben erhalten). Die `RenameModel` sind bewusst in `SeparateDatabaseAndState` verpackt: juntagrico hängt an jedes `RenameModel` eine Umbenennung der Berechtigungen an, die auf einer frischen Datenbank fehlschlägt. | – |
+| `migrations/0001_squashed_0005_max_count.py` | Fasst die früheren Migrationen 0001–0005 zusammen (`replaces`), ohne Abhängigkeit auf `juntagrico_billing`. Die alten Dateien sind entfernt: Eine bestehende Datenbank muss vor dem Update bereits auf 0005 sein (Stand `master` b6442ed), sonst zuerst diesen Stand deployen. | – |
 
 Neue Migrationen nur mit `python -m manage makemigrations huebhof_patenschaften` erzeugen. Ohne App-Namen legt Django auch Migrationen in den installierten Paketen (juntagrico, juntagrico_billing) an, die später zu Konflikten führen.
 

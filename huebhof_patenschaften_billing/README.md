@@ -56,7 +56,7 @@ Die Rechnungen einer Patenschaft stehen auf ihrer Bearbeiten-Seite und im Django
 | Datei | Was | Voraussetzung |
 |---|---|---|
 | `views.py`, `urls.py` | Eigene Views unter den Pfaden von juntagrico_billing (`jb/pending_bills`, `jb/bills_generate`, `jb/bill_recalc/<id>`). Sie rufen die Funktionen von juntagrico_billing auf und ergänzen die Patenschaften. Bei Updates prüfen, ob sich die Original-Views geändert haben. Sauberer wären Hooks in juntagrico_billing, die es noch nicht gibt. | `huebhof_patenschaften_billing.urls` steht in `urls.py` vor `juntagrico_billing.urls` (ein Test prüft das). |
-| `migrations/0001_initial.py` | Übernimmt die Daten der Billing-Felder, die bis Migration 0003 in `huebhof_patenschaften` waren, und läuft vor deren Entfernung (`run_before`). | – |
+| `migrations/0001_squashed_0001_initial.py` | Ersetzt die frühere 0001 (`replaces`) ohne die Datenübernahme aus den Billing-Feldern von `huebhof_patenschaften`, die es in deren zusammengefasster Migration nicht mehr gibt. | – |
 
 ## Tests
 
