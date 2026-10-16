@@ -281,6 +281,20 @@ class ManagementTests(SponsorshipTestCase):
         self.client.post(reverse('sponsorships-type', args=[self.tree.id]), {'delete': ''})
         self.assertTrue(SponsorshipType.objects.filter(id=self.tree.id).exists())
 
+    def test_create_member_search(self):
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('sponsorships-create'))
+        self.assertContains(response, 'django-select2')
+        # amounts and quantity without spin buttons (no change by the mouse wheel)
+        self.assertNotContains(response, 'type="number"')
+        self.assertContains(response, 'inputmode="decimal"')
+        field_id = re.search(r'data-field_id="([^"]+)"', response.content.decode()).group(1)
+        results = self.client.get(reverse('internal-select2-view'),
+                                  {'field_id': field_id, 'term': self.member2.email}).json()['results']
+        self.assertEqual([r['id'] for r in results], [self.member2.id])
+        self.assertEqual(results[0]['text'],
+                         f'{self.member2.last_name} {self.member2.first_name} ({self.member2.email})')
+
     def test_create(self):
         self.client.force_login(self.admin.user)
         response = self.client.get(reverse('sponsorships-create'), {'member': self.member2.id})
@@ -303,11 +317,11 @@ class ManagementTests(SponsorshipTestCase):
         # own fee, without activation, without mail, "create another"
         mail.outbox.clear()
         response = self.client.post(reverse('sponsorships-create'), {
-            'member': self.member3.id, 'type': self.bee.id, 'quantity': 1, 'custom_annual_fee': '75',
+            'member': self.member3.id, 'type': self.bee.id, 'quantity': 1, 'custom_annual_fee': '75,50',
             'order_date': '2026-02-01', 'activation_date': '', 'another': ''})
         self.assertRedirects(response, reverse('sponsorships-create'))
         s = Sponsorship.objects.get(member=self.member3)
-        self.assertEqual((s.annual_fee, s.status), (Decimal('75'), 'ordered'))
+        self.assertEqual((s.annual_fee, s.status), (Decimal('75.50'), 'ordered'))  # comma accepted
         self.assertEqual(len(mail.outbox), 0)
 
     def test_edit_and_cancel(self):

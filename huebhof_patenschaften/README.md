@@ -28,7 +28,7 @@ Im Admin-Menü gibt es nach den Ernteanteilen das Aufklappmenü **Patenschaften*
 | **Aktive** | Kennzahlen pro Typ: bestellt, aktiv, gekündigt und "Summe pro Jahr" (Jahresbeiträge der laufenden Patenschaften; mit `huebhof_patenschaften_billing` zusätzlich "Verrechnet <Jahr>": Rechnungspositionen im laufenden Geschäftsjahr, im ersten Jahr anteilig). Darunter die Liste mit einer Zeile pro Mitglied; gleiche Patenschaften stehen zusammen ("3 × Hochstammbaum à 50 CHF · seit 15.10.2026"), der Stift öffnet die einzelne Patenschaft. Filter: aktiv (Standard), gekündigt (laufen noch), alle inkl. beendete, mit Sonderpreis (nicht beendete mit abweichendem Jahresbeitrag, mit Anzahl im Reiter). Sonderpreise sind in der Liste markiert ("Sonderpreis, Typ: 120 CHF"). Bestellte, noch nicht aktive Patenschaften stehen unter "Pendente Änderungen". Werkzeugleiste: E-Mail an die ausgewählten Pat:innen, E-Mails kopieren, Knöpfe "Excel" und "CSV" (Export mit dem gewählten Statusfilter, eine Zeile pro Patenschaft; Suche und Spaltenfilter werden nicht berücksichtigt). |
 | **Pendente Änderungen** | Prüfung der Bestellungen: pro Mitglied die bestellten, noch nicht aktivierten Patenschaften (nach Bestelldatum gruppiert), je mit Jahresbeitrag. Bei Typen mit Maximum steht die Gesamtbelegung darunter ("Mutterkuh insgesamt: 1 von max. 2 Plätzen belegt, 1 Bestellung offen", rot bei Überbuchung). "Aktivieren per <Datum>" aktiviert die ausgewählten auf das Änderungsdatum (Standard heute, einstellbar wie bei den Ernteanteilen) und schickt dem Mitglied eine Bestätigung. "Ablehnen" storniert die Bestellung und informiert das Mitglied, optional mit Begründung. Kündigungen erscheinen hier nicht. |
 | **Patenschaftstypen** | Typen anlegen und bearbeiten (Name, Beschreibung, Jahresbeitrag, Bestellbar, maximale Anzahl, Sortierung; mit `huebhof_patenschaften_billing` zusätzlich Rechnungspositionstyp). Löschen nur ohne Patenschaften, sonst "Bestellbar" ausschalten. |
-| **Patenschaft erfassen** | Für Bestellungen, die nicht über den Mitgliederbereich kommen: Mitglied, Typ, Anzahl, abweichender Jahresbeitrag (leer = Preis des Typs), Bestell- und Aktivierungsdatum (leer = bleibt "bestellt"), Notizen, optional Bestätigungsmail. "Erfassen und weitere erfassen" für mehrere nacheinander. |
+| **Patenschaft erfassen** | Für Bestellungen, die nicht über den Mitgliederbereich kommen: Mitglied (Suche nach Name oder E-Mail wie beim E-Mail-Versand), Typ, Anzahl, abweichender Jahresbeitrag (leer = Preis des Typs), Bestell- und Aktivierungsdatum (leer = bleibt "bestellt"), Notizen, optional Bestätigungsmail. "Erfassen und weitere erfassen" für mehrere nacheinander. |
 
 ### Preisänderung und Sonderpreise
 
@@ -146,7 +146,6 @@ Lokal muss `JUNTAGRICO_SECRET_KEY` gesetzt sein (beliebiger Wert), sonst schlage
 
 ## Noch offen
 
-* Mitgliederauswahl bei "Patenschaft erfassen" ist eine einfache Auswahlliste (keine Suche).
 * Link zur Vereinbarung zur Patenschaft als `SPONSORSHIPS_INFO_URL` eintragen, sobald die Vereinbarung fertig ist.
 
 ### Beim Update auf juntagrico 2.1
