@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n juntagrico.common %}
+{% load i18n static juntagrico.common %}
 
 {% block page_title %}
     <h3>{% trans "Meine Patenschaften" %}</h3>
@@ -77,7 +77,7 @@
         <form method="post" action="">
             {% csrf_token %}
             {% include "huebhof_patenschaften/snippets/selection.html" %}
-            <button type="submit" class="btn btn-success">{% trans "Verbindlich bestellen" %}</button>
+            <button type="submit" class="btn btn-success btn-lg">{% trans "Verbindlich bestellen" %}</button>
         </form>
     {% else %}
         <p class="text-muted">{% trans "Zurzeit werden keine Patenschaften angeboten." %}</p>
@@ -101,6 +101,8 @@
 
 {% block scripts %}
     {{ block.super }}
+    <script type="text/javascript" src="{% static 'juntagrico/external/bootstrap-input-spinner.js' %}"></script>
+    <script type="text/javascript" src="{% static 'huebhof_patenschaften/js/selection.js' %}"></script>
     <script type="text/javascript">
         document.querySelectorAll('form.sponsorship-cancel').forEach(function (f) {
             f.addEventListener('submit', function (e) {

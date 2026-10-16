@@ -1,33 +1,37 @@
 {% load i18n juntagrico.common %}
+{% comment %}
+    Same markup as the subscription type selection, so the styles of the farm apply
+    (huebhof: form/layout/bundle_container.html, snippets/subscription/type_container.html, customize.css).
+{% endcomment %}
 {% if form.non_field_errors %}
     <div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>
 {% endif %}
-<div class="row">
-    {% for type, field in form.rows %}
-        <div class="col-md-6 mb-3">
-            <div class="card h-100 sponsorship-type">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">{{ type.name }}</h5>
-                    {% if type.description %}
-                        <div class="card-text mb-3">{{ type.description|linebreaks }}</div>
-                    {% endif %}
-                    <div class="mt-auto">
-                        <p class="mb-2"><strong>{{ type.annual_fee|price }}</strong> {% trans "pro Jahr" %}</p>
-                        {% block type_price_extra %}{% endblock %}
-                        {% if type.available == 0 %}
-                            <p class="mb-2"><span class="badge badge-secondary">{% trans "Zurzeit ausgebucht" %}</span></p>
-                        {% elif type.available is not None %}
-                            <p class="small text-muted mb-2">{% blocktrans count n=type.available %}Noch {{ n }} verfügbar{% plural %}Noch {{ n }} verfügbar{% endblocktrans %}</p>
+<div class="subscription-bundle-group mb-4">
+    <div class="row subscription-bundle-grid">
+        {% for type, field in form.rows %}
+            <div class="col-lg-6 sub-type-container sponsorship-type d-flex">
+                <div class="card mb-3 w-100 h-100">
+                    <div class="card-body d-flex flex-column h-100">
+                        <h4>
+                            {{ type.name }}
+                            {% if type.available == 0 %}<span class="badge badge-secondary">{% trans "Zurzeit ausgebucht" %}</span>{% endif %}
+                        </h4>
+                        {% if type.description %}
+                            <div class="type-description">{{ type.description|linebreaksbr }}</div>
                         {% endif %}
-                        <label for="{{ field.id_for_label }}" class="sr-only">{% trans "Anzahl" %} {{ type.name }}</label>
-                        <div class="input-group" style="max-width: 11rem;">
-                            <div class="input-group-prepend"><span class="input-group-text">{% trans "Anzahl" %}</span></div>
-                            {{ field }}
+                        <div class="type-details type-price">
+                            <strong>{{ type.annual_fee|price }}</strong> {% trans "pro Jahr" %}
                         </div>
+                        {% block type_price_extra %}{% endblock %}
+                        {% if type.available %}
+                            <div class="type-duration">{% blocktrans count n=type.available %}Noch {{ n }} verfügbar{% plural %}Noch {{ n }} verfügbar{% endblocktrans %}</div>
+                        {% endif %}
+                        <label for="{{ field.id_for_label }}" class="d-none">{% trans "Anzahl:" %} {{ type.name }}</label>
+                        {{ field }}
                         {% if field.errors %}<div class="text-danger small">{{ field.errors|join:" " }}</div>{% endif %}
                     </div>
                 </div>
             </div>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
 </div>

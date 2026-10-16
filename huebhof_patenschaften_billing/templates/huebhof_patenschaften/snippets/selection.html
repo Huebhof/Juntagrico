@@ -5,10 +5,10 @@
 {% block type_price_extra %}
     {% first_year_share type.annual_fee as share %}
     {% if share %}
-        <p class="small text-muted mb-2 sponsorship-first-year">
+        <div class="type-duration sponsorship-first-year">
             {% blocktrans trimmed with year=share.year amount=share.amount|price start=share.start|date:"d.m." end=share.end|date:"d.m.Y" %}
                 Für {{ year }} anteilig ab heute: ca. {{ amount }} ({{ start }}–{{ end }})
             {% endblocktrans %}
-        </p>
+        </div>
     {% endif %}
 {% endblock %}
