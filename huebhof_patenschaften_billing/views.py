@@ -40,7 +40,7 @@ def pending_bills(request):
                 'subscription': jb_views.get_subscription(parts),
                 'short_parts': jb_views.get_short_parts(parts),
                 'sponsorships': services.group(sponsorships),
-                'price': jb_views.get_price(parts, selected_year) + sum(s.annual_fee for s in sponsorships),
+                'price': jb_views.get_price(parts, selected_year) + sum(billing.amount(s, selected_year) for s in sponsorships),
                 'existing_bills': jb_views.get_existing_bills(member, selected_year),
             })
 
@@ -66,10 +66,10 @@ def bills_generate(request):
 @permission_required('juntagrico.is_book_keeper')
 @transaction.atomic
 def bill_recalc(request, bill_id):
-    """Recalculation like juntagrico_billing, additionally missing sponsorships are added."""
+    """Recalculation like juntagrico_billing, additionally for the sponsorships."""
     bill = get_object_or_404(Bill, pk=bill_id)
     recalc_bill(bill)
-    billing.add_to_bill(bill, billing.billable(bill.business_year).filter(member=bill.member))
+    billing.recalc(bill)
 
     next_url = request.GET.get('next')
     if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):

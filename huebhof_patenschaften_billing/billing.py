@@ -1,6 +1,8 @@
 """Billing of sponsorships via juntagrico_billing.
 
 One bill item (BillItem with custom_item_type) is created per sponsorship and business year.
+Like subscriptions in juntagrico_billing, only the days the sponsorship runs in the business year
+are billed (activation or end during the year), rounded to 5 Rappen.
 If the member already has an unpublished bill in the business year (e.g. for the subscription),
 the items are added to it, otherwise a new bill is created.
 
@@ -8,6 +10,7 @@ Hooked into the juntagrico_billing workflow via views.py.
 """
 import datetime
 from collections import defaultdict
+from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import Q
@@ -23,8 +26,7 @@ DEFAULT_ITEM_TYPE = 'Patenschaft'
 
 
 def billable(business_year):
-    """Sponsorships running in the business year that are not billed for it yet.
-    The full annual fee is always billed."""
+    """Sponsorships running in the business year that are not billed for it yet."""
     return Sponsorship.objects.filter(
         activation_date__isnull=False, activation_date__lte=business_year.end_date, annual_fee__gt=0,
     ).filter(
@@ -54,9 +56,37 @@ def _item_type(sponsorship_type):
     return BillItemType.objects.get_or_create(name=DEFAULT_ITEM_TYPE, defaults={'booking_account': ''})[0]
 
 
-def _description(sponsorship_type, item_type):
+def billed_period(sponsorship, business_year):
+    """(start, end) of the sponsorship within the business year."""
+    start = max(business_year.start_date, sponsorship.activation_date)
+    end = min(business_year.end_date, sponsorship.end_date or datetime.date.max)
+    return start, end
+
+
+def amount(sponsorship, business_year):
+    """Annual fee scaled to the days within the business year, rounded to 5 Rappen.
+    Same calculation as scale_subscriptionpart_price of juntagrico_billing."""
+    start, end = billed_period(sponsorship, business_year)
+    if end < start:
+        return Decimal('0')
+    days_year = (business_year.end_date - business_year.start_date).days + 1
+    days = (end - start).days + 1
+    scaled = round(sponsorship.annual_fee * Decimal(2.0 * days / days_year), 1) / Decimal('2.0')
+    return scaled.quantize(Decimal('0.01'))
+
+
+def _description(sponsorship, item_type, business_year):
     # The bill shows "<item type> <description>", avoid duplicates.
-    return '' if item_type.name == sponsorship_type.name else sponsorship_type.name[:100]
+    parts = [] if item_type.name == sponsorship.type.name else [sponsorship.type.name]
+    start, end = billed_period(sponsorship, business_year)
+    if (start, end) != (business_year.start_date, business_year.end_date):
+        parts.append(f'({start:%d.%m.%Y}–{end:%d.%m.%Y})')
+    return ' '.join(parts)[:100]
+
+
+def _update_total(bill):
+    bill.amount = sum(itm.amount for itm in bill.items.all())
+    bill.save()
 
 
 def add_to_bill(bill, sponsorships):
@@ -64,11 +94,22 @@ def add_to_bill(bill, sponsorships):
     for s in sponsorships:
         item_type = _item_type(s.type)
         item = BillItem.objects.create(
-            bill=bill, custom_item_type=item_type, description=_description(s.type, item_type),
-            amount=float(s.annual_fee))
+            bill=bill, custom_item_type=item_type, description=_description(s, item_type, bill.business_year),
+            amount=float(amount(s, bill.business_year)))
         SponsorshipBillItem.objects.create(sponsorship=s, bill_item=item)
-    bill.amount = sum(itm.amount for itm in bill.items.all())
-    bill.save()
+    _update_total(bill)
+
+
+def recalc(bill):
+    """Updates the sponsorship items of the bill (e.g. after leaving during the year)
+    and adds missing sponsorships of the member."""
+    for link in SponsorshipBillItem.objects.filter(bill_item__bill=bill).select_related(
+            'bill_item__custom_item_type', 'sponsorship__type'):
+        item = link.bill_item
+        item.amount = float(amount(link.sponsorship, bill.business_year))
+        item.description = _description(link.sponsorship, item.custom_item_type, bill.business_year)
+        item.save()
+    add_to_bill(bill, billable(bill.business_year).filter(member=bill.member))
 
 
 @transaction.atomic
