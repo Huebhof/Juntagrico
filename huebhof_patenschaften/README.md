@@ -109,7 +109,7 @@ Für die Verrechnung siehe `huebhof_patenschaften_billing`. Wie in der juntagric
 Andere Apps können das Addon erweitern, ohne es zu ändern (so macht es `huebhof_patenschaften_billing`):
 
 * `extensions.register_type_form_extension()`: zusätzliche Felder im Formular der Patenschaftstypen
-* Template-Blöcke `type_columns_head` / `type_columns` in `types.html` und `status_extra` in `edit.html`: die erweiternde App überschreibt das Template mit `{% extends %}` auf sich selbst und steht dafür in `INSTALLED_APPS` vor `huebhof_patenschaften`
+* Template-Blöcke (Liste in `extensions.py`), z.B. `type_columns` in `types.html`, `status_extra` in `edit.html`, `type_price_extra` in der Auswahl, `sponsorship_row_extra` in der Zusammenfassung und `sponsorship_line_extra` / `total_extra` in der Bestätigungsmail: die erweiternde App überschreibt das Template mit `{% extends %}` auf sich selbst und steht dafür in `INSTALLED_APPS` vor `huebhof_patenschaften`
 * `juntagrico.util.addons.config.register_model_inline()` für `Sponsorship` und `SponsorshipType`: die Admins basieren auf `BaseAdmin`
 
 ## Eingriffe in juntagrico und juntagrico_billing

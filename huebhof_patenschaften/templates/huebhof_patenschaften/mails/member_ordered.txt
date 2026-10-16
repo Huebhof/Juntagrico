@@ -5,9 +5,9 @@
 
 {% trans "Vielen Dank für deine Unterstützung! Wir haben folgende Patenschaft(en) für dich erfasst:" %}
 
-{% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }} {% trans "pro Jahr" %}
+{% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }} {% trans "pro Jahr" %}{% block sponsorship_line_extra %}{% endblock %}
 {% endfor %}
-{% trans "Total pro Jahr" %}: {{ total|price }}
+{% trans "Total pro Jahr" %}: {{ total|price }}{% block total_extra %}{% endblock %}
 
 {% trans "Deine Patenschaften findest du jederzeit im Mitgliederbereich" %}:
 {{ serverurl }}{% url 'sponsorships-mine' %}
