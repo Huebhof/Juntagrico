@@ -255,16 +255,18 @@ def edit(request, sponsorship_id):
 def pending(request, change_date):
     """Not yet activated orders to check, per member, grouped by order date."""
     sponsorships = list(Sponsorship.objects.ordered().select_related('member', 'type').order_by(
-        'order_date', 'type__sort_order', 'id'))
-    # occupancy per type, to check whether the sponsorship is still possible
+        'order_date', 'type__sort_order', 'type__name', 'id'))
+    # occupancy of the types with a maximum, to check whether the sponsorships are still possible
     occupancy = {}
-    for t in {s.type for s in sponsorships}:
-        occupancy[t.id] = {'running': t.sponsorships.running().count(), 'ordered': t.sponsorships.ordered().count(),
-                           'max': t.max_count}
-    for s in sponsorships:
-        s.occupancy = occupancy[s.type_id]
+    for t in {s.type for s in sponsorships if s.type.max_count is not None}:
+        occupancy[t] = {'type': t, 'running': t.sponsorships.running().count(),
+                        'ordered': t.sponsorships.ordered().count(), 'max': t.max_count}
+    pending = []
+    for member, member_sponsorships in services.by_member(sponsorships).items():
+        types = dict.fromkeys(s.type for s in member_sponsorships if s.type in occupancy)
+        pending.append((member, member_sponsorships, [occupancy[t] for t in types]))
     return render(request, 'huebhof_patenschaften/pending.html', {
-        'pending': list(services.by_member(sponsorships).items()),
+        'pending': pending,
         'change_date': change_date or datetime.date.today(),
     })
 

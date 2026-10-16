@@ -422,7 +422,7 @@ class PendingTests(SponsorshipTestCase):
         self.assertContains(response, f'value="{self.a.id}"')
         self.assertContains(response, f'value="{self.b.id}"')
         self.assertNotContains(response, f'value="{self.active.id}"')
-        self.assertContains(response, '2026-03-01')
+        self.assertContains(response, 'Bestellt am 01.03.2026')
         self.assertContains(response, 'href="%s"' % reverse('sponsorships-pending'))  # menu entry
 
     def test_checkboxes_belong_to_form(self):
@@ -491,7 +491,7 @@ class CheckAndActivationTests(SponsorshipTestCase):
         self.tree.max_count = 10
         self.tree.save()
         response = self.client.get(reverse('sponsorships-pending'))
-        self.assertContains(response, '1 laufend, 1 bestellt, max. 10')
+        self.assertContains(response, 'insgesamt: 1 von max. 10 Plätzen belegt, 1 Bestellung offen')
         self.assertContains(response, reverse('sponsorships-pending-reject'))
         # reject asks for the reason in a dialog, the form carries it as hidden field
         self.assertContains(response, 'id="reject-modal"')

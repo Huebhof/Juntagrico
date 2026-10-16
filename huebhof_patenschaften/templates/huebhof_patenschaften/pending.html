@@ -17,7 +17,10 @@
 {% block content %}
     {% action_date request %}
     <p>
-        {% trans "Bestellte Patenschaften, die noch geprüft werden müssen. Ausgewählte anwenden aktiviert sie auf das Änderungsdatum, ablehnen storniert die Bestellung. Das Mitglied wird jeweils per E-Mail informiert. Kündigungen müssen nicht angewendet werden, gekündigte Patenschaften enden automatisch." %}
+        {% blocktrans trimmed %}
+            Neue Bestellungen prüfen und aktivieren oder ablehnen. Das Mitglied wird jeweils per E-Mail informiert.
+            Kündigungen erscheinen hier nicht, gekündigte Patenschaften enden automatisch.
+        {% endblocktrans %}
     </p>
     {{ block.super }}
 {% endblock %}
@@ -27,37 +30,42 @@
         <thead>
             <tr>
                 <th class="filter">{% trans "Pat:in" %}</th>
-                <th class="filter">{% trans "Bestellt" %}</th>
-                <th>{% trans "Jahresbeitrag" %}</th>
+                <th class="filter">{% trans "Bestellungen" %}</th>
                 <th>{% trans "Aktionen" %}</th>
                 <th class="filter">{% trans "Notizen" %}</th>
             </tr>
         </thead>
         <tbody>
-            {% for member, sponsorships in pending %}
+            {% for member, sponsorships, occupancies in pending %}
                 <tr>
                     <td>{% include 'juntagrico/manage/member/snippets/display_linked.html' %}</td>
-                    <td class="pl-5">
+                    <td>
                         {% regroup sponsorships by order_date as by_date %}
                         {% for group in by_date %}
-                            <div class="parts-for-date">
-                                <span class="pre date" title="{% trans "Bestelldatum" %}">{{ group.grouper|date:"Y-m-d" }}:</span>
+                            <div class="parts-for-date{% if not forloop.last %} mb-2{% endif %}">
+                                <div class="date text-muted small">{% blocktrans with date=group.grouper|date:"d.m.Y" %}Bestellt am {{ date }}{% endblocktrans %}</div>
                                 {% for s in group.list %}
-                                    <div>
+                                    <div class="form-check">
                                         <input type="checkbox" form="pending-form-{{ member.id }}" checked="checked"
                                                name="sponsorships[]" id="pending-sponsorship-{{ s.id }}" class="form-check-input"
                                                value="{{ s.id }}">
                                         <label for="pending-sponsorship-{{ s.id }}" class="form-check-label">
-                                            <span class="pre">{{ s.type.name }}</span>
-                                            <small class="text-muted sponsorship-occupancy">({% blocktrans with running=s.occupancy.running ordered=s.occupancy.ordered %}{{ running }} laufend, {{ ordered }} bestellt{% endblocktrans %}{% if s.occupancy.max is not None %}, {% blocktrans with max=s.occupancy.max %}max. {{ max }}{% endblocktrans %}{% endif %})</small>{% if not forloop.last %},{% endif %}
+                                            <span class="pre">{{ s.type.name }}</span>:
+                                            {% blocktrans with fee=s.annual_fee|price %}{{ fee }} pro Jahr{% endblocktrans %}{% block pending_fee_extra %}{% endblock %}
                                         </label>
                                     </div>
                                 {% endfor %}
                             </div>
                         {% endfor %}
-                    </td>
-                    <td>
-                        {% for s in sponsorships %}{{ s.annual_fee|price }}{% block pending_fee_extra %}{% endblock %}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                        {% for o in occupancies %}
+                            <div class="small mt-1 sponsorship-occupancy {% if o.running|add:o.ordered > o.max %}text-danger{% else %}text-muted{% endif %}">
+                                {% blocktrans trimmed count ordered=o.ordered with name=o.type.name running=o.running max=o.max %}
+                                    {{ name }} insgesamt: {{ running }} von max. {{ max }} Plätzen belegt, {{ ordered }} Bestellung offen
+                                {% plural %}
+                                    {{ name }} insgesamt: {{ running }} von max. {{ max }} Plätzen belegt, {{ ordered }} Bestellungen offen
+                                {% endblocktrans %}
+                            </div>
+                        {% endfor %}
                     </td>
                     <td>
                         <form method="post" id="pending-form-{{ member.id }}" action="{% url 'sponsorships-pending-apply' %}"
@@ -65,11 +73,11 @@
                             {% csrf_token %}
                             <input type="hidden" name="reason" value="">
                             <button type="submit" class="btn btn-primary mb-1 text-nowrap">
-                                {% trans "Ausgewählte anwenden" %}
+                                {% blocktrans with date=change_date|date:"d.m.Y" %}Aktivieren per {{ date }}{% endblocktrans %}
                             </button>
                             <button type="button" class="btn btn-outline-danger mb-1 text-nowrap pending-reject"
                                     data-form="pending-form-{{ member.id }}" data-member="{{ member }}">
-                                {% trans "Ausgewählte ablehnen" %}
+                                {% trans "Ablehnen" %}
                             </button>
                         </form>
                     </td>
