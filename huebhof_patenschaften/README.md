@@ -45,7 +45,7 @@ Die einzelne Patenschaft zeigt den Status (mit `huebhof_patenschaften_billing` a
 
 Wie alle Listen in juntagrico wird die Seite "Aktive" in der breiten Ansicht angezeigt; die Formularseiten sind normal breit.
 
-Beträge und Anzahl sind in den Formularen Textfelder ohne Pfeile, damit das Mausrad beim Scrollen den Wert nicht versehentlich ändert. Beträge lassen sich mit Punkt oder Komma eingeben ("75.50" oder "75,50"); auf dem Handy erscheint die Zahlentastatur.
+Beträge und Zahlen (Anzahl, maximale Anzahl, Sortierung) sind in den Verwaltungsformularen Textfelder ohne Pfeile, damit das Mausrad beim Scrollen den Wert nicht versehentlich ändert. Beträge lassen sich mit Punkt oder Komma eingeben ("75.50" oder "75,50"); auf dem Handy erscheint die Zahlentastatur.
 
 Im Django-Admin erscheinen die Patenschaften zusätzlich direkt beim Mitglied (Inline).
 

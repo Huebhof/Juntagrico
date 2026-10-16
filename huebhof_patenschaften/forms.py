@@ -134,7 +134,8 @@ class SponsorshipTypeForm(forms.ModelForm):
     class Meta:
         model = SponsorshipType
         fields = ['name', 'description', 'annual_fee', 'visible', 'max_count', 'sort_order']
-        widgets = {'description': forms.Textarea(attrs={'rows': 4}), 'annual_fee': AmountInput}
+        widgets = {'description': forms.Textarea(attrs={'rows': 4}), 'annual_fee': AmountInput,
+                   'max_count': QuantityInput, 'sort_order': QuantityInput}
 
     def __init__(self, *args, cancel_url=None, **kwargs):
         super().__init__(*args, **kwargs)

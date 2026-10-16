@@ -283,6 +283,8 @@ class ManagementTests(SponsorshipTestCase):
 
     def test_create_member_search(self):
         self.client.force_login(self.admin.user)
+        # type form: amounts and numbers without spin buttons either
+        self.assertNotContains(self.client.get(reverse('sponsorships-type-new')), 'type="number"')
         response = self.client.get(reverse('sponsorships-create'))
         self.assertContains(response, 'django-select2')
         # amounts and quantity without spin buttons (no change by the mouse wheel)
