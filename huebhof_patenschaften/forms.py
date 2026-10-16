@@ -8,6 +8,7 @@ from django.core.validators import MaxValueValidator
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_select2.forms import ModelSelect2Widget
 
 from juntagrico.entity.member import Member
 from juntagrico.forms import JuntagricoDateWidget as _JuntagricoDateWidget
@@ -96,7 +97,16 @@ def _helper(*fields, submit=_('Speichern'), extra=None, cancel_url=None):
     return helper
 
 
-class MemberChoiceField(forms.ModelChoiceField):
+class MemberSelect2Widget(ModelSelect2Widget):
+    """Member search like the recipient field of the juntagrico e-mail form (same autocomplete view)."""
+    search_fields = ['first_name__icontains', 'last_name__icontains', 'email__icontains']
+
+    def __init__(self, *args, **kwargs):
+        kwargs['data_view'] = 'internal-select2-view'
+        kwargs.setdefault('attrs', {}).update({
+            'data-minimum-input-length': 0, 'data-placeholder': _('Name oder E-Mail suchen')})
+        super().__init__(*args, **kwargs)
+
     def label_from_instance(self, member):
         return f'{member.last_name} {member.first_name} ({member.email})'
 
@@ -122,7 +132,7 @@ class SponsorshipTypeForm(forms.ModelForm):
 
 class SponsorshipCreateForm(forms.Form):
     """Admins create sponsorships for a member (e.g. ordered by phone)."""
-    member = MemberChoiceField(queryset=Member.objects.none(), label=_('Pat:in'))
+    member = forms.ModelChoiceField(queryset=Member.objects.none(), label=_('Pat:in'), widget=MemberSelect2Widget)
     type = forms.ModelChoiceField(queryset=SponsorshipType.objects.all(), label=_('Typ'))
     quantity = forms.IntegerField(label=_('Anzahl'), min_value=1, initial=1)
     custom_annual_fee = forms.DecimalField(

@@ -281,6 +281,17 @@ class ManagementTests(SponsorshipTestCase):
         self.client.post(reverse('sponsorships-type', args=[self.tree.id]), {'delete': ''})
         self.assertTrue(SponsorshipType.objects.filter(id=self.tree.id).exists())
 
+    def test_create_member_search(self):
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('sponsorships-create'))
+        self.assertContains(response, 'django-select2')
+        field_id = re.search(r'data-field_id="([^"]+)"', response.content.decode()).group(1)
+        results = self.client.get(reverse('internal-select2-view'),
+                                  {'field_id': field_id, 'term': self.member2.email}).json()['results']
+        self.assertEqual([r['id'] for r in results], [self.member2.id])
+        self.assertEqual(results[0]['text'],
+                         f'{self.member2.last_name} {self.member2.first_name} ({self.member2.email})')
+
     def test_create(self):
         self.client.force_login(self.admin.user)
         response = self.client.get(reverse('sponsorships-create'), {'member': self.member2.id})
