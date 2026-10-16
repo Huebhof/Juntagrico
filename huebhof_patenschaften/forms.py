@@ -76,6 +76,25 @@ class JuntagricoDateWidget(_JuntagricoDateWidget):
         return None if value in (None, '') else super().format_value(value)
 
 
+class AmountInput(forms.TextInput):
+    """Text field for amounts: no spin buttons and no change by the mouse wheel, numeric keyboard on mobiles.
+    Accepts a comma as decimal separator."""
+
+    def __init__(self, attrs=None):
+        super().__init__({'inputmode': 'decimal', **(attrs or {})})
+
+    def value_from_datadict(self, data, files, name):
+        value = super().value_from_datadict(data, files, name)
+        return value.replace(',', '.') if isinstance(value, str) else value
+
+
+class QuantityInput(forms.TextInput):
+    """Text field for quantities: no spin buttons and no change by the mouse wheel."""
+
+    def __init__(self, attrs=None):
+        super().__init__({'inputmode': 'numeric', **(attrs or {})})
+
+
 def _button(name, label, css_class, **kwargs):
     """Submit button with exactly the given style (crispy forms always adds btn-primary otherwise)."""
     button = Submit(name, label, **kwargs)
@@ -115,7 +134,7 @@ class SponsorshipTypeForm(forms.ModelForm):
     class Meta:
         model = SponsorshipType
         fields = ['name', 'description', 'annual_fee', 'visible', 'max_count', 'sort_order']
-        widgets = {'description': forms.Textarea(attrs={'rows': 4})}
+        widgets = {'description': forms.Textarea(attrs={'rows': 4}), 'annual_fee': AmountInput}
 
     def __init__(self, *args, cancel_url=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -134,9 +153,10 @@ class SponsorshipCreateForm(forms.Form):
     """Admins create sponsorships for a member (e.g. ordered by phone)."""
     member = forms.ModelChoiceField(queryset=Member.objects.none(), label=_('Pat:in'), widget=MemberSelect2Widget)
     type = forms.ModelChoiceField(queryset=SponsorshipType.objects.all(), label=_('Typ'))
-    quantity = forms.IntegerField(label=_('Anzahl'), min_value=1, initial=1)
+    quantity = forms.IntegerField(label=_('Anzahl'), min_value=1, initial=1, widget=QuantityInput)
     custom_annual_fee = forms.DecimalField(
         label=_('Abweichender Jahresbeitrag'), required=False, min_value=0, max_digits=8, decimal_places=2,
+        widget=AmountInput,
         help_text=_('Pro Patenschaft. Leer: Jahresbeitrag des Typs, auch bei späteren Preisänderungen. '
                     'Nur für Ausnahmen ausfüllen, z.B. einen Sonderpreis.'))
     order_date = forms.DateField(label=_('Bestellt am'), initial=datetime.date.today, widget=JuntagricoDateWidget)
@@ -163,6 +183,7 @@ class SponsorshipEditForm(forms.ModelForm):
         fields = ['type', 'custom_annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date', 'notes']
         widgets = {f: JuntagricoDateWidget for f in ['order_date', 'activation_date', 'cancellation_date', 'end_date']}
         widgets['notes'] = forms.Textarea(attrs={'rows': 3})
+        widgets['custom_annual_fee'] = AmountInput
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
