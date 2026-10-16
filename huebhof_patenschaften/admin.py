@@ -94,7 +94,7 @@ class SponsorshipInline(admin.TabularInline):
     model = Sponsorship
     fk_name = 'member'
     extra = 0
-    fields = ['type', 'annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date']
+    fields = ['type', 'custom_annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date']
     show_change_link = True
     verbose_name_plural = _('Patenschaften')
 

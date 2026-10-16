@@ -3,7 +3,8 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.db.models.functions import Coalesce
 from django.utils.translation import gettext_lazy as _
 
 from juntagrico.entity.member import Member
@@ -77,6 +78,13 @@ class SponsorshipQuerySet(models.QuerySet):
         return self.filter(Q(end_date__isnull=True) | Q(end_date__gte=date)).exclude(
             activation_date__isnull=True, cancellation_date__isnull=False)
 
+    def with_fee(self):
+        """Annotates `fee`: the custom annual fee, otherwise the one of the type."""
+        return self.annotate(fee=Coalesce('custom_annual_fee', 'type__annual_fee'))
+
+    def total_annual_fee(self):
+        return self.with_fee().aggregate(s=Sum('fee'))['s'] or 0
+
 
 class Sponsorship(models.Model):
     """A sponsorship taken over by a member. Several of the same type = several records."""
@@ -90,9 +98,11 @@ class Sponsorship(models.Model):
         Member, verbose_name=_('Pat:in'), on_delete=models.PROTECT, related_name='sponsorships')
     type = models.ForeignKey(
         SponsorshipType, verbose_name=_('Typ'), on_delete=models.PROTECT, related_name='sponsorships')
-    annual_fee = models.DecimalField(
-        _('Jahresbeitrag'), max_digits=8, decimal_places=2,
-        help_text=_('Beitrag zum Zeitpunkt der Bestellung. Spätere Preisänderungen am Typ wirken sich nicht aus.'))
+    custom_annual_fee = models.DecimalField(
+        _('Abweichender Jahresbeitrag'), max_digits=8, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text=_('Leer: Jahresbeitrag des Typs, Preisänderungen am Typ gelten auch für diese Patenschaft. '
+                    'Nur für Ausnahmen ausfüllen, z.B. einen Sonderpreis; dieser bleibt fix.'))
     order_date = models.DateField(_('Bestellt am'), default=datetime.date.today)
     activation_date = models.DateField(_('Aktiviert am'), null=True, blank=True)
     cancellation_date = models.DateField(_('Gekündigt am'), null=True, blank=True)
@@ -113,10 +123,10 @@ class Sponsorship(models.Model):
     def __str__(self):
         return f'{self.type} ({self.member})'
 
-    def save(self, *args, **kwargs):
-        if self.annual_fee is None and self.type_id:
-            self.annual_fee = self.type.annual_fee
-        super().save(*args, **kwargs)
+    @property
+    def annual_fee(self):
+        """Fee per year: the custom fee if set, otherwise the current one of the type (like subscription types)."""
+        return self.type.annual_fee if self.custom_annual_fee is None else self.custom_annual_fee
 
     @property
     def status(self):

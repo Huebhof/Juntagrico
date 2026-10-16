@@ -36,7 +36,8 @@ class BillingTests(SponsorshipTestCase):
         Sponsorship.objects.create(member=cls.member3, type=cls.tree, activation_date=activation,
                                    end_date=datetime.date(2025, 12, 31))
         Sponsorship.objects.create(member=cls.member3, type=cls.bee, activation_date=datetime.date(2027, 1, 1))
-        Sponsorship.objects.create(member=cls.member3, type=cls.bee, activation_date=activation, annual_fee=Decimal('0'))
+        Sponsorship.objects.create(member=cls.member3, type=cls.bee, activation_date=activation,
+                                   custom_annual_fee=Decimal('0'))
 
     @staticmethod
     def items_of(sponsorship):
@@ -63,6 +64,14 @@ class BillingTests(SponsorshipTestCase):
             start_date=datetime.date(2027, 1, 1), end_date=datetime.date(2027, 12, 31), name='2027')
         # the two billed ones and the one active from 2027
         self.assertEqual(billing.billable(next_year).count(), 3)
+
+    def test_current_type_price_and_custom_fee(self):
+        self.tree.annual_fee = Decimal('150')
+        self.tree.save()
+        self.s_bee.custom_annual_fee = Decimal('30')
+        self.s_bee.save()
+        bill = billing.create_bills(self.year, billing.billable(self.year))[0][0]
+        self.assertEqual(bill.amount, 180.0)
 
     def test_add_to_unpublished_bill(self):
         existing = Bill.objects.create(business_year=self.year, member=self.member4, amount=500.0,

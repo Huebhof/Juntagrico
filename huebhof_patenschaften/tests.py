@@ -56,12 +56,16 @@ class LifecycleTests(SponsorshipTestCase):
         self.assertEqual(s.status, 'withdrawn')
         self.assertNotIn(s, Sponsorship.objects.open())
 
-    def test_price_change_is_not_retroactive(self):
-        s = Sponsorship.objects.create(member=self.member, type=self.tree)
+    def test_price_change_applies_like_subscription_types(self):
+        s = Sponsorship.objects.create(member=self.member, type=self.tree, activation_date=datetime.date.today())
+        custom = Sponsorship.objects.create(member=self.member, type=self.tree, custom_annual_fee=Decimal('80'),
+                                            activation_date=datetime.date.today())
         self.tree.annual_fee = Decimal('200')
         self.tree.save()
         s.refresh_from_db()
-        self.assertEqual(s.annual_fee, Decimal('120'))
+        custom.refresh_from_db()
+        self.assertEqual((s.annual_fee, custom.annual_fee), (Decimal('200'), Decimal('80')))
+        self.assertEqual(Sponsorship.objects.running().total_annual_fee(), Decimal('280'))
 
     def test_member_deactivation_ends_sponsorships(self):
         s = Sponsorship.objects.create(member=self.member5, type=self.tree, activation_date=datetime.date(2020, 1, 1))
@@ -286,20 +290,20 @@ class ManagementTests(SponsorshipTestCase):
         self.assertNotContains(response, 'btn-primary')
         mail.outbox.clear()
         response = self.client.post(reverse('sponsorships-create'), {
-            'member': self.member2.id, 'type': self.tree.id, 'quantity': 3, 'annual_fee': '',
+            'member': self.member2.id, 'type': self.tree.id, 'quantity': 3, 'custom_annual_fee': '',
             'order_date': '2026-02-01', 'activation_date': '2026-03-01', 'notes': 'Telefon',
             'send_confirmation': 'on'})
         self.assertRedirects(response, reverse('sponsorships-manage'))
         created = Sponsorship.objects.filter(member=self.member2)
         self.assertEqual(created.count(), 3)
         s = created.first()
-        self.assertEqual((s.annual_fee, s.activation_date, s.notes),
-                         (Decimal('120'), datetime.date(2026, 3, 1), 'Telefon'))
+        self.assertEqual((s.custom_annual_fee, s.annual_fee, s.activation_date, s.notes),
+                         (None, Decimal('120'), datetime.date(2026, 3, 1), 'Telefon'))
         self.assertEqual(len(mail.outbox), 1)
         # own fee, without activation, without mail, "create another"
         mail.outbox.clear()
         response = self.client.post(reverse('sponsorships-create'), {
-            'member': self.member3.id, 'type': self.bee.id, 'quantity': 1, 'annual_fee': '75',
+            'member': self.member3.id, 'type': self.bee.id, 'quantity': 1, 'custom_annual_fee': '75',
             'order_date': '2026-02-01', 'activation_date': '', 'another': ''})
         self.assertRedirects(response, reverse('sponsorships-create'))
         s = Sponsorship.objects.get(member=self.member3)
@@ -311,7 +315,7 @@ class ManagementTests(SponsorshipTestCase):
         self.client.force_login(self.admin.user)
         url = reverse('sponsorships-edit', args=[s.id])
         self.assertContains(self.client.get(url), 'Kündigen')
-        response = self.client.post(url, {'type': self.tree.id, 'annual_fee': '100',
+        response = self.client.post(url, {'type': self.tree.id, 'custom_annual_fee': '100',
                                            'order_date': s.order_date.isoformat(),
                                            'activation_date': s.activation_date.isoformat(), 'notes': 'Rabatt'})
         self.assertRedirects(response, reverse('sponsorships-manage'))

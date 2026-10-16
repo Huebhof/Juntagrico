@@ -3,7 +3,7 @@ import datetime
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
@@ -136,7 +136,7 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
                 'ordered': qs.ordered().count(),
                 'active': qs.active().count(),
                 'canceled': qs.canceled().count(),
-                'total': qs.running().aggregate(s=Sum('annual_fee'))['s'] or 0,
+                'total': qs.running().total_annual_fee(),
             })
         context['overview'] = rows
         context['members'] = self.group_by_member(context['object_list'])
@@ -144,7 +144,7 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
             'ordered': Sponsorship.objects.ordered().count(),
             'active': Sponsorship.objects.active().count(),
             'canceled': Sponsorship.objects.canceled().count(),
-            'total': running.aggregate(s=Sum('annual_fee'))['s'] or 0,
+            'total': running.total_annual_fee(),
         }
         return context
 
@@ -239,7 +239,7 @@ def create(request):
                                  cancel_url=None if _can_view_overview(request.user) else 'home')
     if form.is_valid():
         d = form.cleaned_data
-        created = services.create(d['member'], d['type'], d['quantity'], d['annual_fee'],
+        created = services.create(d['member'], d['type'], d['quantity'], d['custom_annual_fee'],
                                   d['order_date'], d['activation_date'], d['notes'])
         if d['send_confirmation']:
             mailer.confirm_order(d['member'], created)

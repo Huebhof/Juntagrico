@@ -20,7 +20,7 @@
         $(function () {
             const annualFees = JSON.parse(document.getElementById('sponsorship-annual-fees').textContent);
             $('#id_type').on('change', function () {
-                $('#id_annual_fee').attr('placeholder', annualFees[this.value] || '');
+                $('#id_custom_annual_fee').attr('placeholder', annualFees[this.value] || '');
             }).trigger('change');
         });
     </script>

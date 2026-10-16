@@ -124,9 +124,10 @@ class SponsorshipCreateForm(forms.Form):
     member = MemberChoiceField(queryset=Member.objects.none(), label=_('Pat:in'))
     type = forms.ModelChoiceField(queryset=SponsorshipType.objects.all(), label=_('Typ'))
     quantity = forms.IntegerField(label=_('Anzahl'), min_value=1, initial=1)
-    annual_fee = forms.DecimalField(
-        label=_('Jahresbeitrag'), required=False, min_value=0, max_digits=8, decimal_places=2,
-        help_text=_('Pro Patenschaft. Leer: Jahresbeitrag des Typs.'))
+    custom_annual_fee = forms.DecimalField(
+        label=_('Abweichender Jahresbeitrag'), required=False, min_value=0, max_digits=8, decimal_places=2,
+        help_text=_('Pro Patenschaft. Leer: Jahresbeitrag des Typs, auch bei späteren Preisänderungen. '
+                    'Nur für Ausnahmen ausfüllen, z.B. einen Sonderpreis.'))
     order_date = forms.DateField(label=_('Bestellt am'), initial=datetime.date.today, widget=JuntagricoDateWidget)
     activation_date = forms.DateField(
         label=_('Aktiviert am'), required=False, initial=datetime.date.today, widget=JuntagricoDateWidget,
@@ -148,12 +149,13 @@ class SponsorshipCreateForm(forms.Form):
 class SponsorshipEditForm(forms.ModelForm):
     class Meta:
         model = Sponsorship
-        fields = ['type', 'annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date', 'notes']
+        fields = ['type', 'custom_annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date', 'notes']
         widgets = {f: JuntagricoDateWidget for f in ['order_date', 'activation_date', 'cancellation_date', 'end_date']}
         widgets['notes'] = forms.Textarea(attrs={'rows': 3})
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['custom_annual_fee'].widget.attrs['placeholder'] = f'{self.instance.type.annual_fee:.2f}'
         extra = None
         if self.instance.can_be_canceled:
             extra = _button('cancel', _('Kündigen'), 'btn-danger',
