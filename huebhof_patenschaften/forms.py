@@ -25,11 +25,21 @@ class SponsorshipSelectionForm(forms.Form):
         selection = {str(k): v for k, v in (selection or {}).items()}
         self.types = list(SponsorshipType.objects.visible())
         for sponsorship_type in self.types:
-            self.fields[self.field_name(sponsorship_type)] = forms.IntegerField(
-                label=sponsorship_type.name, min_value=0, max_value=SponsorshipConfig.max_quantity(),
+            # available is also used in the template ("noch 3 verfügbar", "ausgebucht")
+            sponsorship_type.available = sponsorship_type.available_count()
+            max_value = SponsorshipConfig.max_quantity()
+            if sponsorship_type.available is not None:
+                max_value = min(max_value, sponsorship_type.available)
+            field = forms.IntegerField(
+                label=sponsorship_type.name, min_value=0, max_value=max_value,
                 required=False, initial=selection.get(str(sponsorship_type.id), 0),
                 widget=forms.NumberInput(attrs={'class': 'form-control sponsorship-quantity'}),
+                error_messages={'max_value': _('Höchstens %(limit_value)s möglich.')},
             )
+            if sponsorship_type.available == 0:
+                field.disabled = True
+                field.initial = 0
+            self.fields[self.field_name(sponsorship_type)] = field
 
     @staticmethod
     def field_name(sponsorship_type):
@@ -93,7 +103,7 @@ class MemberChoiceField(forms.ModelChoiceField):
 class SponsorshipTypeForm(forms.ModelForm):
     class Meta:
         model = SponsorshipType
-        fields = ['name', 'description', 'annual_fee', 'visible', 'sort_order']
+        fields = ['name', 'description', 'annual_fee', 'visible', 'max_count', 'sort_order']
         widgets = {'description': forms.Textarea(attrs={'rows': 4})}
 
     def __init__(self, *args, cancel_url=None, **kwargs):

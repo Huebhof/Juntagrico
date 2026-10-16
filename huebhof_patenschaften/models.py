@@ -26,6 +26,10 @@ class SponsorshipType(models.Model):
         _('Bestellbar'), default=True,
         help_text=_('Nur bestellbare Patenschaften werden bei der Anmeldung und im Mitgliederbereich angeboten.'))
     sort_order = models.PositiveIntegerField(_('Sortierung'), default=0)
+    max_count = models.PositiveIntegerField(
+        _('Maximale Anzahl'), null=True, blank=True,
+        help_text=_('Leer: unbegrenzt. Gezählt werden laufende und bestellte, noch nicht aktivierte Patenschaften. '
+                    'Ist die Anzahl erreicht, ist der Typ bei der Bestellung ausgebucht.'))
 
     objects = SponsorshipTypeQuerySet.as_manager()
 
@@ -36,6 +40,16 @@ class SponsorshipType(models.Model):
 
     def __str__(self):
         return self.name
+
+    def taken_count(self):
+        """Running and ordered (not yet activated) sponsorships of this type."""
+        return self.sponsorships.open().count()
+
+    def available_count(self):
+        """How many can still be ordered, None if unlimited."""
+        if self.max_count is None:
+            return None
+        return max(0, self.max_count - self.taken_count())
 
 
 class SponsorshipQuerySet(models.QuerySet):

@@ -3,7 +3,6 @@ import datetime
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -252,24 +251,43 @@ def edit(request, sponsorship_id):
 # ---------------------------------------------------------------- Pending changes (like subscriptions)
 
 @permission_required('huebhof_patenschaften.change_sponsorship')
-def pending(request):
-    """Not yet activated orders, per member, grouped by order date."""
-    per_member = {}
-    for s in Sponsorship.objects.ordered().select_related('member', 'type').order_by('order_date', 'type__sort_order', 'id'):
-        per_member.setdefault(s.member, []).append(s)
-    return render(request, 'huebhof_patenschaften/pending.html', {'pending': list(per_member.items())})
+@using_change_date
+def pending(request, change_date):
+    """Not yet activated orders to check, per member, grouped by order date."""
+    sponsorships = list(Sponsorship.objects.ordered().select_related('member', 'type').order_by(
+        'order_date', 'type__sort_order', 'id'))
+    # occupancy per type, to check whether the sponsorship is still possible
+    occupancy = {}
+    for t in {s.type for s in sponsorships}:
+        occupancy[t.id] = {'running': t.sponsorships.running().count(), 'ordered': t.sponsorships.ordered().count(),
+                           'max': t.max_count}
+    for s in sponsorships:
+        s.occupancy = occupancy[s.type_id]
+    return render(request, 'huebhof_patenschaften/pending.html', {
+        'pending': list(services.by_member(sponsorships).items()),
+        'change_date': change_date or datetime.date.today(),
+    })
 
 
 @require_POST
 @permission_required('huebhof_patenschaften.change_sponsorship', raise_exception=True)
 @using_change_date
 def pending_apply(request, change_date):
-    """Activates the selected sponsorships on the change date (default: today)."""
-    ids = request.POST.getlist('sponsorships[]')
-    count = 0
-    with transaction.atomic():
-        for s in Sponsorship.objects.ordered().filter(id__in=ids):
-            s.activate(change_date)
-            count += 1
-    messages.success(request, _('{} Patenschaft(en) aktiviert.').format(count))
+    """Activates the selected sponsorships on the change date (default: today) and informs the members."""
+    activated = services.activate(
+        Sponsorship.objects.ordered().filter(id__in=request.POST.getlist('sponsorships[]')), change_date)
+    messages.success(request, _('{} Patenschaft(en) aktiviert, Bestätigung per E-Mail versandt.').format(
+        len(activated)))
+    return return_to_previous_location(request)
+
+
+@require_POST
+@permission_required('huebhof_patenschaften.change_sponsorship', raise_exception=True)
+def pending_reject(request):
+    """Rejects the selected orders (e.g. no place left) and informs the members."""
+    rejected = services.reject(
+        Sponsorship.objects.ordered().filter(id__in=request.POST.getlist('sponsorships[]')),
+        request.POST.get('reason', '').strip())
+    messages.success(request, _('{} Bestellung(en) abgelehnt, Mitglied per E-Mail informiert.').format(
+        len(rejected)))
     return return_to_previous_location(request)

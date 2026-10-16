@@ -9,7 +9,7 @@
 {% block content %}
     {% action_date request %}
     <p>
-        {% trans "Bestellte Patenschaften, die noch nicht aktiviert sind. Ausgewählte anwenden aktiviert sie auf das Änderungsdatum. Kündigungen müssen nicht angewendet werden, gekündigte Patenschaften enden automatisch." %}
+        {% trans "Bestellte Patenschaften, die noch geprüft werden müssen. Ausgewählte anwenden aktiviert sie auf das Änderungsdatum, ablehnen storniert die Bestellung. Das Mitglied wird jeweils per E-Mail informiert. Kündigungen müssen nicht angewendet werden, gekündigte Patenschaften enden automatisch." %}
     </p>
     {{ block.super }}
 {% endblock %}
@@ -40,7 +40,8 @@
                                                name="sponsorships[]" id="pending-sponsorship-{{ s.id }}" class="form-check-input"
                                                value="{{ s.id }}">
                                         <label for="pending-sponsorship-{{ s.id }}" class="form-check-label">
-                                            <span class="pre">{{ s.type.name }}{% if not forloop.last %},{% endif %}</span>
+                                            <span class="pre">{{ s.type.name }}</span>
+                                            <small class="text-muted sponsorship-occupancy">({% blocktrans with running=s.occupancy.running ordered=s.occupancy.ordered %}{{ running }} laufend, {{ ordered }} bestellt{% endblocktrans %}{% if s.occupancy.max is not None %}, {% blocktrans with max=s.occupancy.max %}max. {{ max }}{% endblocktrans %}{% endif %})</small>{% if not forloop.last %},{% endif %}
                                         </label>
                                     </div>
                                 {% endfor %}
@@ -48,13 +49,20 @@
                         {% endfor %}
                     </td>
                     <td>
-                        {% for s in sponsorships %}{{ s.annual_fee|price }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                        {% for s in sponsorships %}{{ s.annual_fee|price }}{% block pending_fee_extra %}{% endblock %}{% if not forloop.last %}<br>{% endif %}{% endfor %}
                     </td>
                     <td>
                         <form method="post" id="pending-form-{{ member.id }}" action="{% url 'sponsorships-pending-apply' %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-primary mb-1">
                                 {% trans "Ausgewählte anwenden" %}
+                            </button>
+                            <input type="text" name="reason" class="form-control form-control-sm mb-1"
+                                   placeholder="{% trans 'Begründung bei Ablehnung (optional, steht in der E-Mail)' %}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm mb-1"
+                                    formaction="{% url 'sponsorships-pending-reject' %}"
+                                    onclick="return confirm('{% trans "Ausgewählte Bestellungen ablehnen? Das Mitglied wird per E-Mail informiert." %}')">
+                                {% trans "Ausgewählte ablehnen" %}
                             </button>
                         </form>
                     </td>

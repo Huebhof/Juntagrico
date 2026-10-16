@@ -14,6 +14,11 @@
                     <div class="mt-auto">
                         <p class="mb-2"><strong>{{ type.annual_fee|price }}</strong> {% trans "pro Jahr" %}</p>
                         {% block type_price_extra %}{% endblock %}
+                        {% if type.available == 0 %}
+                            <p class="mb-2"><span class="badge badge-secondary">{% trans "Zurzeit ausgebucht" %}</span></p>
+                        {% elif type.available is not None %}
+                            <p class="small text-muted mb-2">{% blocktrans count n=type.available %}Noch {{ n }} verfügbar{% plural %}Noch {{ n }} verfügbar{% endblocktrans %}</p>
+                        {% endif %}
                         <label for="{{ field.id_for_label }}" class="sr-only">{% trans "Anzahl" %} {{ type.name }}</label>
                         <div class="input-group" style="max-width: 11rem;">
                             <div class="input-group-prepend"><span class="input-group-text">{% trans "Anzahl" %}</span></div>

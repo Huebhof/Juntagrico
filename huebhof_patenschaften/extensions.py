@@ -5,7 +5,9 @@ Templates can additionally be extended via blocks (the extending app overrides t
     huebhof_patenschaften/types.html: type_columns_head, type_columns
     huebhof_patenschaften/edit.html: status_extra
     huebhof_patenschaften/snippets/selection.html: type_price_extra
+    huebhof_patenschaften/pending.html: pending_fee_extra (context: s, change_date)
     huebhof_patenschaften/mails/member_ordered.txt: sponsorship_line_extra, total_extra
+    huebhof_patenschaften/mails/member_activated.txt: sponsorship_line_extra, total_extra
     juntagrico/subscription/create/summary.html: sponsorship_row_extra
 """
 

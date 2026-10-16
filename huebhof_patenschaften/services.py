@@ -2,6 +2,7 @@ import datetime
 
 from django.db import transaction
 
+from . import mailer
 from .config import SponsorshipConfig
 from .models import Sponsorship, SponsorshipType
 
@@ -51,3 +52,39 @@ def group(sponsorships):
     for g in groups.values():
         g['quantity'] = len(g['objects'])
     return list(groups.values())
+
+
+def by_member(sponsorships):
+    """{member: [sponsorships]} in the given order."""
+    groups = {}
+    for s in sponsorships:
+        groups.setdefault(s.member, []).append(s)
+    return groups
+
+
+def activate(sponsorships, date=None):
+    """Activates ordered sponsorships (check passed) and informs the members by e-mail.
+    Returns the activated sponsorships."""
+    with transaction.atomic():
+        activated = []
+        for s in sponsorships:
+            if s.activation_date is None and s.cancellation_date is None:
+                s.activate(date)
+                activated.append(s)
+    for member, member_sponsorships in by_member(activated).items():
+        mailer.confirm_activation(member, member_sponsorships)
+    return activated
+
+
+def reject(sponsorships, reason=''):
+    """Withdraws ordered sponsorships (check failed) and informs the members by e-mail.
+    Returns the rejected sponsorships."""
+    with transaction.atomic():
+        rejected = []
+        for s in sponsorships:
+            if s.activation_date is None and s.cancellation_date is None:
+                s.cancel()
+                rejected.append(s)
+    for member, member_sponsorships in by_member(rejected).items():
+        mailer.confirm_rejection(member, member_sponsorships, reason)
+    return rejected

@@ -15,7 +15,7 @@
                 <th>{% trans "Name" %}</th>
                 <th class="text-right">{% trans "Jahresbeitrag" %}</th>
                 <th>{% trans "Bestellbar" %}</th>
-                <th class="text-right">{% trans "Offene Patenschaften" %}</th>
+                <th class="text-right">{% trans "Offene Patenschaften / Maximum" %}</th>
                 {% block type_columns_head %}{% endblock %}
             </tr>
         </thead>
@@ -25,7 +25,7 @@
                     <td>{% if perms.huebhof_patenschaften.change_sponsorshiptype %}<a href="{% url 'sponsorships-type' type.id %}">{{ type.name }}</a>{% else %}{{ type.name }}{% endif %}</td>
                     <td class="text-right">{{ type.annual_fee|price }}</td>
                     <td>{% if type.visible %}{% trans "Ja" %}{% else %}<span class="text-muted">{% trans "Nein" %}</span>{% endif %}</td>
-                    <td class="text-right">{{ type.open_count }}</td>
+                    <td class="text-right">{{ type.open_count }}{% if type.max_count is not None %} / {{ type.max_count }}{% endif %}</td>
                     {% block type_columns %}{% endblock %}
                 </tr>
             {% empty %}

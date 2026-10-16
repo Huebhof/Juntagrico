@@ -1,0 +1,16 @@
+{% extends "mails/email.txt" %}
+{% load i18n juntagrico.common %}
+{% block content %}
+{% blocktrans with fn=member.first_name %}Hallo {{ fn }}{% endblocktrans %}
+
+{% trans "Wir haben deine Bestellung geprüft und freuen uns, dir folgende Patenschaft(en) zu bestätigen:" %}
+
+{% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }} {% trans "pro Jahr" %}, {% blocktrans with d=s.activation_date|date:"d.m.Y" %}gültig ab {{ d }}{% endblocktrans %}{% block sponsorship_line_extra %}{% endblock %}
+{% endfor %}
+{% trans "Total pro Jahr" %}: {{ total|price }}{% block total_extra %}{% endblock %}
+
+{% trans "Die Patenschaft verlängert sich jeweils um ein Geschäftsjahr. Kündigen kannst du sie im Mitgliederbereich, jeweils per Ende Geschäftsjahr" %}:
+{{ serverurl }}{% url 'sponsorships-mine' %}
+
+{% trans "Herzlichen Dank für deine Unterstützung!" %}
+{% endblock %}

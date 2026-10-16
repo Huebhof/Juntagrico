@@ -15,6 +15,7 @@ urlpatterns = [
     path('manage/sponsorships/export/', views.export, name='sponsorships-export'),
     path('manage/sponsorships/pending/', views.pending, name='sponsorships-pending'),
     path('manage/sponsorships/pending/apply/', views.pending_apply, name='sponsorships-pending-apply'),
+    path('manage/sponsorships/pending/reject/', views.pending_reject, name='sponsorships-pending-reject'),
     path('manage/sponsorships/create/', views.create, name='sponsorships-create'),
     path('manage/sponsorships/<int:sponsorship_id>/', views.edit, name='sponsorships-edit'),
     path('manage/sponsorships/types/', views.types, name='sponsorships-types'),

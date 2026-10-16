@@ -40,6 +40,8 @@ Verrechnet werden alle aktivierten Patenschaften mit einem Beitrag über 0, die 
 
 Beim Bestellen sehen Mitglieder neben dem Jahresbeitrag auch den anteiligen Betrag für das laufende Geschäftsjahr ("Für 2026 anteilig ab heute: ca. 7.60 CHF"): auf den Karten im Mitgliederbereich und im Anmeldeprozess, in der Zusammenfassung und in der Bestätigungsmail. "Ca.", weil ab der Aktivierung verrechnet wird, die Admins unter "Pendente Änderungen" vornehmen.
 
+Auf "Pendente Änderungen" steht bei jeder Bestellung der Betrag fürs laufende Jahr bei Aktivierung auf das eingestellte Änderungsdatum, in der Bestätigungsmail der Betrag ab der tatsächlichen Aktivierung.
+
 Die Rechnungen einer Patenschaft stehen auf ihrer Bearbeiten-Seite und im Django-Admin.
 
 ## Berechtigungen
