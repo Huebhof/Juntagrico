@@ -56,10 +56,10 @@
                               class="d-flex flex-column pending-actions" style="max-width: 15rem;">
                             {% csrf_token %}
                             <input type="hidden" name="reason" value="">
-                            <button type="submit" class="btn btn-primary mb-1">
+                            <button type="submit" class="btn btn-primary mb-1 text-nowrap">
                                 {% trans "Ausgewählte anwenden" %}
                             </button>
-                            <button type="button" class="btn btn-outline-danger mb-1 pending-reject"
+                            <button type="button" class="btn btn-outline-danger mb-1 text-nowrap pending-reject"
                                     data-form="pending-form-{{ member.id }}" data-member="{{ member }}">
                                 {% trans "Ausgewählte ablehnen" %}
                             </button>
