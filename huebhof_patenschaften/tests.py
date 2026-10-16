@@ -5,17 +5,12 @@ from decimal import Decimal
 from django.contrib.auth.models import Permission
 from django.core import mail
 from django.test import override_settings
-from django.urls import resolve, reverse
+from django.urls import reverse
 
 from juntagrico.entity.depot import Depot
 from juntagrico.entity.subtypes import SubscriptionType
 from juntagrico.tests import JuntagricoTestCase
 
-from juntagrico_billing.models.bill import Bill, BillItem, BillItemType, BusinessYear
-from juntagrico_billing.models.settings import Settings
-from juntagrico_billing.util.billing import recalc_bill
-
-from . import billing
 from .models import Sponsorship, SponsorshipType
 
 SIGNUP_MANAGER = 'huebhof_patenschaften.signup.SponsorshipSignupManager'
@@ -243,124 +238,6 @@ class AdminTests(SponsorshipTestCase):
         self.assertIn(reverse('sponsorships-pending'), mail.outbox[1].body)
 
 
-class BillingTests(SponsorshipTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-        Settings.objects.create(debtor_account='1100')
-        cls.year = BusinessYear.objects.create(
-            start_date=datetime.date(2026, 1, 1), end_date=datetime.date(2026, 12, 31), name='2026')
-        cls.tree_item_type = BillItemType.objects.create(name='Baumpatenschaft', booking_account='3400')
-        cls.tree.bill_item_type = cls.tree_item_type
-        cls.tree.save()
-        activation = datetime.date(2025, 3, 1)
-        # member4 has no subscription, member has one
-        cls.s_tree = Sponsorship.objects.create(member=cls.member4, type=cls.tree, activation_date=activation)
-        cls.s_bee = Sponsorship.objects.create(member=cls.member4, type=cls.bee, activation_date=activation)
-        # not billable: withdrawn, ended before the year, activated after the year, fee 0
-        withdrawn = Sponsorship.objects.create(member=cls.member2, type=cls.tree)
-        withdrawn.cancel()
-        Sponsorship.objects.create(member=cls.member3, type=cls.tree, activation_date=activation,
-                                   end_date=datetime.date(2025, 12, 31))
-        Sponsorship.objects.create(member=cls.member3, type=cls.bee, activation_date=datetime.date(2027, 1, 1))
-        Sponsorship.objects.create(member=cls.member3, type=cls.bee, activation_date=activation, annual_fee=Decimal('0'))
-
-    def test_billable(self):
-        self.assertEqual(set(billing.billable(self.year)), {self.s_tree, self.s_bee})
-
-    def test_new_bill(self):
-        created, extended = billing.create_bills(self.year, billing.billable(self.year))
-        self.assertEqual((len(created), len(extended)), (1, 0))
-        bill = created[0]
-        self.assertEqual(bill.member, self.member4)
-        self.assertEqual(bill.amount, 170.0)
-        self.assertFalse(bill.published)
-        # own item type with booking account, otherwise default "Patenschaft"
-        item_tree = self.s_tree.bill_items.get()
-        self.assertEqual(item_tree.custom_item_type, self.tree_item_type)
-        self.assertEqual(str(item_tree), 'Baumpatenschaft')
-        self.assertEqual(str(self.s_bee.bill_items.get()), 'Patenschaft Bienenpatenschaft')
-        # not a second time in the same year, again in the following year
-        self.assertFalse(billing.billable(self.year).exists())
-        next_year = BusinessYear.objects.create(
-            start_date=datetime.date(2027, 1, 1), end_date=datetime.date(2027, 12, 31), name='2027')
-        # the two billed ones and the one active from 2027
-        self.assertEqual(billing.billable(next_year).count(), 3)
-
-    def test_add_to_unpublished_bill(self):
-        existing = Bill.objects.create(business_year=self.year, member=self.member4, amount=500.0,
-                                       bill_date=datetime.date(2026, 1, 1), booking_date=datetime.date(2026, 1, 1))
-        BillItem.objects.create(bill=existing, description='Ernteanteil', amount=500.0)
-        created, extended = billing.create_bills(self.year, billing.billable(self.year))
-        self.assertEqual((created, extended), ([], [existing]))
-        existing.refresh_from_db()
-        self.assertEqual(existing.amount, 670.0)
-        # recalculation by juntagrico_billing keeps the sponsorships
-        recalc_bill(existing)
-        existing.refresh_from_db()
-        self.assertEqual(existing.items.filter(sponsorships__isnull=False).count(), 2)
-
-    def test_published_bill_stays_unchanged(self):
-        Bill.objects.create(business_year=self.year, member=self.member4, amount=500.0, published=True,
-                            bill_date=datetime.date(2026, 1, 1), booking_date=datetime.date(2026, 1, 1))
-        created, extended = billing.create_bills(self.year, billing.billable(self.year))
-        self.assertEqual((len(created), len(extended)), (1, 0))
-
-    def test_jb_urls_point_to_addon(self):
-        from . import views_billing
-        self.assertEqual(resolve(reverse('jb:pending-bills-list')).func, views_billing.pending_bills)
-        self.assertEqual(resolve(reverse('jb:bills-generate')).func, views_billing.bills_generate)
-        self.assertEqual(resolve(reverse('jb:bill-recalc', args=[1])).func, views_billing.bill_recalc)
-
-    def test_pending_bills(self):
-        self.client.force_login(self.admin.user)
-        self.client.post(reverse('jb:bills-setyear'), {'year': '2026'})
-        response = self.client.get(reverse('jb:pending-bills-list'))
-        self.assertContains(response, '1 &times; Baumpatenschaft')
-        self.assertContains(response, '1 &times; Bienenpatenschaft')
-        self.assertContains(response, 'data-order="170.00"')  # amount without subscription
-        self.assertNotContains(response, 'Patenschaften verrechnen')  # no separate menu entry anymore
-
-    def test_generate_all_one_bill_per_member(self):
-        with_subscription = Sponsorship.objects.create(member=self.member, type=self.tree,
-                                                       activation_date=datetime.date(2025, 3, 1))
-        self.client.force_login(self.admin.user)
-        self.client.post(reverse('jb:bills-setyear'), {'year': '2026'})
-        response = self.client.post(reverse('jb:bills-generate'))
-        self.assertRedirects(response, reverse('jb:unpublished-bills-list'))
-        # member with subscription: one bill with subscription and sponsorship
-        bill = self.member.bills.get(business_year=self.year)
-        self.assertTrue(bill.items.filter(subscription_part__isnull=False).exists())
-        self.assertEqual(list(bill.items.filter(sponsorships__isnull=False)), list(with_subscription.bill_items.all()))
-        self.assertAlmostEqual(bill.amount, sum(i.amount for i in bill.items.all()))
-        # member without subscription: own bill with sponsorships only
-        bill4 = self.member4.bills.get(business_year=self.year)
-        self.assertEqual(bill4.amount, 170.0)
-        self.assertFalse(billing.billable(self.year).exists())
-        url = reverse('admin:huebhof_patenschaften_sponsorship_change', args=[self.s_tree.id])
-        self.assertContains(self.client.get(url), reverse('admin:juntagrico_billing_bill_change', args=[bill4.id]))
-
-    def test_recalc_adds_sponsorships(self):
-        bill = Bill.objects.create(business_year=self.year, member=self.member4, amount=0.0,
-                                   bill_date=datetime.date(2026, 1, 1), booking_date=datetime.date(2026, 1, 1))
-        self.client.force_login(self.admin.user)
-        next_url = reverse('admin:juntagrico_billing_bill_change', args=[bill.id])
-        response = self.client.get(reverse('jb:bill-recalc', args=[bill.id]) + '?next=' + next_url)
-        self.assertRedirects(response, next_url)
-        bill.refresh_from_db()
-        self.assertEqual(bill.amount, 170.0)
-        # a second time changes nothing
-        self.client.get(reverse('jb:bill-recalc', args=[bill.id]))
-        bill.refresh_from_db()
-        self.assertEqual(bill.items.count(), 2)
-
-    def test_book_keepers_only(self):
-        self.client.force_login(self.member.user)
-        self.assertNotEqual(self.client.get(reverse('jb:pending-bills-list')).status_code, 200)
-        self.client.post(reverse('jb:bills-generate'))
-        self.assertFalse(Bill.objects.exists())
-
-
 class ManagementTests(SponsorshipTestCase):
     def test_type_create_edit_delete(self):
         self.client.force_login(self.admin.user)
@@ -368,7 +245,7 @@ class ManagementTests(SponsorshipTestCase):
         self.assertEqual(self.client.get(reverse('sponsorships-type-new')).status_code, 200)
         response = self.client.post(reverse('sponsorships-type-new'), {
             'name': 'Hühnerpatenschaft', 'description': 'Gack', 'annual_fee': '80', 'visible': 'on',
-            'sort_order': '3', 'bill_item_type': ''})
+            'sort_order': '3'})
         self.assertRedirects(response, reverse('sponsorships-types'))
         chicken = SponsorshipType.objects.get(name='Hühnerpatenschaft')
         self.assertEqual(chicken.annual_fee, Decimal('80'))

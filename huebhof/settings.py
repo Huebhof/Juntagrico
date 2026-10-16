@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'huebhof',
     'huebhof_hueblikum',
     'juntagrico_billing',
+    'huebhof_patenschaften_billing',
     'huebhof_patenschaften',
     'juntagrico',
     'import_export',

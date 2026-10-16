@@ -26,10 +26,6 @@ class SponsorshipType(models.Model):
         _('Bestellbar'), default=True,
         help_text=_('Nur bestellbare Patenschaften werden bei der Anmeldung und im Mitgliederbereich angeboten.'))
     sort_order = models.PositiveIntegerField(_('Sortierung'), default=0)
-    bill_item_type = models.ForeignKey(
-        'juntagrico_billing.BillItemType', verbose_name=_('Rechnungspositionstyp'),
-        null=True, blank=True, on_delete=models.PROTECT, related_name='sponsorship_types',
-        help_text=_('Bestimmt das Buchungskonto auf der Rechnung. Leer: Rechnungspositionstyp "Patenschaft".'))
 
     objects = SponsorshipTypeQuerySet.as_manager()
 
@@ -88,9 +84,6 @@ class Sponsorship(models.Model):
     cancellation_date = models.DateField(_('Gekündigt am'), null=True, blank=True)
     end_date = models.DateField(_('Ende'), null=True, blank=True)
     notes = models.TextField(_('Notizen'), blank=True)
-    bill_items = models.ManyToManyField(
-        'juntagrico_billing.BillItem', verbose_name=_('Rechnungspositionen'), blank=True,
-        related_name='sponsorships')
 
     objects = SponsorshipQuerySet.as_manager()
 

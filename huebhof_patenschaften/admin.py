@@ -1,6 +1,4 @@
 from django.contrib import admin, messages
-from django.urls import reverse
-from django.utils.html import format_html_join
 from django.utils.translation import gettext_lazy as _
 from import_export import fields, resources
 from adminsortable2.admin import SortableAdminMixin
@@ -52,7 +50,7 @@ class StatusFilter(admin.SimpleListFilter):
 
 @admin.register(SponsorshipType)
 class SponsorshipTypeAdmin(SortableAdminMixin, BaseAdmin):
-    list_display = ['name', 'annual_fee', 'bill_item_type', 'visible', 'running_count']
+    list_display = ['name', 'annual_fee', 'visible', 'running_count']
     list_editable = ['visible']
     search_fields = ['name', 'description']
 
@@ -70,21 +68,11 @@ class SponsorshipAdmin(ExportMixin, BaseAdmin):
     search_fields = ['member__first_name', 'member__last_name', 'member__email', 'type__name']
     autocomplete_fields = ['member']
     date_hierarchy = 'order_date'
-    exclude = ['bill_items']
-    readonly_fields = ['bills']
     actions = ['activate', 'cancel']
 
     @admin.display(description=_('Status'))
     def status_display(self, obj):
         return obj.get_status_display()
-
-    @admin.display(description=_('Rechnungen'))
-    def bills(self, obj):
-        items = obj.bill_items.select_related('bill__business_year').order_by('bill__business_year__start_date')
-        return format_html_join(
-            ', ', '<a href="{}">{} ({})</a>',
-            ((reverse('admin:juntagrico_billing_bill_change', args=[i.bill_id]), i.bill_id, i.bill.business_year)
-             for i in items)) or '-'
 
     @admin.action(description=_('Ausgewählte Patenschaften aktivieren'))
     def activate(self, request, queryset):
