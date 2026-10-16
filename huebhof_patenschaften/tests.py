@@ -493,6 +493,10 @@ class CheckAndActivationTests(SponsorshipTestCase):
         response = self.client.get(reverse('sponsorships-pending'))
         self.assertContains(response, '1 laufend, 1 bestellt, max. 10')
         self.assertContains(response, reverse('sponsorships-pending-reject'))
+        # reject asks for the reason in a dialog, the form carries it as hidden field
+        self.assertContains(response, 'id="reject-modal"')
+        self.assertContains(response, f'data-form="pending-form-{self.member.id}"')
+        self.assertContains(response, '<input type="hidden" name="reason" value="">')
 
     def test_activate_sends_confirmation(self):
         mail.outbox.clear()

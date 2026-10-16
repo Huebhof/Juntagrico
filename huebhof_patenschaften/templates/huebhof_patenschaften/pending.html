@@ -52,16 +52,15 @@
                         {% for s in sponsorships %}{{ s.annual_fee|price }}{% block pending_fee_extra %}{% endblock %}{% if not forloop.last %}<br>{% endif %}{% endfor %}
                     </td>
                     <td>
-                        <form method="post" id="pending-form-{{ member.id }}" action="{% url 'sponsorships-pending-apply' %}">
+                        <form method="post" id="pending-form-{{ member.id }}" action="{% url 'sponsorships-pending-apply' %}"
+                              class="d-flex flex-column pending-actions" style="max-width: 15rem;">
                             {% csrf_token %}
+                            <input type="hidden" name="reason" value="">
                             <button type="submit" class="btn btn-primary mb-1">
                                 {% trans "Ausgewählte anwenden" %}
                             </button>
-                            <input type="text" name="reason" class="form-control form-control-sm mb-1"
-                                   placeholder="{% trans 'Begründung bei Ablehnung (optional, steht in der E-Mail)' %}">
-                            <button type="submit" class="btn btn-outline-danger btn-sm mb-1"
-                                    formaction="{% url 'sponsorships-pending-reject' %}"
-                                    onclick="return confirm('{% trans "Ausgewählte Bestellungen ablehnen? Das Mitglied wird per E-Mail informiert." %}')">
+                            <button type="button" class="btn btn-outline-danger mb-1 pending-reject"
+                                    data-form="pending-form-{{ member.id }}" data-member="{{ member }}">
                                 {% trans "Ausgewählte ablehnen" %}
                             </button>
                         </form>
@@ -73,14 +72,62 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {# One dialog for all members: asks for the reason before rejecting #}
+    <div class="modal fade" id="reject-modal" tabindex="-1" role="dialog" aria-labelledby="reject-modal-title" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reject-modal-title">{% trans "Bestellung ablehnen" %}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Schliessen' %}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong class="reject-member"></strong>: <span class="reject-items"></span></p>
+                    <p class="text-danger reject-none d-none">{% trans "Keine Patenschaft ausgewählt." %}</p>
+                    <label for="reject-reason">{% trans "Begründung (optional, steht in der E-Mail)" %}</label>
+                    <textarea id="reject-reason" class="form-control" rows="3"
+                              placeholder="{% trans 'z.B. Alle Plätze sind bereits vergeben.' %}"></textarea>
+                    <p class="small text-muted mt-2 mb-0">
+                        {% trans "Die Bestellung wird storniert und das Mitglied per E-Mail informiert. Es wird nichts verrechnet." %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">{% trans "Abbrechen" %}</button>
+                    <button type="button" class="btn btn-danger reject-confirm">{% trans "Ablehnen und informieren" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
     {{ block.super }}
     <script type="text/javascript">
         $(function () {
-            // Clicking a checkbox should not select the row
-            $("#filter-table input, #filter-table label").click(function (e) { e.stopPropagation() })
+            // Clicking a checkbox or button should not select the row
+            $("#filter-table input, #filter-table label, #filter-table button").click(function (e) { e.stopPropagation() })
+
+            // Reject: show the dialog with the selected sponsorships, then submit the member's form with the reason
+            let rejectForm = null
+            $("#filter-table .pending-reject").click(function () {
+                rejectForm = document.getElementById(this.dataset.form)
+                const items = $('input[name="sponsorships[]"][form="' + rejectForm.id + '"]:checked').map(function () {
+                    return $('label[for="' + this.id + '"] .pre').text()
+                }).get()
+                $("#reject-modal .reject-member").text(this.dataset.member)
+                $("#reject-modal .reject-items").text(items.join(", "))
+                $("#reject-modal .reject-none").toggleClass("d-none", items.length > 0)
+                $("#reject-modal .reject-confirm").prop("disabled", items.length === 0)
+                $("#reject-reason").val("")
+                $("#reject-modal").modal("show")
+            })
+            $("#reject-modal .reject-confirm").click(function () {
+                rejectForm.elements.reason.value = $("#reject-reason").val()
+                rejectForm.action = "{% url 'sponsorships-pending-reject' %}"
+                rejectForm.submit()
+            })
         })
     </script>
 {% endblock %}
