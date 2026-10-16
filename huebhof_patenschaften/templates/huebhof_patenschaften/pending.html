@@ -2,6 +2,14 @@
 {% load i18n juntagrico.snippets juntagrico.common %}
 {# Same structure as juntagrico/manage/subscription/pending.html #}
 
+{% block styles %}
+    {{ block.super }}
+    <style>
+        /* Keep the scrollbar while the reject dialog is open, otherwise the table redistributes its column widths */
+        body.modal-open { overflow-y: scroll; padding-right: 0 !important; }
+    </style>
+{% endblock %}
+
 {% block page_title %}
     <h3>{% trans "Pendente Änderungen der Patenschaften" %}</h3>
 {% endblock %}
