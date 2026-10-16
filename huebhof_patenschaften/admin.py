@@ -18,6 +18,7 @@ class SponsorshipResource(resources.ModelResource):
     email = fields.Field(attribute='member__email', column_name='E-Mail')
     type_name = fields.Field(attribute='type__name', column_name='Typ')
     annual_fee = fields.Field(attribute='annual_fee', column_name='Jahresbeitrag')
+    custom_annual_fee = fields.Field(attribute='custom_annual_fee', column_name='Sonderpreis')
     order_date = fields.Field(attribute='order_date', column_name='Bestellt am')
     activation_date = fields.Field(attribute='activation_date', column_name='Aktiviert am')
     cancellation_date = fields.Field(attribute='cancellation_date', column_name='Gekündigt am')
@@ -27,7 +28,7 @@ class SponsorshipResource(resources.ModelResource):
 
     class Meta:
         model = Sponsorship
-        fields = ('id', 'first_name', 'last_name', 'email', 'type_name', 'annual_fee',
+        fields = ('id', 'first_name', 'last_name', 'email', 'type_name', 'annual_fee', 'custom_annual_fee',
                   'order_date', 'activation_date', 'cancellation_date', 'end_date', 'status', 'notes')
         export_order = fields
 
@@ -94,7 +95,7 @@ class SponsorshipInline(admin.TabularInline):
     model = Sponsorship
     fk_name = 'member'
     extra = 0
-    fields = ['type', 'annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date']
+    fields = ['type', 'custom_annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date']
     show_change_link = True
     verbose_name_plural = _('Patenschaften')
 

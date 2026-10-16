@@ -29,8 +29,8 @@ DEFAULT_ITEM_TYPE = 'Patenschaft'
 
 def billable(business_year):
     """Sponsorships running in the business year that are not billed for it yet."""
-    return Sponsorship.objects.filter(
-        activation_date__isnull=False, activation_date__lte=business_year.end_date, annual_fee__gt=0,
+    return Sponsorship.objects.with_fee().filter(
+        activation_date__isnull=False, activation_date__lte=business_year.end_date, fee__gt=0,
     ).filter(
         Q(end_date__isnull=True) | Q(end_date__gte=business_year.start_date)
     ).exclude(

@@ -23,18 +23,18 @@ def order(member, selection, date=None):
     for sponsorship_type, quantity in resolve_selection(selection):
         for _ in range(quantity):
             created.append(Sponsorship.objects.create(
-                member=member, type=sponsorship_type, annual_fee=sponsorship_type.annual_fee,
+                member=member, type=sponsorship_type,
                 order_date=date, activation_date=activation_date,
             ))
     return created
 
 
 @transaction.atomic
-def create(member, sponsorship_type, quantity, annual_fee=None, order_date=None, activation_date=None, notes=''):
+def create(member, sponsorship_type, quantity, custom_annual_fee=None, order_date=None, activation_date=None,
+           notes=''):
     """Created by admins: dates are given explicitly, SPONSORSHIPS_AUTO_ACTIVATE does not apply."""
     return [Sponsorship.objects.create(
-        member=member, type=sponsorship_type,
-        annual_fee=sponsorship_type.annual_fee if annual_fee is None else annual_fee,
+        member=member, type=sponsorship_type, custom_annual_fee=custom_annual_fee,
         order_date=order_date or datetime.date.today(), activation_date=activation_date, notes=notes,
     ) for _ in range(quantity)]
 
