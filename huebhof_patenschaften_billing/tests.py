@@ -2,7 +2,6 @@ import datetime
 from decimal import Decimal
 
 from django.core import mail
-from django.template.defaultfilters import floatformat
 from django.urls import resolve, reverse
 
 from juntagrico_billing.models.bill import Bill, BillItem, BillItemType, BusinessYear
@@ -10,7 +9,6 @@ from juntagrico_billing.models.settings import Settings
 from juntagrico_billing.util.billing import recalc_bill
 
 from huebhof_patenschaften.models import Sponsorship, SponsorshipType
-from huebhof_patenschaften import tests as core_tests
 from huebhof_patenschaften.tests import SponsorshipTestCase
 
 from . import billing, views
@@ -149,8 +147,8 @@ class BillingTests(SponsorshipTestCase):
         self.assertFalse(Bill.objects.exists())
 
 
-class ProRataTests(SponsorshipTestCase):
-    """Like subscriptions: only the days within the business year are billed."""
+class FullAnnualFeeTests(SponsorshipTestCase):
+    """Unlike subscriptions: always the full annual fee, also when starting or ending during the year."""
 
     @classmethod
     def setUpTestData(cls):
@@ -164,47 +162,41 @@ class ProRataTests(SponsorshipTestCase):
         self.assertEqual(billing.amount(s, self.year), Decimal('36'))
 
     def test_start_during_year(self):
-        # 16.10.-31.12.: 77 of 365 days, 36 * 77 / 365 = 7.59 -> 7.60
         s = Sponsorship.objects.create(member=self.member4, type=self.chicken,
                                        activation_date=datetime.date(2026, 10, 16))
-        self.assertEqual(billing.amount(s, self.year), Decimal('7.6'))
+        self.assertEqual(billing.amount(s, self.year), Decimal('36'))
         bill = billing.create_bills(self.year, [s])[0][0]
         item = bill.items.get()
-        self.assertEqual(item.amount, 7.6)
-        self.assertEqual(bill.amount, 7.6)
-        self.assertIn('(16.10.2026–31.12.2026)', str(item))
-        # following year: full fee, no period on the bill
+        self.assertEqual(item.amount, 36.0)
+        self.assertEqual(bill.amount, 36.0)
+        self.assertNotIn('(', str(item))
         next_year = BusinessYear.objects.create(
             start_date=datetime.date(2027, 1, 1), end_date=datetime.date(2027, 12, 31), name='2027')
-        item = billing.create_bills(next_year, [s])[0][0].items.get()
-        self.assertEqual(item.amount, 36.0)
-        self.assertNotIn('(', str(item))
+        self.assertEqual(billing.create_bills(next_year, [s])[0][0].items.get().amount, 36.0)
 
     def test_end_during_year(self):
-        # 1.1.-30.6.: 181 of 365 days, 120 * 181 / 365 = 59.51 -> 59.50
         s = Sponsorship.objects.create(member=self.member4, type=self.tree, activation_date=datetime.date(2025, 1, 1),
                                        end_date=datetime.date(2026, 6, 30))
-        self.assertEqual(billing.amount(s, self.year), Decimal('59.5'))
+        self.assertEqual(billing.amount(s, self.year), Decimal('120'))
 
-    def test_pending_bills_show_pro_rata_amount(self):
+    def test_pending_bills_show_full_fee(self):
         Settings.objects.create(debtor_account='1100')
         Sponsorship.objects.create(member=self.member4, type=self.chicken, activation_date=datetime.date(2026, 10, 16))
         self.client.force_login(self.admin.user)
         self.client.post(reverse('jb:bills-setyear'), {'year': '2026'})
-        self.assertContains(self.client.get(reverse('jb:pending-bills-list')), 'data-order="7.60"')
+        self.assertContains(self.client.get(reverse('jb:pending-bills-list')), 'data-order="36.00"')
 
     def test_recalc_after_leaving(self):
         s = Sponsorship.objects.create(member=self.member4, type=self.tree, activation_date=datetime.date(2025, 1, 1))
         bill = billing.create_bills(self.year, [s])[0][0]
-        self.assertEqual(bill.amount, 120.0)
         s.end_date = datetime.date(2026, 6, 30)
         s.save()
         self.client.force_login(self.admin.user)
         self.client.get(reverse('jb:bill-recalc', args=[bill.id]))
         bill.refresh_from_db()
         self.assertEqual(bill.items.count(), 1)
-        self.assertEqual(bill.amount, 59.5)
-        self.assertIn('(01.01.2026–30.06.2026)', str(bill.items.get()))
+        self.assertEqual(bill.amount, 120.0)
+        self.assertNotIn('(', str(bill.items.get()))
 
 
 class BilledOverviewTests(SponsorshipTestCase):
@@ -233,79 +225,31 @@ class BilledOverviewTests(SponsorshipTestCase):
         self.assertContains(response, '<th class="text-right">120 CHF</th>', html=False)
 
 
-class FirstYearShareTests(SponsorshipTestCase):
-    """Pro rata amount shown when ordering (card, signup summary, confirmation mail)."""
-
-    def test_calculation(self):
-        share = billing.first_year_share(Decimal('36'), datetime.date(2026, 10, 16))
-        self.assertEqual(share['amount'], Decimal('7.60'))
-        self.assertEqual((share['start'], share['end'], share['year']),
-                         (datetime.date(2026, 10, 16), datetime.date(2026, 12, 31), '2026'))
-        self.assertEqual(billing.first_year_share(Decimal('36'), datetime.date(2026, 10, 16), 2)['amount'],
-                         Decimal('15.20'))
-        # first day of the business year: full annual fee, nothing to show
-        self.assertIsNone(billing.first_year_share(Decimal('36'), datetime.date(2026, 1, 1)))
-
-    def expected(self, annual_fee, quantity=1):
-        share = billing.first_year_share(annual_fee, quantity=quantity)
-        return share and floatformat(share['amount'], '-2u')  # same format as the price filter
+class NoProRataDisplayTests(SponsorshipTestCase):
+    """No pro rata amount when ordering, checking or activating, only the annual fee."""
 
     def test_card_in_member_area(self):
         self.client.force_login(self.member.user)
-        response = self.client.get(reverse('sponsorships-mine'))
-        expected = self.expected(self.tree.annual_fee)
-        if expected:
-            self.assertContains(response, 'sponsorship-first-year')
-            self.assertContains(response, f'ca. {expected} CHF')
-        else:
-            self.assertNotContains(response, 'sponsorship-first-year')
+        self.assertNotContains(self.client.get(reverse('sponsorships-mine')), 'anteilig')
 
-    subscription_selection = staticmethod(core_tests.SignupTests.subscription_selection)
-
-    def test_signup_summary(self):
-        # walk through the order process with the steps of the core tests
-        core_tests.SignupTests._until_sponsorships(self)
-        self.client.post(reverse('cs-sponsorships'), {f'type_{self.tree.id}': 2})
-        core_tests.SignupTests._rest_until_summary(self)
-        response = self.client.get(reverse('cs-summary'))
-        self.assertContains(response, '2 &times; Baumpatenschaft: 240 CHF')
-        expected = self.expected(self.tree.annual_fee, 2)
-        if expected:
-            self.assertContains(response, f'anteilig ab heute: ca. {expected} CHF')
-
-    def test_confirmation_mail(self):
+    def test_confirmation_mails(self):
         self.client.force_login(self.member.user)
         mail.outbox.clear()
         self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 2})
         body = mail.outbox[0].body
         self.assertIn('Baumpatenschaft: 120 CHF pro Jahr', body)
-        expected = self.expected(self.tree.annual_fee, 2)
-        if expected:
-            self.assertIn(f'(anteilig): ca. {expected} CHF', body)
-        else:
-            self.assertNotIn('anteilig', body)
-
-
-class PendingAndActivationTests(SponsorshipTestCase):
-    """Pro rata amount on the check page (from the change date) and in the confirmation mail."""
-
-    def setUp(self):
-        self.chicken = SponsorshipType.objects.create(name='Huhn', annual_fee=Decimal('36'))
-        self.s = Sponsorship.objects.create(member=self.member, type=self.chicken)
+        self.assertNotIn('anteilig', body)
         self.client.force_login(self.admin.user)
         session = self.client.session
         session['changedate'] = '2026-10-16'
         session.save()
-
-    def test_pending_shows_amount_from_change_date(self):
-        self.assertContains(self.client.get(reverse('sponsorships-pending')), '2026: 7.60 CHF ab 16.10.')
-
-    def test_confirmation_mail_with_amount(self):
+        self.assertNotContains(self.client.get(reverse('sponsorships-pending')), 'anteilig')
         mail.outbox.clear()
-        self.client.post(reverse('sponsorships-pending-apply'), {'sponsorships[]': [self.s.id]})
+        s = Sponsorship.objects.filter(member=self.member, activation_date__isnull=True).first()
+        self.client.post(reverse('sponsorships-pending-apply'), {'sponsorships[]': [s.id]})
         body = mail.outbox[0].body
         self.assertIn('gültig ab 16.10.2026', body)
-        self.assertIn('für 2026 anteilig: 7.60 CHF (16.10.–31.12.2026)', body)
+        self.assertNotIn('anteilig', body)
 
 
 class TypeSettingsTests(SponsorshipTestCase):

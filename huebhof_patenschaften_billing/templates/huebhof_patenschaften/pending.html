@@ -1,5 +1,0 @@
-{% extends "huebhof_patenschaften/pending.html" %}
-{% load i18n juntagrico.common sponsorship_billing %}
-{# Shows the pro rata amount for the current business year when activating on the change date. #}
-
-{% block pending_fee_extra %}{% first_year_share s.annual_fee 1 change_date as share %}{% if share %} <small class="text-muted sponsorship-first-year">({% blocktrans with year=share.year amount=share.amount|price start=share.start|date:"d.m." %}{{ year }}: {{ amount }} ab {{ start }}{% endblocktrans %})</small>{% endif %}{% endblock %}

@@ -9,7 +9,7 @@
 
 {% block overview_columns_head %}
     {% if billed %}
-        <th class="text-right" title="{% trans 'Rechnungspositionen der Patenschaften im laufenden Geschäftsjahr, auch noch nicht versandte Rechnungen. Im ersten Jahr anteilig.' %}">
+        <th class="text-right" title="{% trans 'Rechnungspositionen der Patenschaften im laufenden Geschäftsjahr, auch noch nicht versandte Rechnungen.' %}">
             {% blocktrans with year=billed.year %}Verrechnet {{ year }}{% endblocktrans %}
         </th>
     {% endif %}

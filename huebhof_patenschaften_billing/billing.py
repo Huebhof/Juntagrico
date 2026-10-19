@@ -1,8 +1,8 @@
 """Billing of sponsorships via juntagrico_billing.
 
 One bill item (BillItem with custom_item_type) is created per sponsorship and business year.
-Like subscriptions in juntagrico_billing, only the days the sponsorship runs in the business year
-are billed (activation or end during the year), rounded to 5 Rappen.
+Unlike subscriptions in juntagrico_billing, the full annual fee is billed for every business year
+the sponsorship runs in, also if it starts or ends during the year (no pro rata).
 If the member already has an unpublished bill in the business year (e.g. for the subscription),
 the items are added to it, otherwise a new bill is created.
 
@@ -14,8 +14,6 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import Q, Sum
-
-from juntagrico.util import temporal
 
 from juntagrico_billing.models.bill import Bill, BillItem, BillItemType, BusinessYear
 from juntagrico_billing.models.settings import Settings
@@ -58,53 +56,14 @@ def _item_type(sponsorship_type):
     return BillItemType.objects.get_or_create(name=DEFAULT_ITEM_TYPE, defaults={'booking_account': ''})[0]
 
 
-def billed_period(sponsorship, business_year):
-    """(start, end) of the sponsorship within the business year."""
-    start = max(business_year.start_date, sponsorship.activation_date)
-    end = min(business_year.end_date, sponsorship.end_date or datetime.date.max)
-    return start, end
-
-
-def scale(annual_fee, start, end, year_start, year_end):
-    """Annual fee scaled to the days from start to end within the business year, rounded to 5 Rappen.
-    Same calculation as scale_subscriptionpart_price of juntagrico_billing."""
-    if end < start:
-        return Decimal('0.00')
-    days_year = (year_end - year_start).days + 1
-    days = (end - start).days + 1
-    scaled = round(annual_fee * Decimal(2.0 * days / days_year), 1) / Decimal('2.0')
-    return scaled.quantize(Decimal('0.01'))
-
-
 def amount(sponsorship, business_year):
-    """Amount billed for the sponsorship in the business year."""
-    start, end = billed_period(sponsorship, business_year)
-    return scale(sponsorship.annual_fee, start, end, business_year.start_date, business_year.end_date)
+    """Amount billed for the sponsorship in the business year: always the full annual fee."""
+    return sponsorship.annual_fee
 
 
-def first_year_share(annual_fee, date=None, quantity=1):
-    """Pro rata amount from date until the end of its business year, for display when ordering.
-    None if date is the first day of the business year (then the full annual fee applies)."""
-    date = date or datetime.date.today()
-    year_start = temporal.start_of_specific_business_year(date)
-    year_end = temporal.end_of_specific_business_year(date)
-    if date <= year_start:
-        return None
-    return {
-        'amount': scale(annual_fee, date, year_end, year_start, year_end) * quantity,
-        'start': date,
-        'end': year_end,
-        'year': str(year_start.year) if year_start.year == year_end.year else f'{year_start.year}/{year_end.year}',
-    }
-
-
-def _description(sponsorship, item_type, business_year):
+def _description(sponsorship, item_type):
     # The bill shows "<item type> <description>", avoid duplicates.
-    parts = [] if item_type.name == sponsorship.type.name else [sponsorship.type.name]
-    start, end = billed_period(sponsorship, business_year)
-    if (start, end) != (business_year.start_date, business_year.end_date):
-        parts.append(f'({start:%d.%m.%Y}–{end:%d.%m.%Y})')
-    return ' '.join(parts)[:100]
+    return '' if item_type.name == sponsorship.type.name else sponsorship.type.name[:100]
 
 
 def _update_total(bill):
@@ -117,20 +76,20 @@ def add_to_bill(bill, sponsorships):
     for s in sponsorships:
         item_type = _item_type(s.type)
         item = BillItem.objects.create(
-            bill=bill, custom_item_type=item_type, description=_description(s, item_type, bill.business_year),
+            bill=bill, custom_item_type=item_type, description=_description(s, item_type),
             amount=float(amount(s, bill.business_year)))
         SponsorshipBillItem.objects.create(sponsorship=s, bill_item=item)
     _update_total(bill)
 
 
 def recalc(bill):
-    """Updates the sponsorship items of the bill (e.g. after leaving during the year)
+    """Updates the sponsorship items of the bill (e.g. after a price change)
     and adds missing sponsorships of the member."""
     for link in SponsorshipBillItem.objects.filter(bill_item__bill=bill).select_related(
             'bill_item__custom_item_type', 'sponsorship__type'):
         item = link.bill_item
         item.amount = float(amount(link.sponsorship, bill.business_year))
-        item.description = _description(link.sponsorship, item.custom_item_type, bill.business_year)
+        item.description = _description(link.sponsorship, item.custom_item_type)
         item.save()
     add_to_bill(bill, billable(bill.business_year).filter(member=bill.member))
 

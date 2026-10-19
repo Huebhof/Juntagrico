@@ -1,3 +1,0 @@
-{% extends "huebhof_patenschaften/mails/member_activated.txt" %}{% load i18n juntagrico.common sponsorship_billing %}{% block sponsorship_line_extra %}{% first_year_share s.annual_fee 1 s.activation_date as share %}{% if share %}
-  {% blocktrans with year=share.year amount=share.amount|price start=share.start|date:"d.m." end=share.end|date:"d.m.Y" %}für {{ year }} anteilig: {{ amount }} ({{ start }}–{{ end }}){% endblocktrans %}{% endif %}{% endblock %}{% block total_extra %}{% first_year_total sponsorships as share %}{% if share %}
-{% blocktrans with year=share.year amount=share.amount|price %}Total für {{ year }} (anteilig): {{ amount }}{% endblocktrans %}{% endif %}{% endblock %}
