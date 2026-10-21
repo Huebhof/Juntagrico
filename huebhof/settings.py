@@ -3,6 +3,8 @@ Django settings for huebhof project.
 """
 
 import os
+from datetime import timedelta
+
 from juntagrico import defaults
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -44,6 +46,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap4',
     'django_select2',
     'djrichtextfield',    
+    'axes',
 ]
 
 ROOT_URLCONF = 'huebhof.urls'
@@ -103,6 +106,7 @@ USE_L10N = True
 DATE_INPUT_FORMATS =['%d.%m.%Y',]
 
 AUTHENTICATION_BACKENDS = (
+    'axes.backends.AxesStandaloneBackend',
     'juntagrico.util.auth.AuthenticateWithEmail',
     'django.contrib.auth.backends.ModelBackend'
 )
@@ -115,8 +119,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'impersonate.middleware.ImpersonateMiddleware',
-    'django.contrib.sites.middleware.CurrentSiteMiddleware'
-    
+    'django.contrib.sites.middleware.CurrentSiteMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 EMAIL_HOST = os.environ.get('JUNTAGRICO_EMAIL_HOST')
@@ -151,6 +155,16 @@ IMPERSONATE = {
 }
 
 LOGIN_REDIRECT_URL = "/"
+
+"""
+    Brute-Force-Schutz (django-axes): IP nach 3 fehlgeschlagenen Logins 30 Minuten sperren
+"""
+AXES_FAILURE_LIMIT = 3
+AXES_COOLOFF_TIME = timedelta(minutes=30)
+AXES_IPWARE_META_PRECEDENCE_ORDER = [
+    'HTTP_X_FORWARDED_FOR',
+    'REMOTE_ADDR',
+]
 
 """
     File & Storage Settings
