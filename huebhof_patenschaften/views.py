@@ -19,7 +19,7 @@ from . import mailer, services
 from .admin import SponsorshipResource
 from .config import SponsorshipConfig
 from .forms import SponsorshipCreateForm, SponsorshipEditForm, SponsorshipOrderForm, SponsorshipSelectionForm, \
-    SponsorshipTypeForm
+    SponsorshipSignupSelectionForm, SponsorshipTypeForm
 from .models import Sponsorship, SponsorshipType
 
 
@@ -33,11 +33,18 @@ def any_permission_required(*perms):
 class SelectSponsorshipsView(SignupView, FormView):
     """Step in the order process: select sponsorships (optional)."""
     template_name = 'huebhof_patenschaften/signup_select.html'
-    form_class = SponsorshipSelectionForm
+
+    def get_form_class(self):
+        # with a subscription, its start date applies to the sponsorships too
+        if self.signup_manager.has_parts():
+            return SponsorshipSelectionForm
+        return SponsorshipSignupSelectionForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['selection'] = self.signup_manager.get('sponsorships', {})
+        if self.get_form_class() is SponsorshipSignupSelectionForm:
+            kwargs['start_date'] = self.signup_manager.get('sponsorships_start_date')
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -46,6 +53,8 @@ class SelectSponsorshipsView(SignupView, FormView):
     def form_valid(self, form):
         # empty dict = deliberately continue without sponsorship
         self.signup_manager.set('sponsorships', form.selection())
+        if 'start_date' in form.cleaned_data:
+            self.signup_manager.set('sponsorships_start_date', form.cleaned_data['start_date'].isoformat())
         return redirect(self.signup_manager.get_next_page())
 
 
@@ -58,7 +67,7 @@ def my_sponsorships(request):
     if request.method == 'POST':
         form = SponsorshipOrderForm(request.POST)
         if form.is_valid():
-            created = services.order(member, form.selection())
+            created = services.order(member, form.selection(), start_date=form.cleaned_data['start_date'])
             mailer.confirm_order(member, created)
             mailer.notify_admins_ordered(member, created)
             messages.success(request, _('Vielen Dank! Deine Bestellung ist eingegangen.'))
@@ -135,7 +144,7 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
             qs = Sponsorship.objects.filter(type=sponsorship_type)
             rows.append({
                 'type': sponsorship_type,
-                'ordered': qs.ordered().count(),
+                'ordered': qs.not_started().count(),
                 'active': qs.active().count(),
                 'canceled': qs.canceled().count(),
                 'total': qs.running().total_annual_fee(),
@@ -143,7 +152,7 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
         context['overview'] = rows
         context['members'] = self.group_by_member(context['object_list'])
         context['totals'] = {
-            'ordered': Sponsorship.objects.ordered().count(),
+            'ordered': Sponsorship.objects.not_started().count(),
             'active': Sponsorship.objects.active().count(),
             'canceled': Sponsorship.objects.canceled().count(),
             'total': running.total_annual_fee(),
@@ -157,8 +166,8 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
         for member, member_sponsorships in services.by_member(sponsorships).items():
             lines = {}
             for s in member_sponsorships:
-                key = (s.type_id, s.annual_fee, s.status, s.order_date, s.activation_date, s.cancellation_date,
-                       s.end_date)
+                key = (s.type_id, s.annual_fee, s.status, s.order_date, s.start_date, s.activation_date,
+                       s.cancellation_date, s.end_date)
                 lines.setdefault(key, []).append(s)
             running = [s for s in member_sponsorships if s.status in (Sponsorship.ACTIVE, Sponsorship.CANCELED)]
             members.append({
@@ -282,14 +291,16 @@ def pending(request, change_date):
     occupancy = {}
     for t in {s.type for s in sponsorships if s.type.max_count is not None}:
         occupancy[t] = {'type': t, 'running': t.sponsorships.running().count(),
-                        'ordered': t.sponsorships.ordered().count(), 'max': t.max_count}
+                        'ordered': t.sponsorships.not_started().count(), 'max': t.max_count}
     pending = []
     for member, member_sponsorships in services.by_member(sponsorships).items():
         types = dict.fromkeys(s.type for s in member_sponsorships if s.type in occupancy)
-        pending.append((member, member_sponsorships, [occupancy[t] for t in types]))
+        # without change date: activated on the desired start (at the earliest today)
+        activation_dates = [change_date] if change_date else sorted(
+            {s.suggested_activation_date for s in member_sponsorships})
+        pending.append((member, member_sponsorships, [occupancy[t] for t in types], activation_dates))
     return render(request, 'huebhof_patenschaften/pending.html', {
         'pending': pending,
-        'change_date': change_date or datetime.date.today(),
     })
 
 
@@ -297,7 +308,8 @@ def pending(request, change_date):
 @permission_required('huebhof_patenschaften.change_sponsorship', raise_exception=True)
 @using_change_date
 def pending_apply(request, change_date):
-    """Activates the selected sponsorships on the change date (default: today) and informs the members."""
+    """Activates the selected sponsorships on the change date (default: desired start, at the earliest today)
+    and informs the members."""
     activated = services.activate(
         Sponsorship.objects.ordered().filter(id__in=request.POST.getlist('sponsorships[]')), change_date)
     messages.success(request, _('{} Patenschaft(en) aktiviert, Bestätigung per E-Mail versandt.').format(

@@ -15,7 +15,7 @@
                         <tr>
                             <th>{% trans "Patenschaft" %}</th>
                             <th>{% trans "Jahresbeitrag" %}</th>
-                            <th>{% trans "Seit" %}</th>
+                            <th>{% trans "Beginn" %}</th>
                             <th>{% trans "Status" %}</th>
                             <th></th>
                         </tr>
@@ -25,7 +25,7 @@
                             <tr>
                                 <td>{{ s.type.name }}</td>
                                 <td>{{ s.annual_fee|price }}</td>
-                                <td>{{ s.activation_date|default:s.order_date|date:"d.m.Y" }}</td>
+                                <td>{{ s.activation_date|default:s.start_date|default:s.order_date|date:"d.m.Y" }}{% if not s.activation_date and s.start_date %} <span class="text-muted small">({% trans "gewünscht" %})</span>{% endif %}</td>
                                 <td>
                                     {% if s.status == 'canceled' %}
                                         <span class="badge badge-warning">{% blocktrans with e=s.end_date|date:"d.m.Y" %}Gekündigt, läuft bis {{ e }}{% endblocktrans %}</span>
@@ -77,6 +77,7 @@
         <form method="post" action="">
             {% csrf_token %}
             {% include "huebhof_patenschaften/snippets/selection.html" %}
+            {% include "huebhof_patenschaften/snippets/start_date.html" with field=form.start_date %}
             <button type="submit" class="btn btn-success btn-lg">{% trans "Verbindlich bestellen" %}</button>
         </form>
     {% else %}

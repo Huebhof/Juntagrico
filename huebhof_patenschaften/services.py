@@ -15,16 +15,18 @@ def resolve_selection(selection):
 
 
 @transaction.atomic
-def order(member, selection, date=None):
-    """Creates one sponsorship per ordered unit and returns the new objects."""
+def order(member, selection, date=None, start_date=None):
+    """Creates one sponsorship per ordered unit and returns the new objects.
+    start_date: desired start chosen by the member (default: order date)."""
     date = date or datetime.date.today()
-    activation_date = date if SponsorshipConfig.auto_activate() else None
+    start_date = start_date or date
+    activation_date = max(start_date, date) if SponsorshipConfig.auto_activate() else None
     created = []
     for sponsorship_type, quantity in resolve_selection(selection):
         for _ in range(quantity):
             created.append(Sponsorship.objects.create(
                 member=member, type=sponsorship_type,
-                order_date=date, activation_date=activation_date,
+                order_date=date, start_date=start_date, activation_date=activation_date,
             ))
     return created
 
@@ -64,7 +66,7 @@ def by_member(sponsorships):
 
 def activate(sponsorships, date=None):
     """Activates ordered sponsorships (check passed) and informs the members by e-mail.
-    Returns the activated sponsorships."""
+    Without date each one on its desired start (at the earliest today). Returns the activated sponsorships."""
     with transaction.atomic():
         activated = []
         for s in sponsorships:

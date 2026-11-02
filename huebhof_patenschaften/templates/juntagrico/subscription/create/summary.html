@@ -5,6 +5,7 @@
     {% url 'cs-sponsorships' as sponsorships_url %}
     {% if sponsorships is not None %}
         {% sponsorship_selection sponsorships as selected_sponsorships %}
+        {% sponsorship_start_date subscriptions sponsorships_start_date as start_date %}
         <h4>{% trans "Patenschaften" %} <a href="{{ sponsorships_url }}?mod" class="edit"><i class="bi bi-pencil-square"></i></a></h4>
         <p>
             {% for row in selected_sponsorships %}
@@ -14,6 +15,9 @@
             {% empty %}
                 {% trans "Keine Patenschaft" %}
             {% endfor %}
+            {% if selected_sponsorships and start_date %}
+                <br><span class="text-muted">{% blocktrans with d=start_date|date:"d.m.Y" %}Gewünschter Beginn: {{ d }}{% endblocktrans %}</span>
+            {% endif %}
         </p>
     {% endif %}
     {{ block.super }}

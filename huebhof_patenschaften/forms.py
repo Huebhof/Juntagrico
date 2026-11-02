@@ -57,7 +57,38 @@ class SponsorshipSelectionForm(forms.Form):
                 for t in self.types if self.cleaned_data.get(self.field_name(t))}
 
 
-class SponsorshipOrderForm(SponsorshipSelectionForm):
+class JuntagricoDateWidget(_JuntagricoDateWidget):
+    """Browser date picker like in juntagrico, but also for empty fields."""
+
+    def format_value(self, value):
+        return None if value in (None, '') else super().format_value(value)
+
+
+class StartDateMixin(forms.Form):
+    """Desired start of the ordered sponsorships. Empty = today."""
+    start_date = forms.DateField(
+        label=_('Gewünschter Beginn'), required=False, initial=datetime.date.today,
+        widget=JuntagricoDateWidget(attrs={'class': 'form-control sponsorship-start-date'}),
+        help_text=_('Wir prüfen deine Bestellung und bestätigen dir den Beginn per E-Mail.'))
+
+    def clean_start_date(self):
+        start_date = self.cleaned_data.get('start_date') or datetime.date.today()
+        if start_date < datetime.date.today():
+            raise forms.ValidationError(_('Der Beginn kann nicht in der Vergangenheit liegen.'))
+        return start_date
+
+
+class SponsorshipSignupSelectionForm(StartDateMixin, SponsorshipSelectionForm):
+    """Order process without subscription: the desired start is asked here
+    (with a subscription, its start date applies)."""
+
+    def __init__(self, *args, start_date=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if start_date:
+            self.fields['start_date'].initial = start_date
+
+
+class SponsorshipOrderForm(StartDateMixin, SponsorshipSelectionForm):
     """Ordering in the member area: at least one sponsorship required."""
 
     def clean(self):
@@ -68,13 +99,6 @@ class SponsorshipOrderForm(SponsorshipSelectionForm):
 
 
 # ---------------------------------------------------------------- Management
-
-class JuntagricoDateWidget(_JuntagricoDateWidget):
-    """Browser date picker like in juntagrico, but also for empty fields."""
-
-    def format_value(self, value):
-        return None if value in (None, '') else super().format_value(value)
-
 
 class AmountInput(forms.TextInput):
     """Text field for amounts: no spin buttons and no change by the mouse wheel, numeric keyboard on mobiles.
@@ -181,8 +205,10 @@ class SponsorshipCreateForm(forms.Form):
 class SponsorshipEditForm(forms.ModelForm):
     class Meta:
         model = Sponsorship
-        fields = ['type', 'custom_annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date', 'notes']
-        widgets = {f: JuntagricoDateWidget for f in ['order_date', 'activation_date', 'cancellation_date', 'end_date']}
+        fields = ['type', 'custom_annual_fee', 'order_date', 'start_date', 'activation_date', 'cancellation_date',
+                  'end_date', 'notes']
+        widgets = {f: JuntagricoDateWidget
+                   for f in ['order_date', 'start_date', 'activation_date', 'cancellation_date', 'end_date']}
         widgets['notes'] = forms.Textarea(attrs={'rows': 3})
         widgets['custom_annual_fee'] = AmountInput
 

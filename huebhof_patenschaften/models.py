@@ -58,6 +58,12 @@ class SponsorshipQuerySet(models.QuerySet):
         """Ordered, but neither activated nor withdrawn."""
         return self.filter(activation_date__isnull=True, cancellation_date__isnull=True)
 
+    def not_started(self, date=None):
+        """Status "ordered": not yet activated, or activated on a later date (desired start)."""
+        date = date or datetime.date.today()
+        return self.filter(Q(activation_date__isnull=True, cancellation_date__isnull=True)
+                           | Q(activation_date__gt=date))
+
     def running(self, date=None):
         """Activated and not yet ended (canceled ones included until their end date)."""
         date = date or datetime.date.today()
@@ -108,6 +114,9 @@ class Sponsorship(models.Model):
         help_text=_('Leer: Jahresbeitrag des Typs, Preisänderungen am Typ gelten auch für diese Patenschaft. '
                     'Nur für Ausnahmen ausfüllen, z.B. einen Sonderpreis; dieser bleibt fix.'))
     order_date = models.DateField(_('Bestellt am'), default=datetime.date.today)
+    start_date = models.DateField(
+        _('Gewünschter Beginn'), null=True, blank=True,
+        help_text=_('Von der Pat:in bei der Bestellung gewählt. Wird beim Aktivieren vorgeschlagen.'))
     activation_date = models.DateField(_('Aktiviert am'), null=True, blank=True)
     cancellation_date = models.DateField(_('Gekündigt am'), null=True, blank=True)
     end_date = models.DateField(_('Ende'), null=True, blank=True)
@@ -158,9 +167,15 @@ class Sponsorship(models.Model):
     def can_be_canceled(self):
         return self.status in (self.ORDERED, self.ACTIVE)
 
+    @property
+    def suggested_activation_date(self):
+        """The desired start, but not in the past."""
+        today = datetime.date.today()
+        return max(self.start_date, today) if self.start_date else today
+
     def activate(self, date=None):
         if self.activation_date is None:
-            self.activation_date = date or datetime.date.today()
+            self.activation_date = date or self.suggested_activation_date
             self.save()
 
     @staticmethod

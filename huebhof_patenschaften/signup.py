@@ -1,3 +1,5 @@
+import datetime
+
 from juntagrico.util.sessions import SignupManager
 
 from . import mailer, services
@@ -32,9 +34,17 @@ class SponsorshipSignupManager(SignupManager):
             return 'cs-sponsorships'
         return next_page
 
+    def sponsorships_start_date(self):
+        """Desired start: the one of the subscription, otherwise the one chosen on the sponsorship page."""
+        if self.has_parts():
+            return None  # taken from the subscription in apply_subscriptions
+        raw = self.get('sponsorships_start_date')
+        return datetime.date.fromisoformat(raw) if raw else None
+
     def apply_subscriptions(self, member, co_members):
         subscription = super().apply_subscriptions(member, co_members)
-        self._new_sponsorships = services.order(member.member, self.get('sponsorships', {}))
+        start_date = subscription.start_date if subscription else self.sponsorships_start_date()
+        self._new_sponsorships = services.order(member.member, self.get('sponsorships', {}), start_date=start_date)
         return subscription
 
     def send_emails(self, member, co_members, subscription):

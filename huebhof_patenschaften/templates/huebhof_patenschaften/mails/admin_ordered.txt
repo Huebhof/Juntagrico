@@ -4,7 +4,7 @@
 {% trans "Hallo" %}
 
 {% blocktrans with m=member %}{{ m }} hat soeben folgende Patenschaft(en) bestellt{% endblocktrans %}:
-{% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }}{% if not s.activation_date %} ({% trans "noch nicht aktiviert" %}){% endif %}
+{% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }}{% if s.start_date %}, {% blocktrans with d=s.start_date|date:"d.m.Y" %}gewünscht ab {{ d }}{% endblocktrans %}{% endif %}{% if not s.activation_date %} ({% trans "noch nicht aktiviert" %}){% endif %}
 {% endfor %}
 {% trans "Total pro Jahr" %}: {{ total|price }}
 

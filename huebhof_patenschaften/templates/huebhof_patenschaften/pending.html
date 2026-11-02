@@ -19,6 +19,7 @@
     <p>
         {% blocktrans trimmed %}
             Neue Bestellungen prüfen und aktivieren oder ablehnen. Das Mitglied wird jeweils per E-Mail informiert.
+            Ohne gesetztes Änderungsdatum wird per gewünschtem Beginn aktiviert, frühestens heute.
             Kündigungen erscheinen hier nicht, gekündigte Patenschaften enden automatisch.
         {% endblocktrans %}
     </p>
@@ -36,7 +37,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for member, sponsorships, occupancies in pending %}
+            {% for member, sponsorships, occupancies, activation_dates in pending %}
                 <tr>
                     <td>{% include 'juntagrico/manage/member/snippets/display_linked.html' %}</td>
                     <td>
@@ -52,6 +53,7 @@
                                         <label for="pending-sponsorship-{{ s.id }}" class="form-check-label">
                                             <span class="pre">{{ s.type.name }}</span>:
                                             {% blocktrans with fee=s.annual_fee|price %}{{ fee }} pro Jahr{% endblocktrans %}{% block pending_fee_extra %}{% endblock %}
+                                            {% if s.start_date %}<span class="text-muted sponsorship-start-date">· {% blocktrans with date=s.start_date|date:"d.m.Y" %}gewünscht ab {{ date }}{% endblocktrans %}</span>{% endif %}
                                         </label>
                                     </div>
                                 {% endfor %}
@@ -73,7 +75,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="reason" value="">
                             <button type="submit" class="btn btn-primary mb-1 text-nowrap">
-                                {% blocktrans with date=change_date|date:"d.m.Y" %}Aktivieren per {{ date }}{% endblocktrans %}
+                                {% if activation_dates|length == 1 %}{% blocktrans with date=activation_dates.0|date:"d.m.Y" %}Aktivieren per {{ date }}{% endblocktrans %}{% else %}{% trans "Aktivieren per gewünschtem Beginn" %}{% endif %}
                             </button>
                             <button type="button" class="btn btn-outline-danger mb-1 text-nowrap pending-reject"
                                     data-form="pending-form-{{ member.id }}" data-member="{{ member }}">

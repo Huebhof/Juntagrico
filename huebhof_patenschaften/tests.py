@@ -508,6 +508,73 @@ class PendingTests(SponsorshipTestCase):
         self.assertEqual(self.a.status, 'ordered')
 
 
+class StartDateTests(SponsorshipTestCase):
+    """Desired start: chosen when ordering, shown to the admins and suggested when activating."""
+
+    def test_member_area_order(self):
+        start = datetime.date.today() + datetime.timedelta(days=30)
+        self.client.force_login(self.member.user)
+        self.assertContains(self.client.get(reverse('sponsorships-mine')),
+                            f'value="{datetime.date.today().isoformat()}"')  # default: today
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1, 'start_date': start.isoformat()})
+        s = Sponsorship.objects.get(member=self.member)
+        self.assertEqual((s.status, s.start_date, s.activation_date), ('ordered', start, None))
+        self.assertTrue(any(f'gewünscht ab {start:%d.%m.%Y}' in m.body for m in mail.outbox))  # order confirmation
+
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('sponsorships-manage') + '?status=all')
+        self.assertContains(response, f'gewünscht ab {start:%d.%m.%Y}')
+        response = self.client.get(reverse('sponsorships-pending'))
+        self.assertContains(response, f'gewünscht ab {start:%d.%m.%Y}')
+        self.assertContains(response, f'Aktivieren per {start:%d.%m.%Y}')
+        self.client.post(reverse('sponsorships-pending-apply'), {'sponsorships[]': [s.id]})
+        s.refresh_from_db()
+        self.assertEqual(s.activation_date, start)
+        response = self.client.get(reverse('sponsorships-manage') + '?status=all')
+        self.assertContains(response, f'aktiv ab {start:%d.%m.%Y}')
+        # not started yet: counted as ordered, no annual amount yet
+        tree_row = next(r for r in response.context['overview'] if r['type'] == self.tree)
+        self.assertEqual((tree_row['ordered'], tree_row['active'], tree_row['total']), (1, 0, 0))
+        self.assertEqual(response.context['totals']['ordered'], 1)
+
+    def test_without_date_today(self):
+        self.client.force_login(self.member.user)
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1})
+        self.assertEqual(Sponsorship.objects.get(member=self.member).start_date, datetime.date.today())
+
+    def test_past_date_rejected(self):
+        self.client.force_login(self.member.user)
+        response = self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1, 'start_date': '2020-01-01'})
+        self.assertContains(response, 'nicht in der Vergangenheit')
+        self.assertFalse(Sponsorship.objects.filter(member=self.member).exists())
+
+    def test_past_start_activated_today(self):
+        s = Sponsorship.objects.create(member=self.member, type=self.tree, start_date=datetime.date(2026, 1, 1))
+        self.client.force_login(self.admin.user)
+        self.client.post(reverse('sponsorships-pending-apply'), {'sponsorships[]': [s.id]})
+        s.refresh_from_db()
+        self.assertEqual(s.activation_date, datetime.date.today())
+
+    @override_settings(SPONSORSHIPS_AUTO_ACTIVATE=True)
+    def test_auto_activate_on_start(self):
+        start = datetime.date.today() + datetime.timedelta(days=10)
+        self.client.force_login(self.member.user)
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1, 'start_date': start.isoformat()})
+        s = Sponsorship.objects.get(member=self.member)
+        self.assertEqual((s.activation_date, s.status), (start, 'ordered'))
+
+    def test_signup_takes_subscription_start(self):
+        signup = SignupTests(methodName='test_with_sponsorships')
+        signup.client = self.client
+        signup._until_sponsorships()
+        response = self.client.get(reverse('cs-sponsorships'))
+        self.assertNotContains(response, 'name="start_date"')  # with subscription: its start date applies
+        self.client.post(reverse('cs-sponsorships'), {f'type_{self.tree.id}': 1})
+        signup._rest_until_summary()
+        self.client.post(reverse('cs-summary'), {'comment': ''})
+        self.assertEqual(Sponsorship.objects.get(member=self.member4).start_date, datetime.date(2030, 1, 1))
+
+
 class CheckAndActivationTests(SponsorshipTestCase):
     """Orders are checked by admins: activate (confirmation mail) or reject (mail with reason)."""
 
