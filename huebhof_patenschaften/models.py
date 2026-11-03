@@ -10,6 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from juntagrico.entity.member import Member
 from juntagrico.util import temporal
 
+from . import years
+
 
 class SponsorshipTypeQuerySet(models.QuerySet):
     def visible(self):
@@ -42,21 +44,36 @@ class SponsorshipType(models.Model):
     def __str__(self):
         return self.name
 
-    def taken_count(self):
-        """Running and ordered (not yet activated) sponsorships of this type."""
-        return self.sponsorships.open().count()
+    def taken_count(self, year=None):
+        """Sponsorships of this type occupying a place in the sponsorship year (default: current one)."""
+        return self.sponsorships.in_year(year or years.start_of(years.today())).count()
 
-    def available_count(self):
-        """How many can still be ordered, None if unlimited."""
+    def available_count(self, year=None):
+        """How many can still be ordered for the sponsorship year (default: current one), None if unlimited."""
         if self.max_count is None:
             return None
-        return max(0, self.max_count - self.taken_count())
+        return max(0, self.max_count - self.taken_count(year))
 
 
 class SponsorshipQuerySet(models.QuerySet):
     def ordered(self):
         """Ordered, but neither activated nor withdrawn."""
         return self.filter(activation_date__isnull=True, cancellation_date__isnull=True)
+
+    def not_started(self, date=None):
+        """Status "ordered": not yet activated, or activated on a later date (desired start)."""
+        date = date or datetime.date.today()
+        return self.filter(Q(activation_date__isnull=True, cancellation_date__isnull=True)
+                           | Q(activation_date__gt=date))
+
+    def in_year(self, year):
+        """Occupying a place in the sponsorship year (given by any date in it): starting in it or before
+        and not ending before it. Not canceled ones renew automatically, so they count for later years too.
+        Withdrawn orders do not count."""
+        return self.exclude(activation_date__isnull=True, cancellation_date__isnull=False).annotate(
+            begin=Coalesce('activation_date', 'start_date', 'order_date'),
+        ).filter(begin__lte=years.end_of(year)).filter(
+            Q(end_date__isnull=True) | Q(end_date__gte=years.start_of(year)))
 
     def running(self, date=None):
         """Activated and not yet ended (canceled ones included until their end date)."""
@@ -108,6 +125,9 @@ class Sponsorship(models.Model):
         help_text=_('Leer: Jahresbeitrag des Typs, Preisänderungen am Typ gelten auch für diese Patenschaft. '
                     'Nur für Ausnahmen ausfüllen, z.B. einen Sonderpreis; dieser bleibt fix.'))
     order_date = models.DateField(_('Bestellt am'), default=datetime.date.today)
+    start_date = models.DateField(
+        _('Gewünschter Beginn'), null=True, blank=True,
+        help_text=_('Von der Pat:in bei der Bestellung gewählt. Wird beim Aktivieren vorgeschlagen.'))
     activation_date = models.DateField(_('Aktiviert am'), null=True, blank=True)
     cancellation_date = models.DateField(_('Gekündigt am'), null=True, blank=True)
     end_date = models.DateField(_('Ende'), null=True, blank=True)
@@ -158,9 +178,24 @@ class Sponsorship(models.Model):
     def can_be_canceled(self):
         return self.status in (self.ORDERED, self.ACTIVE)
 
+    @property
+    def year(self):
+        """Start of the sponsorship year: the one it was activated or ordered for."""
+        return years.start_of(self.activation_date or self.start_date or self.order_date)
+
+    @property
+    def year_label(self):
+        return years.label(self.year)
+
+    @property
+    def suggested_activation_date(self):
+        """The desired start, but not in the past."""
+        today = datetime.date.today()
+        return max(self.start_date, today) if self.start_date else today
+
     def activate(self, date=None):
         if self.activation_date is None:
-            self.activation_date = date or datetime.date.today()
+            self.activation_date = date or self.suggested_activation_date
             self.save()
 
     @staticmethod

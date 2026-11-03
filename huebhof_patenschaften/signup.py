@@ -34,7 +34,8 @@ class SponsorshipSignupManager(SignupManager):
 
     def apply_subscriptions(self, member, co_members):
         subscription = super().apply_subscriptions(member, co_members)
-        self._new_sponsorships = services.order(member.member, self.get('sponsorships', {}))
+        self._new_sponsorships = services.order(
+            member.member, self.get('sponsorships', {}), self.get('sponsorships_years', {}))
         return subscription
 
     def send_emails(self, member, co_members, subscription):

@@ -2,7 +2,7 @@ import datetime
 
 from django.db import transaction
 
-from . import mailer
+from . import mailer, years
 from .config import SponsorshipConfig
 from .models import Sponsorship, SponsorshipType
 
@@ -14,17 +14,28 @@ def resolve_selection(selection):
     return [(sponsorship_type, selection[str(sponsorship_type.id)]) for sponsorship_type in types]
 
 
+def chosen_year(sponsorship_type, chosen_years, orderable):
+    """Start of the year chosen for the type. A year that cannot (or no longer) be ordered,
+    e.g. from an old session, is replaced by the first orderable one."""
+    year = (chosen_years or {}).get(str(sponsorship_type.id))
+    return next((y for y in orderable if y.isoformat() == year), orderable[0])
+
+
 @transaction.atomic
-def order(member, selection, date=None):
-    """Creates one sponsorship per ordered unit and returns the new objects."""
-    date = date or datetime.date.today()
-    activation_date = date if SponsorshipConfig.auto_activate() else None
+def order(member, selection, chosen_years=None, date=None):
+    """Creates one sponsorship per ordered unit and returns the new objects.
+    chosen_years: {'type_id': start of the sponsorship year (ISO)}, see chosen_year().
+    The start is the beginning of the chosen year, at the earliest the order date."""
+    date = date or years.today()
+    orderable = years.orderable(date)
     created = []
     for sponsorship_type, quantity in resolve_selection(selection):
+        start_date = max(chosen_year(sponsorship_type, chosen_years, orderable), date)
+        activation_date = start_date if SponsorshipConfig.auto_activate() else None
         for _ in range(quantity):
             created.append(Sponsorship.objects.create(
                 member=member, type=sponsorship_type,
-                order_date=date, activation_date=activation_date,
+                order_date=date, start_date=start_date, activation_date=activation_date,
             ))
     return created
 
@@ -64,7 +75,7 @@ def by_member(sponsorships):
 
 def activate(sponsorships, date=None):
     """Activates ordered sponsorships (check passed) and informs the members by e-mail.
-    Returns the activated sponsorships."""
+    Without date each one on its desired start (at the earliest today). Returns the activated sponsorships."""
     with transaction.atomic():
         activated = []
         for s in sponsorships:

@@ -9,7 +9,7 @@
 {% endfor %}
 {% trans "Total pro Jahr" %}: {{ total|price }}{% block total_extra %}{% endblock %}
 
-{% trans "Die Patenschaft verlängert sich jeweils um ein Geschäftsjahr. Kündigen kannst du sie im Mitgliederbereich, jeweils per Ende Geschäftsjahr" %}:
+{% trans "Die Patenschaft verlängert sich jeweils um ein Patenschaftsjahr. Kündigen kannst du sie im Mitgliederbereich, jeweils per Ende Patenschaftsjahr" %}:
 {{ serverurl }}{% url 'sponsorships-mine' %}
 
 {% trans "Herzlichen Dank für deine Unterstützung!" %}

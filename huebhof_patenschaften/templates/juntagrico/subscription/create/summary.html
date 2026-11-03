@@ -4,11 +4,11 @@
 {% block comment %}
     {% url 'cs-sponsorships' as sponsorships_url %}
     {% if sponsorships is not None %}
-        {% sponsorship_selection sponsorships as selected_sponsorships %}
+        {% sponsorship_selection sponsorships sponsorships_years as selected_sponsorships %}
         <h4>{% trans "Patenschaften" %} <a href="{{ sponsorships_url }}?mod" class="edit"><i class="bi bi-pencil-square"></i></a></h4>
         <p>
             {% for row in selected_sponsorships %}
-                {{ row.quantity }} &times; {{ row.type.name }}: {{ row.total|price }} {% trans "pro Jahr" %}
+                {{ row.quantity }} &times; {{ row.type.name }}: {{ row.total|price }} {% trans "pro Jahr" %}, {% blocktrans with y=row.year %}Patenschaftsjahr {{ y }}{% endblocktrans %}
                 {% block sponsorship_row_extra %}{% endblock %}
                 {% if not forloop.last %}<br>{% endif %}
             {% empty %}

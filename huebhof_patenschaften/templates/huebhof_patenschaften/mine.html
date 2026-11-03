@@ -15,7 +15,7 @@
                         <tr>
                             <th>{% trans "Patenschaft" %}</th>
                             <th>{% trans "Jahresbeitrag" %}</th>
-                            <th>{% trans "Seit" %}</th>
+                            <th>{% trans "Beginn" %}</th>
                             <th>{% trans "Status" %}</th>
                             <th></th>
                         </tr>
@@ -25,7 +25,7 @@
                             <tr>
                                 <td>{{ s.type.name }}</td>
                                 <td>{{ s.annual_fee|price }}</td>
-                                <td>{{ s.activation_date|default:s.order_date|date:"d.m.Y" }}</td>
+                                <td>{% if s.status == 'ordered' %}{% blocktrans with y=s.year_label %}Patenschaftsjahr {{ y }}{% endblocktrans %}{% else %}{{ s.activation_date|date:"d.m.Y" }}{% endif %}</td>
                                 <td>
                                     {% if s.status == 'canceled' %}
                                         <span class="badge badge-warning">{% blocktrans with e=s.end_date|date:"d.m.Y" %}Gekündigt, läuft bis {{ e }}{% endblocktrans %}</span>
@@ -59,7 +59,7 @@
                 </table>
                 <p class="text-muted small">
                     {% blocktrans trimmed with e=next_end_date|date:"d.m.Y" %}
-                        Eine Kündigung gilt per Ende des Geschäftsjahres. Wenn du heute kündigst, läuft die Patenschaft bis am {{ e }}.
+                        Eine Kündigung gilt per Ende des Patenschaftsjahres. Wenn du heute kündigst, läuft die Patenschaft bis am {{ e }}.
                     {% endblocktrans %}
                 </p>
             {% else %}

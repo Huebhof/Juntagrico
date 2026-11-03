@@ -13,8 +13,10 @@ $(function () {
     }
 
     quantities.change(function () {
-        // highlight card, if value != 0
-        $(this).closest('.card').toggleClass('bg-primary', (parseInt(this.value) || 0) !== 0)
+        // highlight card and show the choice of the sponsorship year, if value != 0
+        let selected = (parseInt(this.value) || 0) !== 0
+        $(this).closest('.card').toggleClass('bg-primary', selected)
+            .find('.sponsorship-year-choice').toggleClass('d-none', !selected)
         let total = total_selected()
         if (total === 0) {
             submit.text(submit.data('label-none'))

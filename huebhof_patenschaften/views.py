@@ -15,7 +15,7 @@ from juntagrico.util import return_to_previous_location
 from juntagrico.view_decorators import highlighted_menu, using_change_date
 from juntagrico.views_subscription import SignupView
 
-from . import mailer, services
+from . import mailer, services, years
 from .admin import SponsorshipResource
 from .config import SponsorshipConfig
 from .forms import SponsorshipCreateForm, SponsorshipEditForm, SponsorshipOrderForm, SponsorshipSelectionForm, \
@@ -38,6 +38,7 @@ class SelectSponsorshipsView(SignupView, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['selection'] = self.signup_manager.get('sponsorships', {})
+        kwargs['chosen_years'] = self.signup_manager.get('sponsorships_years', {})
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -46,6 +47,7 @@ class SelectSponsorshipsView(SignupView, FormView):
     def form_valid(self, form):
         # empty dict = deliberately continue without sponsorship
         self.signup_manager.set('sponsorships', form.selection())
+        self.signup_manager.set('sponsorships_years', form.chosen_years())
         return redirect(self.signup_manager.get_next_page())
 
 
@@ -58,7 +60,7 @@ def my_sponsorships(request):
     if request.method == 'POST':
         form = SponsorshipOrderForm(request.POST)
         if form.is_valid():
-            created = services.order(member, form.selection())
+            created = services.order(member, form.selection(), form.chosen_years())
             mailer.confirm_order(member, created)
             mailer.notify_admins_ordered(member, created)
             messages.success(request, _('Vielen Dank! Deine Bestellung ist eingegangen.'))
@@ -135,7 +137,7 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
             qs = Sponsorship.objects.filter(type=sponsorship_type)
             rows.append({
                 'type': sponsorship_type,
-                'ordered': qs.ordered().count(),
+                'ordered': qs.not_started().count(),
                 'active': qs.active().count(),
                 'canceled': qs.canceled().count(),
                 'total': qs.running().total_annual_fee(),
@@ -143,7 +145,7 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
         context['overview'] = rows
         context['members'] = self.group_by_member(context['object_list'])
         context['totals'] = {
-            'ordered': Sponsorship.objects.ordered().count(),
+            'ordered': Sponsorship.objects.not_started().count(),
             'active': Sponsorship.objects.active().count(),
             'canceled': Sponsorship.objects.canceled().count(),
             'total': running.total_annual_fee(),
@@ -157,8 +159,8 @@ class SponsorshipsManageView(MultiplePermissionsRequiredMixin, ListView):
         for member, member_sponsorships in services.by_member(sponsorships).items():
             lines = {}
             for s in member_sponsorships:
-                key = (s.type_id, s.annual_fee, s.status, s.order_date, s.activation_date, s.cancellation_date,
-                       s.end_date)
+                key = (s.type_id, s.annual_fee, s.status, s.order_date, s.start_date, s.activation_date,
+                       s.cancellation_date, s.end_date)
                 lines.setdefault(key, []).append(s)
             running = [s for s in member_sponsorships if s.status in (Sponsorship.ACTIVE, Sponsorship.CANCELED)]
             members.append({
@@ -278,18 +280,22 @@ def pending(request, change_date):
     """Not yet activated orders to check, per member, grouped by order date."""
     sponsorships = list(Sponsorship.objects.ordered().select_related('member', 'type').order_by(
         'order_date', 'type__sort_order', 'type__name', 'id'))
-    # occupancy of the types with a maximum, to check whether the sponsorships are still possible
+    # occupancy of the types with a maximum in the ordered sponsorship year, to check whether they are still possible
     occupancy = {}
-    for t in {s.type for s in sponsorships if s.type.max_count is not None}:
-        occupancy[t] = {'type': t, 'running': t.sponsorships.running().count(),
-                        'ordered': t.sponsorships.ordered().count(), 'max': t.max_count}
+    for t, year in {(s.type, s.year) for s in sponsorships if s.type.max_count is not None}:
+        taken = t.sponsorships.in_year(year)
+        ordered = taken.not_started().count()
+        occupancy[(t, year)] = {'type': t, 'year': years.label(year), 'running': taken.count() - ordered,
+                                'ordered': ordered, 'max': t.max_count}
     pending = []
     for member, member_sponsorships in services.by_member(sponsorships).items():
-        types = dict.fromkeys(s.type for s in member_sponsorships if s.type in occupancy)
-        pending.append((member, member_sponsorships, [occupancy[t] for t in types]))
+        types = dict.fromkeys((s.type, s.year) for s in member_sponsorships if (s.type, s.year) in occupancy)
+        # without change date: activated on the start of the ordered year (at the earliest today)
+        activation_dates = [change_date] if change_date else sorted(
+            {s.suggested_activation_date for s in member_sponsorships})
+        pending.append((member, member_sponsorships, [occupancy[t] for t in types], activation_dates))
     return render(request, 'huebhof_patenschaften/pending.html', {
         'pending': pending,
-        'change_date': change_date or datetime.date.today(),
     })
 
 
@@ -297,7 +303,8 @@ def pending(request, change_date):
 @permission_required('huebhof_patenschaften.change_sponsorship', raise_exception=True)
 @using_change_date
 def pending_apply(request, change_date):
-    """Activates the selected sponsorships on the change date (default: today) and informs the members."""
+    """Activates the selected sponsorships on the change date (default: start of the ordered sponsorship year,
+    at the earliest today) and informs the members."""
     activated = services.activate(
         Sponsorship.objects.ordered().filter(id__in=request.POST.getlist('sponsorships[]')), change_date)
     messages.success(request, _('{} Patenschaft(en) aktiviert, Bestätigung per E-Mail versandt.').format(

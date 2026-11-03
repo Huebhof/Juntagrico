@@ -1,6 +1,7 @@
 import datetime
 import re
 from decimal import Decimal
+from unittest import mock
 
 from django.contrib.auth.models import Permission
 from django.core import mail
@@ -11,6 +12,7 @@ from juntagrico.entity.depot import Depot
 from juntagrico.entity.subtypes import SubscriptionType
 from juntagrico.tests import JuntagricoTestCase
 
+from . import services, years
 from .models import Sponsorship, SponsorshipType
 
 SIGNUP_MANAGER = 'huebhof_patenschaften.signup.SponsorshipSignupManager'
@@ -147,6 +149,8 @@ class SignupTests(SponsorshipTestCase):
         self.assertRedirects(response, reverse('cs-depot'), fetch_redirect_response=False)
 
 
+# the current sponsorship year can always be ordered, independent of the date the tests run
+@override_settings(BUSINESS_YEAR_CANCELATION_MONTH=12)
 class MemberAreaTests(SponsorshipTestCase):
     @override_settings(SPONSORSHIPS_AUTO_ACTIVATE=True)
     def test_list_order_cancel(self):
@@ -508,6 +512,109 @@ class PendingTests(SponsorshipTestCase):
         self.assertEqual(self.a.status, 'ordered')
 
 
+@mock.patch('huebhof_patenschaften.years.today')
+class SponsorshipYearTests(SponsorshipTestCase):
+    """Ordered for a whole sponsorship year (= business year): until the end of the cancellation month (September)
+    the current or the next one, afterwards only the next one."""
+
+    def test_years(self, today):
+        today.return_value = datetime.date(2026, 9, 30)
+        self.assertEqual(years.orderable(), [datetime.date(2026, 1, 1), datetime.date(2027, 1, 1)])
+        today.return_value = datetime.date(2026, 10, 1)
+        self.assertEqual(years.orderable(), [datetime.date(2027, 1, 1)])
+        self.assertEqual(years.label(datetime.date(2026, 5, 1)), '2026')
+        with override_settings(BUSINESS_YEAR_START={'day': 1, 'month': 7}):
+            self.assertEqual(years.label(datetime.date(2026, 5, 1)), '2025/26')
+
+    def test_after_cancellation_month_only_next_year(self, today):
+        today.return_value = datetime.date(2026, 11, 3)
+        self.client.force_login(self.member.user)
+        response = self.client.get(reverse('sponsorships-mine'))
+        self.assertContains(response, 'Für das Patenschaftsjahr 2027')
+        self.assertNotContains(response, '<select')
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1})
+        s = Sponsorship.objects.get(member=self.member)
+        self.assertEqual((s.order_date, s.start_date, s.activation_date), (today(), datetime.date(2027, 1, 1), None))
+        self.assertTrue(any('für das Patenschaftsjahr 2027' in m.body for m in mail.outbox))  # order confirmation
+
+        self.client.force_login(self.admin.user)
+        response = self.client.get(reverse('sponsorships-manage') + '?status=all')
+        self.assertContains(response, 'bestellt am 03.11.2026 · für 2027')
+        response = self.client.get(reverse('sponsorships-pending'))
+        self.assertContains(response, '· für 2027')
+        self.assertContains(response, 'Aktivieren per 01.01.2027')
+        self.client.post(reverse('sponsorships-pending-apply'), {'sponsorships[]': [s.id]})
+        s.refresh_from_db()
+        self.assertEqual(s.activation_date, datetime.date(2027, 1, 1))
+        response = self.client.get(reverse('sponsorships-manage') + '?status=all')
+        self.assertContains(response, 'bestellt am 03.11.2026 · für 2027')
+        # not started yet: counted as ordered, no annual amount yet
+        tree_row = next(r for r in response.context['overview'] if r['type'] == self.tree)
+        self.assertEqual((tree_row['ordered'], tree_row['active'], tree_row['total']), (1, 0, 0))
+        self.assertEqual(response.context['totals']['ordered'], 1)
+
+    def test_choice_until_cancellation_month(self, today):
+        today.return_value = datetime.date(2026, 5, 1)
+        self.client.force_login(self.member.user)
+        response = self.client.get(reverse('sponsorships-mine'))
+        self.assertContains(response, 'Für welches Patenschaftsjahr?')
+        self.assertContains(response, '<option value="2026-01-01" selected>2026</option>', html=True)
+        self.client.post(reverse('sponsorships-mine'), {f'type_{self.tree.id}': 1, f'year_{self.tree.id}': '2027-01-01',
+                                                       f'type_{self.bee.id}': 1, f'year_{self.bee.id}': '2026-01-01'})
+        starts = dict(Sponsorship.objects.filter(member=self.member).values_list('type', 'start_date'))
+        # current year: from the order date
+        self.assertEqual(starts, {self.tree.id: datetime.date(2027, 1, 1), self.bee.id: datetime.date(2026, 5, 1)})
+
+    def test_year_no_longer_orderable_falls_back(self, today):
+        today.return_value = datetime.date(2026, 11, 3)
+        created = services.order(self.member, {str(self.tree.id): 1}, {str(self.tree.id): '2026-01-01'})
+        self.assertEqual(created[0].start_date, datetime.date(2027, 1, 1))
+
+    def test_occupancy_per_year(self, today):
+        today.return_value = datetime.date(2026, 5, 1)
+        self.tree.max_count = 1
+        self.tree.save()
+        running = Sponsorship.objects.create(member=self.member2, type=self.tree,
+                                             activation_date=datetime.date(2025, 1, 1))
+        # not canceled: renews automatically, so the place is taken for the next year too
+        self.assertEqual((self.tree.available_count(datetime.date(2026, 1, 1)),
+                          self.tree.available_count(datetime.date(2027, 1, 1))), (0, 0))
+        self.client.force_login(self.member.user)
+        self.assertContains(self.client.get(reverse('sponsorships-mine')), 'Zurzeit ausgebucht')
+
+        # canceled until September: the place is free for the next year
+        running.cancel(datetime.date(2026, 5, 1))
+        self.assertEqual(running.end_date, datetime.date(2026, 12, 31))
+        self.assertEqual((self.tree.available_count(datetime.date(2026, 1, 1)),
+                          self.tree.available_count(datetime.date(2027, 1, 1))), (0, 1))
+        response = self.client.get(reverse('sponsorships-mine'))
+        self.assertContains(response, '2026: ausgebucht · 2027: noch 1 verfügbar')
+        self.assertContains(response, '<option value="2027-01-01" selected>2027</option>', html=True)
+        response = self.client.post(reverse('sponsorships-mine'),
+                                    {f'type_{self.tree.id}': 1, f'year_{self.tree.id}': '2026-01-01'})
+        self.assertContains(response, 'Für 2026 sind höchstens 0 möglich.')
+        self.client.post(reverse('sponsorships-mine'),
+                         {f'type_{self.tree.id}': 1, f'year_{self.tree.id}': '2027-01-01'})
+        s = Sponsorship.objects.get(member=self.member)
+        self.assertEqual(s.year, datetime.date(2027, 1, 1))
+        self.assertEqual(self.tree.available_count(datetime.date(2027, 1, 1)), 0)
+
+        self.client.force_login(self.admin.user)
+        self.assertContains(self.client.get(reverse('sponsorships-pending')),
+                            'Baumpatenschaft 2027: 0 von max. 1 Plätzen belegt, 1 Bestellung offen')
+
+    def test_signup(self, today):
+        today.return_value = datetime.date(2026, 11, 3)
+        signup = SignupTests(methodName='test_with_sponsorships')
+        signup.client = self.client
+        signup._until_sponsorships()
+        self.client.post(reverse('cs-sponsorships'), {f'type_{self.tree.id}': 1})
+        signup._rest_until_summary()
+        self.assertContains(self.client.get(reverse('cs-summary')), 'Patenschaftsjahr 2027')
+        self.client.post(reverse('cs-summary'), {'comment': ''})
+        self.assertEqual(Sponsorship.objects.get(member=self.member4).start_date, datetime.date(2027, 1, 1))
+
+
 class CheckAndActivationTests(SponsorshipTestCase):
     """Orders are checked by admins: activate (confirmation mail) or reject (mail with reason)."""
 
@@ -527,7 +634,8 @@ class CheckAndActivationTests(SponsorshipTestCase):
         self.tree.max_count = 10
         self.tree.save()
         response = self.client.get(reverse('sponsorships-pending'))
-        self.assertContains(response, 'insgesamt: 1 von max. 10 Plätzen belegt, 1 Bestellung offen')
+        self.assertContains(response, f'Baumpatenschaft {datetime.date.today().year}: '
+                                      '1 von max. 10 Plätzen belegt, 1 Bestellung offen')
         self.assertContains(response, reverse('sponsorships-pending-reject'))
         # reject asks for the reason in a dialog, the form carries it as hidden field
         self.assertContains(response, 'id="reject-modal"')

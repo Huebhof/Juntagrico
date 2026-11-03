@@ -20,6 +20,7 @@ class SponsorshipResource(resources.ModelResource):
     annual_fee = fields.Field(attribute='annual_fee', column_name='Jahresbeitrag')
     custom_annual_fee = fields.Field(attribute='custom_annual_fee', column_name='Sonderpreis')
     order_date = fields.Field(attribute='order_date', column_name='Bestellt am')
+    year = fields.Field(attribute='year_label', column_name='Patenschaftsjahr')
     activation_date = fields.Field(attribute='activation_date', column_name='Aktiviert am')
     cancellation_date = fields.Field(attribute='cancellation_date', column_name='Gekündigt am')
     end_date = fields.Field(attribute='end_date', column_name='Ende')
@@ -29,7 +30,7 @@ class SponsorshipResource(resources.ModelResource):
     class Meta:
         model = Sponsorship
         fields = ('id', 'first_name', 'last_name', 'email', 'type_name', 'annual_fee', 'custom_annual_fee',
-                  'order_date', 'activation_date', 'cancellation_date', 'end_date', 'status', 'notes')
+                  'order_date', 'year', 'activation_date', 'cancellation_date', 'end_date', 'status', 'notes')
         export_order = fields
 
     def dehydrate_status(self, obj):
@@ -64,13 +65,17 @@ class SponsorshipTypeAdmin(SortableAdminMixin, BaseAdmin):
 @admin.register(Sponsorship)
 class SponsorshipAdmin(ExportMixin, BaseAdmin):
     resource_classes = [SponsorshipResource]
-    list_display = ['member', 'type', 'annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date',
-                    'status_display']
+    list_display = ['member', 'type', 'annual_fee', 'order_date', 'year_display', 'activation_date',
+                    'cancellation_date', 'end_date', 'status_display']
     list_filter = [StatusFilter, 'type', 'order_date']
     search_fields = ['member__first_name', 'member__last_name', 'member__email', 'type__name']
     autocomplete_fields = ['member']
     date_hierarchy = 'order_date'
     actions = ['activate', 'cancel']
+
+    @admin.display(description=_('Patenschaftsjahr'))
+    def year_display(self, obj):
+        return obj.year_label
 
     @admin.display(description=_('Status'))
     def status_display(self, obj):
@@ -95,7 +100,8 @@ class SponsorshipInline(admin.TabularInline):
     model = Sponsorship
     fk_name = 'member'
     extra = 0
-    fields = ['type', 'custom_annual_fee', 'order_date', 'activation_date', 'cancellation_date', 'end_date']
+    fields = ['type', 'custom_annual_fee', 'order_date', 'start_date', 'activation_date', 'cancellation_date',
+              'end_date']
     show_change_link = True
     verbose_name_plural = _('Patenschaften')
 

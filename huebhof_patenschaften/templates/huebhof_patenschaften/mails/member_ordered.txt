@@ -5,7 +5,7 @@
 
 {% if sponsorships.0.activation_date %}{% trans "Vielen Dank für deine Unterstützung! Wir haben folgende Patenschaft(en) für dich erfasst:" %}{% else %}{% trans "Vielen Dank für deine Bestellung! Wir prüfen, ob die Patenschaft möglich ist, und melden uns bei dir. Du hast bestellt:" %}{% endif %}
 
-{% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }} {% trans "pro Jahr" %}{% block sponsorship_line_extra %}{% endblock %}
+{% for s in sponsorships %}- {{ s.type.name }}: {{ s.annual_fee|price }} {% trans "pro Jahr" %}, {% blocktrans with y=s.year_label %}für das Patenschaftsjahr {{ y }}{% endblocktrans %}{% block sponsorship_line_extra %}{% endblock %}
 {% endfor %}
 {% trans "Total pro Jahr" %}: {{ total|price }}{% block total_extra %}{% endblock %}
 
