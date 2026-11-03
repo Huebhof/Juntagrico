@@ -10,6 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from juntagrico.entity.member import Member
 from juntagrico.util import temporal
 
+from . import years
+
 
 class SponsorshipTypeQuerySet(models.QuerySet):
     def visible(self):
@@ -42,15 +44,15 @@ class SponsorshipType(models.Model):
     def __str__(self):
         return self.name
 
-    def taken_count(self):
-        """Running and ordered (not yet activated) sponsorships of this type."""
-        return self.sponsorships.open().count()
+    def taken_count(self, year=None):
+        """Sponsorships of this type occupying a place in the sponsorship year (default: current one)."""
+        return self.sponsorships.in_year(year or years.start_of(years.today())).count()
 
-    def available_count(self):
-        """How many can still be ordered, None if unlimited."""
+    def available_count(self, year=None):
+        """How many can still be ordered for the sponsorship year (default: current one), None if unlimited."""
         if self.max_count is None:
             return None
-        return max(0, self.max_count - self.taken_count())
+        return max(0, self.max_count - self.taken_count(year))
 
 
 class SponsorshipQuerySet(models.QuerySet):
@@ -63,6 +65,15 @@ class SponsorshipQuerySet(models.QuerySet):
         date = date or datetime.date.today()
         return self.filter(Q(activation_date__isnull=True, cancellation_date__isnull=True)
                            | Q(activation_date__gt=date))
+
+    def in_year(self, year):
+        """Occupying a place in the sponsorship year (given by any date in it): starting in it or before
+        and not ending before it. Not canceled ones renew automatically, so they count for later years too.
+        Withdrawn orders do not count."""
+        return self.exclude(activation_date__isnull=True, cancellation_date__isnull=False).annotate(
+            begin=Coalesce('activation_date', 'start_date', 'order_date'),
+        ).filter(begin__lte=years.end_of(year)).filter(
+            Q(end_date__isnull=True) | Q(end_date__gte=years.start_of(year)))
 
     def running(self, date=None):
         """Activated and not yet ended (canceled ones included until their end date)."""
@@ -166,6 +177,15 @@ class Sponsorship(models.Model):
     @property
     def can_be_canceled(self):
         return self.status in (self.ORDERED, self.ACTIVE)
+
+    @property
+    def year(self):
+        """Start of the sponsorship year: the one it was activated or ordered for."""
+        return years.start_of(self.activation_date or self.start_date or self.order_date)
+
+    @property
+    def year_label(self):
+        return years.label(self.year)
 
     @property
     def suggested_activation_date(self):

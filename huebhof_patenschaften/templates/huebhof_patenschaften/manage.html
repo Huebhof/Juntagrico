@@ -97,7 +97,7 @@
                                         {% if line.count > 1 %}{% blocktrans with fee=s.annual_fee|price %}à {{ fee }}{% endblocktrans %}{% else %}{{ s.annual_fee|price }}{% endif %}
                                         {% if s.custom_annual_fee is not None %}<span class="badge badge-warning sponsorship-custom-fee" title="{% trans 'Abweichender Jahresbeitrag, Preisänderungen am Typ wirken nicht' %}">{% blocktrans with fee=s.type.annual_fee|price %}Sonderpreis, Typ: {{ fee }}{% endblocktrans %}</span>{% endif %}
                                         ·
-                                        {% if s.status == 'ordered' %}{% blocktrans with date=s.order_date|date:"d.m.Y" %}bestellt am {{ date }}{% endblocktrans %}{% if s.activation_date %}, {% blocktrans with date=s.activation_date|date:"d.m.Y" %}aktiv ab {{ date }}{% endblocktrans %}{% elif s.start_date %}, {% blocktrans with date=s.start_date|date:"d.m.Y" %}gewünscht ab {{ date }}{% endblocktrans %}{% endif %}
+                                        {% if s.status == 'ordered' %}{% blocktrans with date=s.order_date|date:"d.m.Y" %}bestellt am {{ date }}{% endblocktrans %} · {% blocktrans with y=s.year_label %}für {{ y }}{% endblocktrans %}
                                         {% elif s.status == 'active' %}{% blocktrans with date=s.activation_date|date:"d.m.Y" %}seit {{ date }}{% endblocktrans %}
                                         {% elif s.status == 'canceled' %}{% blocktrans with date=s.cancellation_date|date:"d.m.Y" end=s.end_date|date:"d.m.Y" %}gekündigt am {{ date }}, läuft bis {{ end }}{% endblocktrans %}
                                         {% elif s.status == 'ended' %}{% blocktrans with date=s.end_date|date:"d.m.Y" %}beendet am {{ date }}{% endblocktrans %}

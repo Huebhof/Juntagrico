@@ -15,11 +15,11 @@ from juntagrico.util import return_to_previous_location
 from juntagrico.view_decorators import highlighted_menu, using_change_date
 from juntagrico.views_subscription import SignupView
 
-from . import mailer, services
+from . import mailer, services, years
 from .admin import SponsorshipResource
 from .config import SponsorshipConfig
 from .forms import SponsorshipCreateForm, SponsorshipEditForm, SponsorshipOrderForm, SponsorshipSelectionForm, \
-    SponsorshipSignupSelectionForm, SponsorshipTypeForm
+    SponsorshipTypeForm
 from .models import Sponsorship, SponsorshipType
 
 
@@ -33,18 +33,12 @@ def any_permission_required(*perms):
 class SelectSponsorshipsView(SignupView, FormView):
     """Step in the order process: select sponsorships (optional)."""
     template_name = 'huebhof_patenschaften/signup_select.html'
-
-    def get_form_class(self):
-        # with a subscription, its start date applies to the sponsorships too
-        if self.signup_manager.has_parts():
-            return SponsorshipSelectionForm
-        return SponsorshipSignupSelectionForm
+    form_class = SponsorshipSelectionForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['selection'] = self.signup_manager.get('sponsorships', {})
-        if self.get_form_class() is SponsorshipSignupSelectionForm:
-            kwargs['start_date'] = self.signup_manager.get('sponsorships_start_date')
+        kwargs['chosen_years'] = self.signup_manager.get('sponsorships_years', {})
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -53,8 +47,7 @@ class SelectSponsorshipsView(SignupView, FormView):
     def form_valid(self, form):
         # empty dict = deliberately continue without sponsorship
         self.signup_manager.set('sponsorships', form.selection())
-        if 'start_date' in form.cleaned_data:
-            self.signup_manager.set('sponsorships_start_date', form.cleaned_data['start_date'].isoformat())
+        self.signup_manager.set('sponsorships_years', form.chosen_years())
         return redirect(self.signup_manager.get_next_page())
 
 
@@ -67,7 +60,7 @@ def my_sponsorships(request):
     if request.method == 'POST':
         form = SponsorshipOrderForm(request.POST)
         if form.is_valid():
-            created = services.order(member, form.selection(), start_date=form.cleaned_data['start_date'])
+            created = services.order(member, form.selection(), form.chosen_years())
             mailer.confirm_order(member, created)
             mailer.notify_admins_ordered(member, created)
             messages.success(request, _('Vielen Dank! Deine Bestellung ist eingegangen.'))
@@ -287,15 +280,17 @@ def pending(request, change_date):
     """Not yet activated orders to check, per member, grouped by order date."""
     sponsorships = list(Sponsorship.objects.ordered().select_related('member', 'type').order_by(
         'order_date', 'type__sort_order', 'type__name', 'id'))
-    # occupancy of the types with a maximum, to check whether the sponsorships are still possible
+    # occupancy of the types with a maximum in the ordered sponsorship year, to check whether they are still possible
     occupancy = {}
-    for t in {s.type for s in sponsorships if s.type.max_count is not None}:
-        occupancy[t] = {'type': t, 'running': t.sponsorships.running().count(),
-                        'ordered': t.sponsorships.not_started().count(), 'max': t.max_count}
+    for t, year in {(s.type, s.year) for s in sponsorships if s.type.max_count is not None}:
+        taken = t.sponsorships.in_year(year)
+        ordered = taken.not_started().count()
+        occupancy[(t, year)] = {'type': t, 'year': years.label(year), 'running': taken.count() - ordered,
+                                'ordered': ordered, 'max': t.max_count}
     pending = []
     for member, member_sponsorships in services.by_member(sponsorships).items():
-        types = dict.fromkeys(s.type for s in member_sponsorships if s.type in occupancy)
-        # without change date: activated on the desired start (at the earliest today)
+        types = dict.fromkeys((s.type, s.year) for s in member_sponsorships if (s.type, s.year) in occupancy)
+        # without change date: activated on the start of the ordered year (at the earliest today)
         activation_dates = [change_date] if change_date else sorted(
             {s.suggested_activation_date for s in member_sponsorships})
         pending.append((member, member_sponsorships, [occupancy[t] for t in types], activation_dates))
@@ -308,8 +303,8 @@ def pending(request, change_date):
 @permission_required('huebhof_patenschaften.change_sponsorship', raise_exception=True)
 @using_change_date
 def pending_apply(request, change_date):
-    """Activates the selected sponsorships on the change date (default: desired start, at the earliest today)
-    and informs the members."""
+    """Activates the selected sponsorships on the change date (default: start of the ordered sponsorship year,
+    at the earliest today) and informs the members."""
     activated = services.activate(
         Sponsorship.objects.ordered().filter(id__in=request.POST.getlist('sponsorships[]')), change_date)
     messages.success(request, _('{} Patenschaft(en) aktiviert, Bestätigung per E-Mail versandt.').format(

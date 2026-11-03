@@ -14,21 +14,29 @@ from juntagrico.entity.member import Member
 from juntagrico.forms import JuntagricoDateWidget as _JuntagricoDateWidget
 from juntagrico.templatetags.juntagrico.common import price
 
-from . import extensions
+from . import extensions, years
 from .config import SponsorshipConfig
 from .models import Sponsorship, SponsorshipType
 
 
 class SponsorshipSelectionForm(forms.Form):
-    """One number field per orderable type. All 0 = continue without sponsorship."""
+    """Per orderable type a number field and the sponsorship year. All 0 = continue without sponsorship.
+    Until the end of the cancellation month the current and the next year can be chosen, afterwards only the next."""
 
-    def __init__(self, *args, selection=None, **kwargs):
+    def __init__(self, *args, selection=None, chosen_years=None, **kwargs):
         super().__init__(*args, **kwargs)
         selection = {str(k): v for k, v in (selection or {}).items()}
+        chosen_years = {str(k): v for k, v in (chosen_years or {}).items()}
+        self.years = years.orderable()
         self.types = list(SponsorshipType.objects.visible())
         for sponsorship_type in self.types:
-            # available is also used in the template ("noch 3 verfügbar", "ausgebucht")
-            sponsorship_type.available = sponsorship_type.available_count()
+            # used in the template ("noch 3 verfügbar", "ausgebucht") and for the validation per year
+            sponsorship_type.availability = [
+                (year.isoformat(), years.label(year), sponsorship_type.available_count(year)) for year in self.years]
+            available = [a for _, _, a in sponsorship_type.availability]
+            sponsorship_type.available = None if None in available else max(available)
+            # canceled sponsorships free their place for the next year only
+            sponsorship_type.availability_differs = len(set(available)) > 1
             max_value = SponsorshipConfig.max_quantity()
             if sponsorship_type.available is not None:
                 max_value = min(max_value, sponsorship_type.available)
@@ -42,53 +50,51 @@ class SponsorshipSelectionForm(forms.Form):
                 field.disabled = True
                 field.initial = 0
             self.fields[self.field_name(sponsorship_type)] = field
+            # default: the year chosen before, otherwise the first one with a free place
+            year_initial = chosen_years.get(str(sponsorship_type.id)) or next(
+                (y for y, _, a in sponsorship_type.availability if a != 0), self.years[0].isoformat())
+            self.fields[self.year_field_name(sponsorship_type)] = forms.ChoiceField(
+                label=_('Patenschaftsjahr'), required=False, initial=year_initial,
+                choices=[(y, label) for y, label, _ in sponsorship_type.availability],
+                widget=forms.Select(attrs={'class': 'form-control sponsorship-year'}) if len(self.years) > 1
+                else forms.HiddenInput,
+            )
 
     @staticmethod
     def field_name(sponsorship_type):
         return f'type_{sponsorship_type.id}'
 
+    @staticmethod
+    def year_field_name(sponsorship_type):
+        return f'year_{sponsorship_type.id}'
+
+    def clean(self):
+        cleaned = super().clean()
+        for t in self.types:
+            year = cleaned.get(self.year_field_name(t)) or self.fields[self.year_field_name(t)].initial
+            cleaned[self.year_field_name(t)] = year
+            quantity = cleaned.get(self.field_name(t))
+            for y, label, available in t.availability:
+                if quantity and y == year and available is not None and quantity > available:
+                    self.add_error(self.field_name(t),
+                                   _('Für {} sind höchstens {} möglich.').format(label, available))
+        return cleaned
+
     def rows(self):
-        """For the template: [(type, boundfield)]."""
-        return [(t, self[self.field_name(t)]) for t in self.types]
+        """For the template: [(type, quantity field, year field)]."""
+        return [(t, self[self.field_name(t)], self[self.year_field_name(t)]) for t in self.types]
 
     def selection(self):
         """{'type_id': quantity} with quantity > 0 only, JSON serializable for the session."""
         return {str(t.id): self.cleaned_data.get(self.field_name(t)) or 0
                 for t in self.types if self.cleaned_data.get(self.field_name(t))}
 
-
-class JuntagricoDateWidget(_JuntagricoDateWidget):
-    """Browser date picker like in juntagrico, but also for empty fields."""
-
-    def format_value(self, value):
-        return None if value in (None, '') else super().format_value(value)
+    def chosen_years(self):
+        """{'type_id': start of the sponsorship year (ISO)} of the selected types, JSON serializable."""
+        return {type_id: self.cleaned_data[f'year_{type_id}'] for type_id in self.selection()}
 
 
-class StartDateMixin(forms.Form):
-    """Desired start of the ordered sponsorships. Empty = today."""
-    start_date = forms.DateField(
-        label=_('Gewünschter Beginn'), required=False, initial=datetime.date.today,
-        widget=JuntagricoDateWidget(attrs={'class': 'form-control sponsorship-start-date'}),
-        help_text=_('Wir prüfen deine Bestellung und bestätigen dir den Beginn per E-Mail.'))
-
-    def clean_start_date(self):
-        start_date = self.cleaned_data.get('start_date') or datetime.date.today()
-        if start_date < datetime.date.today():
-            raise forms.ValidationError(_('Der Beginn kann nicht in der Vergangenheit liegen.'))
-        return start_date
-
-
-class SponsorshipSignupSelectionForm(StartDateMixin, SponsorshipSelectionForm):
-    """Order process without subscription: the desired start is asked here
-    (with a subscription, its start date applies)."""
-
-    def __init__(self, *args, start_date=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if start_date:
-            self.fields['start_date'].initial = start_date
-
-
-class SponsorshipOrderForm(StartDateMixin, SponsorshipSelectionForm):
+class SponsorshipOrderForm(SponsorshipSelectionForm):
     """Ordering in the member area: at least one sponsorship required."""
 
     def clean(self):
@@ -99,6 +105,13 @@ class SponsorshipOrderForm(StartDateMixin, SponsorshipSelectionForm):
 
 
 # ---------------------------------------------------------------- Management
+
+class JuntagricoDateWidget(_JuntagricoDateWidget):
+    """Browser date picker like in juntagrico, but also for empty fields."""
+
+    def format_value(self, value):
+        return None if value in (None, '') else super().format_value(value)
+
 
 class AmountInput(forms.TextInput):
     """Text field for amounts: no spin buttons and no change by the mouse wheel, numeric keyboard on mobiles.

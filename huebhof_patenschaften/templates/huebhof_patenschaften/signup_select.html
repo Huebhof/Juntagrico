@@ -20,7 +20,6 @@
     <form method="post" action="">
         {% csrf_token %}
         {% include "huebhof_patenschaften/snippets/selection.html" %}
-        {% if form.start_date %}{% include "huebhof_patenschaften/snippets/start_date.html" with field=form.start_date %}{% endif %}
         <div class="form-group">
             {# The label follows the selection (selection.js): nothing selected = continue without sponsorship #}
             <button type="submit" class="btn btn-success btn-lg sponsorship-submit"

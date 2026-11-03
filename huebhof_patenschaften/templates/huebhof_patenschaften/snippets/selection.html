@@ -8,7 +8,7 @@
 {% endif %}
 <div class="subscription-bundle-group mb-4">
     <div class="row subscription-bundle-grid">
-        {% for type, field in form.rows %}
+        {% for type, field, year_field in form.rows %}
             <div class="col-lg-6 sub-type-container sponsorship-type d-flex">
                 <div class="card mb-3 w-100 h-100">
                     <div class="card-body d-flex flex-column h-100">
@@ -24,11 +24,29 @@
                         </div>
                         {% block type_price_extra %}{% endblock %}
                         {% if type.available %}
-                            <div class="type-duration">{% blocktrans count n=type.available %}Noch {{ n }} verfügbar{% plural %}Noch {{ n }} verfügbar{% endblocktrans %}</div>
+                            <div class="type-duration">
+                                {% if type.availability_differs %}
+                                    {% for year, label, available in type.availability %}{% if not forloop.first %} · {% endif %}{% if available %}{% blocktrans count n=available %}{{ label }}: noch {{ n }} verfügbar{% plural %}{{ label }}: noch {{ n }} verfügbar{% endblocktrans %}{% else %}{% blocktrans %}{{ label }}: ausgebucht{% endblocktrans %}{% endif %}{% endfor %}
+                                {% else %}
+                                    {% blocktrans count n=type.available %}Noch {{ n }} verfügbar{% plural %}Noch {{ n }} verfügbar{% endblocktrans %}
+                                {% endif %}
+                            </div>
                         {% endif %}
                         <label for="{{ field.id_for_label }}" class="d-none">{% trans "Anzahl:" %} {{ type.name }}</label>
                         {{ field }}
                         {% if field.errors %}<div class="text-danger small">{{ field.errors|join:" " }}</div>{% endif %}
+                        {% if type.available != 0 %}
+                            {% if form.years|length > 1 %}
+                                {# shown as soon as a quantity is chosen (selection.js) #}
+                                <div class="form-group mt-2 mb-0 sponsorship-year-choice">
+                                    <label for="{{ year_field.id_for_label }}" class="small mb-1">{% trans "Für welches Patenschaftsjahr?" %}</label>
+                                    {{ year_field }}
+                                </div>
+                            {% else %}
+                                {{ year_field }}
+                                <div class="small mt-2 sponsorship-year-info">{% blocktrans with label=type.availability.0.1 %}Für das Patenschaftsjahr {{ label }}{% endblocktrans %}</div>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
