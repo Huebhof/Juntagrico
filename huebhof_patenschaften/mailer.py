@@ -1,7 +1,33 @@
+from functools import wraps
+
+from django.contrib.auth.models import Permission
+from django.db.models import Q
 from django.template.loader import get_template
 from django.utils.translation import gettext as _
 
-from juntagrico.mailer import EmailSender, base_dict, organisation_subject, requires_someone_with_perm
+from juntagrico.entity.member import Member
+from juntagrico.mailer import EmailSender, base_dict, organisation_subject
+
+
+def _emails_by_permission(codename):
+    # juntagrico >= 2.0.11 sucht in requires_someone_with_perm nur noch
+    # Berechtigungen der App "juntagrico"; unsere liegen in dieser App.
+    perm = Permission.objects.get(content_type__app_label='huebhof_patenschaften', codename=codename)
+    return Member.objects.filter(
+        Q(user__groups__permissions=perm) | Q(user__user_permissions=perm)
+    ).distinct().active().values_list('email', flat=True)
+
+
+def requires_someone_with_perm(codename):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            emails = _emails_by_permission(codename)
+            if len(emails) > 0:
+                kwargs['emails'] = emails
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 def _render(template, context):

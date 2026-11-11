@@ -117,11 +117,30 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'juntagrico.middleware.RequirePasswordChangeMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'impersonate.middleware.ImpersonateMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'axes.middleware.AxesMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',  # am Ende
 ]
+
+"""
+    Security (Juntagrico Security-Briefing 2026-11)
+"""
+# Cookies nur über HTTPS senden
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# Passwort-Kriterien für Admins, Mitarbeitende, Konten mit Berechtigungen
+# sowie Koordinator:innen von Tätigkeitsbereichen und Depots.
+# Eigene Klasse, weil die Juntagrico-Variante (2.0.11) bei normalen Konten abstürzt.
+AUTH_PASSWORD_VALIDATORS = [{
+    'NAME': 'huebhof.password_validation.PrivilegedOnlyPasswordValidator',
+    'OPTIONS': {
+        'validators': defaults.password_validators,
+    },
+}]
 
 EMAIL_HOST = os.environ.get('JUNTAGRICO_EMAIL_HOST')
 EMAIL_HOST_USER = os.environ.get('JUNTAGRICO_EMAIL_USER')
@@ -150,8 +169,14 @@ STATIC_URL = '/static/'
 
 LOCALE_PATHS = ('locale',)
 
+# Impersonate nur für Mitglieder der Gruppe "impersonators" (Gruppe braucht
+# keine Berechtigungen) und nur für Konten ohne Berechtigungen/Koordination.
+allow_impersonate = defaults.allow_group('impersonators')
+
 IMPERSONATE = {
     'REDIRECT_URL': '/my/profile',
+    'CUSTOM_ALLOW': 'huebhof.settings.allow_impersonate',
+    'CUSTOM_USER_QUERYSET': 'juntagrico.defaults.unprivileged_only',
 }
 
 LOGIN_REDIRECT_URL = "/"
