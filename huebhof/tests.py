@@ -53,3 +53,17 @@ class PasswordValidationTests(JuntagricoTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(self.client.session.get('must_change_password'))
         self.assertRedirects(self.client.get(reverse('home')), reverse('password'), fetch_redirect_response=False)
+
+    def test_password_reset_rejects_weak_password_for_privileged(self):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+        for user, rejected in ((self.depot_coordinator.user, True), (self.plain.user, False)):
+            with self.subTest(user=user.username):
+                url = reverse('password_reset_confirm', args=[
+                    urlsafe_base64_encode(force_bytes(user.pk)), default_token_generator.make_token(user)])
+                response = self.client.get(url, follow=True)
+                response = self.client.post(response.redirect_chain[-1][0],
+                                            {'new_password1': 'test', 'new_password2': 'test'})
+                user.refresh_from_db()
+                self.assertEqual(user.check_password('test'), not rejected)
